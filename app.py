@@ -316,6 +316,12 @@ textarea{min-height:100px}
 .metric-box .num{margin-top:8px;color:var(--primary);font-size:24px;font-weight:bold}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:999}
 .modal:target{display:flex}
+.modal.show-modal{display:flex}
+.usage-modal-card{width:min(560px,100%)}
+.usage-option-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:8px}
+.usage-radio{position:absolute;opacity:0;pointer-events:none}
+.usage-option{display:flex;align-items:center;justify-content:center;text-align:center;padding:12px 10px;border:1px solid var(--line);border-radius:14px;background:#fff;cursor:pointer;min-height:56px;font-weight:700;transition:.2s}
+.usage-radio:checked + .usage-option{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border-color:var(--primary);box-shadow:0 8px 18px rgba(18,59,109,.18)}
 .modal-card{background:#fff;width:min(1100px,100%);max-height:90vh;overflow:auto;border-radius:20px;padding:20px;position:relative}
 .modal-close{position:absolute;left:16px;top:16px;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f3f6fb;color:var(--text);font-size:20px}
 .form-section{display:none}
@@ -517,13 +523,31 @@ async function submitUsageModal(form, rowId, modalId){
     const data = await ajaxPost(form.action, new FormData(form));
     replaceRowAndModal(data, rowId, modalId);
     if(data.ok){
-      window.location.hash = '#!';
-      form.reset();
+      closeUsageModal(modalId, form.id);
     }
   }catch(err){
     showLiveFlash(err.message || 'تعذر إضافة البطاقة', 'error');
   }finally{
     form.classList.remove('ajax-saving');
+  }
+  return false;
+}
+
+function openUsageModal(modalId){
+  const modal = document.getElementById(modalId);
+  if(modal){ modal.classList.add('show-modal'); }
+  return false;
+}
+
+function closeUsageModal(modalId, formId){
+  const modal = document.getElementById(modalId);
+  if(modal){ modal.classList.remove('show-modal'); }
+  if(formId){
+    const form = document.getElementById(formId);
+    if(form){ form.reset(); }
+  }
+  if(window.location.hash && window.location.hash === '#' + modalId){
+    window.location.hash = '#!';
   }
   return false;
 }
@@ -2203,40 +2227,35 @@ def build_beneficiary_row_html(r, selected_type, args_dict, page=1, display_inde
 
     if has_permission("usage_counter") and limited and count < 3:
         usage_url = f"{url_for('add_usage', beneficiary_id=r['id'])}?{current_qs}"
-        reason_options = "".join([f"<option value='{safe(x)}'>{safe(x)}</option>" for x in USAGE_REASON_OPTIONS])
-        card_options = "".join([f"<option value='{safe(x)}'>{safe(x)}</option>" for x in CARD_TYPE_OPTIONS])
+        usage_form_id = f"usage-form-{r['id']}"
+        reason_options = "".join([
+            f"<label><input class='usage-radio' type='radio' name='usage_reason' value='{safe(x)}' required><span class='usage-option'>{safe(x)}</span></label>"
+            for x in USAGE_REASON_OPTIONS
+        ])
+        card_options = "".join([
+            f"<label><input class='usage-radio' type='radio' name='card_type' value='{safe(x)}' {'checked' if x == 'ساعة' else ''} required><span class='usage-option'>{safe(x)}</span></label>"
+            for x in CARD_TYPE_OPTIONS
+        ])
         usage_form = f"""
-        <form method="POST" action="{usage_url}" onsubmit="return submitUsageModal(this, {r['id']}, '{usage_modal_id}')">
-          <div class="row">
-            <div>
-              <label>سبب البطاقة</label>
-              <select name="usage_reason" required>
-                <option value="">اختر السبب</option>
-                {reason_options}
-              </select>
-            </div>
-            <div>
-              <label>نوع البطاقة</label>
-              <select name="card_type" required>
-                <option value="">اختر النوع</option>
-                {card_options}
-              </select>
-            </div>
-          </div>
+        <form id="{usage_form_id}" method="POST" action="{usage_url}" onsubmit="return submitUsageModal(this, {r['id']}, '{usage_modal_id}')">
+          <div class="section-title" style="margin-top:0">سبب البطاقة</div>
+          <div class="usage-option-grid">{reason_options}</div>
+          <div class="section-title">نوع البطاقة</div>
+          <div class="usage-option-grid">{card_options}</div>
           <div style="margin-top:12px">
             <label>ملاحظة إضافية</label>
             <textarea name="usage_notes" placeholder="اختياري"></textarea>
           </div>
           <div class="actions" style="margin-top:14px">
             <button class="btn btn-accent" type="submit"><i class="fa-solid fa-check"></i> تثبيت البطاقة</button>
-            <a class="btn btn-soft" href="#!">إلغاء</a>
+            <button class="btn btn-soft" type="button" onclick="return closeUsageModal('{usage_modal_id}', '{usage_form_id}')">إلغاء</button>
           </div>
         </form>
         """
         modal_parts.append(f"""
-        <div id="{usage_modal_id}" class="modal">
-          <div class="modal-card">
-            <a href="#!" class="modal-close">×</a>
+        <div id="{usage_modal_id}" class="modal" onclick="if(event.target===this) closeUsageModal('{usage_modal_id}', '{usage_form_id}')">
+          <div class="modal-card usage-modal-card">
+            <a href="#!" class="modal-close" onclick="return closeUsageModal('{usage_modal_id}', '{usage_form_id}')">×</a>
             <div class="hero" style="margin-bottom:14px"><h1>إضافة بطاقة</h1><p>{safe(r.get('full_name'))}</p></div>
             <div class="info-note" style="margin-bottom:14px">
               <strong>الاستخدام الحالي:</strong> {usage_label}
@@ -2245,7 +2264,7 @@ def build_beneficiary_row_html(r, selected_type, args_dict, page=1, display_inde
           </div>
         </div>
         """)
-        actions.append(f"<a class='btn btn-accent btn-icon' href='#{usage_modal_id}' onclick=\"window.location.hash='#{usage_modal_id}'; return false;\" title='+1 بطاقة'><i class='fa-solid fa-plus'></i></a>")
+        actions.append(f"<button class='btn btn-accent btn-icon' type='button' onclick=\"return openUsageModal('{usage_modal_id}')\" title='+1 بطاقة'><i class='fa-solid fa-plus'></i></button>")
 
     type_html = f"<span class='type-badge {get_type_css(r.get('user_type'))}'>{get_type_label(r.get('user_type'))}</span>"
     added_by = safe(r.get('added_by_username')) or '-'
@@ -2760,7 +2779,8 @@ def add_usage(beneficiary_id):
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         updated_row = query_one("SELECT * FROM beneficiaries WHERE id=%s", [beneficiary_id])
         args_dict = build_request_args_dict()
-        row_html, modal_html = build_beneficiary_row_html(updated_row, args_dict.get("user_type", ""), args_dict, page=max(1, int(request.args.get("page", "1") or "1")))
+        selected_type = args_dict.get("user_type", "") or (updated_row.get("user_type") if updated_row else "")
+        row_html, modal_html = build_beneficiary_row_html(updated_row, selected_type, args_dict, page=max(1, int(request.args.get("page", "1") or "1")))
         return jsonify({"ok": category == "success", "row_html": row_html, "modal_html": modal_html, "message": message, "category": category})
 
     return redirect(request.referrer or url_for("beneficiaries_page"))
