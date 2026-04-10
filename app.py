@@ -147,19 +147,32 @@ html{scroll-behavior:smooth}
 body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#f6fafd,#eef7fc);color:var(--text)}
 a{text-decoration:none}
 .layout{display:flex;min-height:100vh;transition:.25s}
-.sidebar{width:290px;background:linear-gradient(180deg,var(--primary),#0d2f57);color:#fff;padding:20px;position:sticky;top:0;height:100vh;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.12);transition:.25s}
-.layout.sidebar-collapsed .sidebar{width:0;padding:0;border:0;overflow:hidden;box-shadow:none}
+.sidebar{
+  width:290px;background:linear-gradient(180deg,var(--primary),#0d2f57);color:#fff;padding:20px;position:sticky;top:0;height:100vh;
+  overflow-x:hidden;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.12);transition:width .28s ease,padding .28s ease;white-space:nowrap
+}
+.layout.sidebar-collapsed .sidebar{width:88px;padding:20px 12px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
 .layout.sidebar-collapsed .main{width:100%}
-.brand{display:flex;align-items:center;gap:12px;font-size:24px;font-weight:bold;margin-bottom:18px}
-.brand-badge{width:42px;height:42px;border-radius:12px;background:var(--accent);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:bold}
+.brand{display:flex;align-items:center;gap:12px;font-size:24px;font-weight:bold;margin-bottom:18px;overflow:hidden}
+.brand-badge{width:42px;height:42px;min-width:42px;border-radius:12px;background:var(--accent);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:bold}
+.brand-text{display:flex;flex-direction:column;transition:opacity .2s ease,transform .2s ease,width .2s ease;overflow:hidden}
 .brand small{display:block;font-size:12px;color:#cfe4ff;margin-top:4px}
-.nav .section{font-size:12px;color:#d8e8ff;margin:16px 0 8px}
-.nav a,.nav details summary{display:flex;align-items:center;gap:10px;color:#fff;padding:12px 14px;border-radius:12px;margin-bottom:8px;background:rgba(255,255,255,.08);cursor:pointer;list-style:none}
+.layout.sidebar-collapsed .brand{justify-content:center}
+.layout.sidebar-collapsed .brand-text{opacity:0;transform:translateX(8px);width:0}
+.nav .section{font-size:12px;color:#d8e8ff;margin:16px 0 8px;transition:opacity .2s ease}
+.nav a,.nav details summary{display:flex;align-items:center;gap:10px;color:#fff;padding:12px 14px;border-radius:12px;margin-bottom:8px;background:rgba(255,255,255,.08);cursor:pointer;list-style:none;transition:all .22s ease;overflow:hidden}
 .nav a:hover,.nav details summary:hover,.nav a.active{background:rgba(255,255,255,.18)}
+.nav a i,.nav details summary i{min-width:20px;text-align:center;font-size:16px}
+.nav-label{transition:opacity .2s ease,transform .2s ease,width .2s ease;overflow:hidden}
 .nav details{margin-bottom:8px}
 .nav details summary::-webkit-details-marker{display:none}
 .nav details .submenu{padding-right:10px}
 .nav details .submenu a{background:rgba(255,255,255,.05);font-size:14px}
+.layout.sidebar-collapsed .nav-label{opacity:0;transform:translateX(8px);width:0}
+.layout.sidebar-collapsed .nav a,.layout.sidebar-collapsed .nav details summary{justify-content:center;padding:12px 10px}
+.layout.sidebar-collapsed .nav .section,.layout.sidebar-collapsed .nav details .submenu{display:none}
+.layout.sidebar-collapsed .nav details{margin-bottom:8px}
+.layout.sidebar-collapsed .nav details[open] summary{margin-bottom:8px}
 .main{flex:1;padding:22px}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
 .topbar-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -293,7 +306,7 @@ textarea{min-height:100px}
 .timer-pulse:after{content:'';position:absolute;inset:-6px;border-radius:inherit;border:2px solid currentColor;opacity:0;animation:pulseRing 1.8s infinite}
 @keyframes pulseRing{0%{transform:scale(.92);opacity:.35}70%{transform:scale(1.08);opacity:0}100%{opacity:0}}
 @keyframes timerAlertIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
-@media (max-width:900px){.layout{display:block}.sidebar{width:100%;height:auto;position:relative}.layout.sidebar-collapsed .sidebar{height:0}.main{padding:16px}.modal-card{padding:16px}.bar-row{grid-template-columns:100px 1fr 44px}.timer-big{font-size:36px}.timer-ring{width:230px;height:230px}.timer-big.timer-big-ring{font-size:44px}.topbar{align-items:flex-start}.userbox{width:100%;justify-content:flex-start}}
+@media (max-width:900px){.layout{display:block}.sidebar{width:100%;height:auto;position:relative}.layout.sidebar-collapsed .sidebar{width:72px;height:auto;padding:16px 10px}.main{padding:16px}.modal-card{padding:16px}.bar-row{grid-template-columns:100px 1fr 44px}.timer-big{font-size:36px}.timer-ring{width:230px;height:230px}.timer-big.timer-big-ring{font-size:44px}.topbar{align-items:flex-start}.userbox{width:100%;justify-content:flex-start}}
 </style>
 <script>
 function toggleBeneficiarySections(selectEl, scopeId){
@@ -582,46 +595,61 @@ async function pausePowerTimer(){ try{ const data = await postPowerTimer('/api/p
 async function resumePowerTimer(){ try{ const data = await postPowerTimer('/api/power-timer/resume', {}); showLiveFlash(data.message || 'تم الاستئناف.', 'success'); refreshPowerTimerStatus(); }catch(err){ showLiveFlash(err.message || 'تعذر الاستئناف', 'error'); } return false; }
 async function stopPowerTimer(){ if(!confirm('هل تريد إيقاف المؤقت نهائيًا لهذا اليوم؟')) return false; try{ const data = await postPowerTimer('/api/power-timer/stop', {}); showLiveFlash(data.message || 'تم الإيقاف النهائي.', 'success'); dismissPowerTimerAlert(); refreshPowerTimerStatus(); }catch(err){ showLiveFlash(err.message || 'تعذر الإيقاف النهائي', 'error'); } return false; }
 
-document.addEventListener('DOMContentLoaded', function(){ initBeneficiaryForms(); try{ applySidebarState(localStorage.getItem('sidebar-collapsed') === '1'); }catch(e){} updateLiveClock(); setInterval(updateLiveClock, 1000); requestPowerTimerNotificationPermission(); refreshPowerTimerStatus(); powerTimerPollHandle = setInterval(refreshPowerTimerStatus, 1000); });
+document.addEventListener('DOMContentLoaded', function(){
+  initBeneficiaryForms();
+  try{
+    const saved = localStorage.getItem('sidebar-collapsed');
+    applySidebarState(saved === null ? true : saved === '1');
+  }catch(e){
+    applySidebarState(true);
+  }
+  updateLiveClock();
+  setInterval(updateLiveClock, 1000);
+  requestPowerTimerNotificationPermission();
+  refreshPowerTimerStatus();
+  powerTimerPollHandle = setInterval(refreshPowerTimerStatus, 1000);
+});
 </script>
 </head>
 <body>
 {% if session.get('account_id') %}
 <div class="layout" id="app-layout">
   <aside class="sidebar">
-    <div class="brand"><div class="brand-badge">H</div><div>Hobe Hub<small>Professional+ Edition</small></div></div>
+    <div class="brand">
+      <div class="brand-badge">H</div>
+      <div class="brand-text">Hobe Hub<small>Professional+ Edition</small></div>
+    </div>
     <div class="nav">
-      <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>
-      <a href="{{ url_for('beneficiaries_page') }}"><i class="fa-solid fa-users"></i> المستفيدون</a>
-      <a href="{{ url_for('power_timer_page') }}"><i class="fa-solid fa-bolt"></i> مؤقت الكهرباء</a>
+      <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-gauge"></i><span class="nav-label">لوحة التحكم</span></a>
+      <a href="{{ url_for('beneficiaries_page') }}"><i class="fa-solid fa-users"></i><span class="nav-label">المستفيدون</span></a>
+      <a href="{{ url_for('power_timer_page') }}"><i class="fa-solid fa-bolt"></i><span class="nav-label">مؤقت الكهرباء</span></a>
       {% if has_permission('add') %}
       <details open>
-        <summary><i class="fa-solid fa-user-plus"></i> إضافة مستفيد</summary>
+        <summary><i class="fa-solid fa-user-plus"></i><span class="nav-label">إضافة مستفيد</span></summary>
         <div class="submenu">
-          <a href="{{ url_for('add_beneficiary_page') }}?user_type=tawjihi"><i class="fa-solid fa-user-graduate"></i> طالب توجيهي</a>
-          <a href="{{ url_for('add_beneficiary_page') }}?user_type=university"><i class="fa-solid fa-building-columns"></i> طالب جامعي</a>
-          <a href="{{ url_for('add_beneficiary_page') }}?user_type=freelancer"><i class="fa-solid fa-laptop-code"></i> فري لانسر</a>
+          <a href="{{ url_for('add_beneficiary_page') }}?user_type=tawjihi"><i class="fa-solid fa-user-graduate"></i><span class="nav-label">طالب توجيهي</span></a>
+          <a href="{{ url_for('add_beneficiary_page') }}?user_type=university"><i class="fa-solid fa-building-columns"></i><span class="nav-label">طالب جامعي</span></a>
+          <a href="{{ url_for('add_beneficiary_page') }}?user_type=freelancer"><i class="fa-solid fa-laptop-code"></i><span class="nav-label">فري لانسر</span></a>
         </div>
       </details>
       {% endif %}
       {% if has_permission('import') %}
-      <a href="{{ url_for('import_page') }}"><i class="fa-solid fa-file-arrow-up"></i> استيراد CSV</a>
+      <a href="{{ url_for('import_page') }}"><i class="fa-solid fa-file-arrow-up"></i><span class="nav-label">استيراد CSV</span></a>
       {% endif %}
       {% if has_permission('export') %}
-      <a href="{{ url_for('export_center') }}"><i class="fa-solid fa-file-arrow-down"></i> مركز التصدير</a>
+      <a href="{{ url_for('export_center') }}"><i class="fa-solid fa-file-arrow-down"></i><span class="nav-label">مركز التصدير</span></a>
       {% endif %}
       {% if has_permission('backup') %}
-      <a href="{{ url_for('backup_sql') }}"><i class="fa-solid fa-database"></i> Backup SQL</a>
+      <a href="{{ url_for('backup_sql') }}"><i class="fa-solid fa-database"></i><span class="nav-label">Backup SQL</span></a>
       {% endif %}
       <div class="section">الحساب</div>
-      <a href="{{ url_for('profile_page') }}"><i class="fa-solid fa-id-badge"></i> صفحتي الشخصية</a>
+      <a href="{{ url_for('profile_page') }}"><i class="fa-solid fa-id-badge"></i><span class="nav-label">صفحتي الشخصية</span></a>
       {% if has_permission('manage_accounts') %}
-      <a href="{{ url_for('accounts_page') }}"><i class="fa-solid fa-user-shield"></i> إدارة المستخدمين</a>
+      <a href="{{ url_for('accounts_page') }}"><i class="fa-solid fa-user-shield"></i><span class="nav-label">إدارة المستخدمين</span></a>
       {% endif %}
       {% if has_permission('view_audit_log') %}
-      <a href="{{ url_for('audit_log_page') }}"><i class="fa-solid fa-clock-rotate-left"></i> سجل العمليات</a>
+      <a href="{{ url_for('audit_log_page') }}"><i class="fa-solid fa-clock-rotate-left"></i><span class="nav-label">سجل العمليات</span></a>
       {% endif %}
-
     </div>
   </aside>
   <main class="main">
