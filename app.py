@@ -511,6 +511,23 @@ async function submitBeneficiaryEdit(form, rowId, modalId){
   return false;
 }
 
+async function submitUsageModal(form, rowId, modalId){
+  form.classList.add('ajax-saving');
+  try{
+    const data = await ajaxPost(form.action, new FormData(form));
+    replaceRowAndModal(data, rowId, modalId);
+    if(data.ok){
+      window.location.hash = '#!';
+      form.reset();
+    }
+  }catch(err){
+    showLiveFlash(err.message || 'تعذر إضافة البطاقة', 'error');
+  }finally{
+    form.classList.remove('ajax-saving');
+  }
+  return false;
+}
+
 function updateBulkSelectedCount(){
   const checks = Array.from(document.querySelectorAll('.row-select'));
   const count = checks.filter(cb => cb.checked).length;
@@ -2189,7 +2206,7 @@ def build_beneficiary_row_html(r, selected_type, args_dict, page=1, display_inde
         reason_options = "".join([f"<option value='{safe(x)}'>{safe(x)}</option>" for x in USAGE_REASON_OPTIONS])
         card_options = "".join([f"<option value='{safe(x)}'>{safe(x)}</option>" for x in CARD_TYPE_OPTIONS])
         usage_form = f"""
-        <form method="POST" action="{usage_url}">
+        <form method="POST" action="{usage_url}" onsubmit="return submitUsageModal(this, {r['id']}, '{usage_modal_id}')">
           <div class="row">
             <div>
               <label>سبب البطاقة</label>
@@ -2228,7 +2245,7 @@ def build_beneficiary_row_html(r, selected_type, args_dict, page=1, display_inde
           </div>
         </div>
         """)
-        actions.append(f"<a class='btn btn-accent btn-icon' href='#{usage_modal_id}' title='+1 بطاقة'><i class='fa-solid fa-plus'></i></a>")
+        actions.append(f"<a class='btn btn-accent btn-icon' href='#{usage_modal_id}' onclick=\"window.location.hash='#{usage_modal_id}'; return false;\" title='+1 بطاقة'><i class='fa-solid fa-plus'></i></a>")
 
     type_html = f"<span class='type-badge {get_type_css(r.get('user_type'))}'>{get_type_label(r.get('user_type'))}</span>"
     added_by = safe(r.get('added_by_username')) or '-'
