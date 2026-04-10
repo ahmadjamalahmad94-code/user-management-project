@@ -317,6 +317,8 @@ textarea{min-height:100px}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:999}
 .modal:target{display:flex}
 .modal-card{background:#fff;width:min(1100px,100%);max-height:90vh;overflow:auto;border-radius:20px;padding:20px;position:relative}
+.modal-card{animation:fadeInScale .22s ease}
+.choice-section{margin-bottom:16px}.choice-group{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}.choice-chip{padding:10px 16px;border-radius:14px;border:1px solid var(--line);background:#fff;cursor:pointer;transition:all .22s ease;font-weight:700;color:var(--text);box-shadow:0 4px 10px rgba(15,23,42,.04)}.choice-chip:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(15,23,42,.08);border-color:var(--secondary)}.choice-chip.active{background:linear-gradient(135deg,var(--secondary),var(--purple));color:#fff;border-color:transparent;transform:translateY(-1px) scale(1.02)}.choice-hint{margin-top:8px;font-size:12px;color:var(--muted)}.smart-highlight{background:linear-gradient(135deg,#ffffff,#f8fbff);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 8px 20px rgba(15,23,42,.05)}.smart-highlight h3{margin:0 0 8px 0;color:var(--primary)}.smart-list{display:flex;flex-direction:column;gap:10px}.smart-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.smart-item .meta{color:var(--muted);font-size:12px}.smart-item strong{color:var(--primary)}
 .modal-close{position:absolute;left:16px;top:16px;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f3f6fb;color:var(--text);font-size:20px}
 .modal.show-modal{display:flex}
 .global-usage-modal-card{width:min(560px,100%)}
@@ -373,6 +375,7 @@ textarea{min-height:100px}
 .timer-pulse:after{content:'';position:absolute;inset:-6px;border-radius:inherit;border:2px solid currentColor;opacity:0;animation:pulseRing 1.8s infinite}
 @keyframes pulseRing{0%{transform:scale(.92);opacity:.35}70%{transform:scale(1.08);opacity:0}100%{opacity:0}}
 @keyframes timerAlertIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInScale{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
 @media (max-width:900px){
   .layout{display:block;position:relative}
   .sidebar{
@@ -513,6 +516,19 @@ async function submitBeneficiaryEdit(form, rowId, modalId){
   return false;
 }
 
+function resetUsageChoiceGroup(groupId){
+  const group = document.getElementById(groupId);
+  if(!group) return;
+  group.querySelectorAll('.choice-chip').forEach(function(btn){ btn.classList.remove('active'); });
+}
+function selectUsageChoice(hiddenId, groupId, btn, value){
+  const hidden = document.getElementById(hiddenId);
+  if(hidden) hidden.value = value;
+  const group = document.getElementById(groupId);
+  if(group){ group.querySelectorAll('.choice-chip').forEach(function(item){ item.classList.remove('active'); }); }
+  if(btn) btn.classList.add('active');
+  return false;
+}
 function openGlobalUsageModal(rowId, submitUrl){
   const modal = document.getElementById('global-usage-modal');
   const form = document.getElementById('global-usage-form');
@@ -520,6 +536,14 @@ function openGlobalUsageModal(rowId, submitUrl){
   form.action = submitUrl;
   form.dataset.rowId = String(rowId);
   form.reset();
+  const reasonInput = document.getElementById('usage_reason');
+  const cardInput = document.getElementById('card_type');
+  if(reasonInput) reasonInput.value = '';
+  if(cardInput) cardInput.value = 'ساعة';
+  resetUsageChoiceGroup('usage-reason-group');
+  resetUsageChoiceGroup('card-type-group');
+  const defaultCard = document.querySelector('#card-type-group .choice-chip[data-value="ساعة"]');
+  if(defaultCard) defaultCard.classList.add('active');
   modal.classList.add('show-modal');
   return false;
 }
@@ -533,24 +557,33 @@ function closeGlobalUsageModal(){
     form.action = '';
     form.dataset.rowId = '';
   }
+  resetUsageChoiceGroup('usage-reason-group');
+  resetUsageChoiceGroup('card-type-group');
+  const reasonInput = document.getElementById('usage_reason');
+  const cardInput = document.getElementById('card_type');
+  if(reasonInput) reasonInput.value = '';
+  if(cardInput) cardInput.value = 'ساعة';
+  const defaultCard = document.querySelector('#card-type-group .choice-chip[data-value="ساعة"]');
+  if(defaultCard) defaultCard.classList.add('active');
   return false;
 }
-
-async function submitUsageModal(form){
-  form.classList.add('ajax-saving');
-  try{
-    const data = await ajaxPost(form.action, new FormData(form));
-    const rowId = parseInt(form.dataset.rowId || '0', 10);
-    replaceRowAndModal(data, rowId, '');
-    if(data.ok){
-      closeGlobalUsageModal();
-    }
-  }catch(err){
-    showLiveFlash(err.message || 'تعذر إضافة البطاقة', 'error');
-  }finally{
-    form.classList.remove('ajax-saving');
+function validateUsageForm(form){
+  const reasonInput = form.querySelector('input[name="usage_reason"]');
+  const cardInput = form.querySelector('input[name="card_type"]');
+  if(!reasonInput || !reasonInput.value){
+    showLiveFlash('يجب اختيار سبب الحصول على البطاقة.', 'error');
+    return false;
   }
-  return false;
+  if(!cardInput || !cardInput.value){
+    showLiveFlash('يجب اختيار نوع البطاقة.', 'error');
+    return false;
+  }
+  if(form.dataset.submitting === '1') return false;
+  form.dataset.submitting = '1';
+  form.classList.add('ajax-saving');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...'; }
+  return true;
 }
 
 function updateBulkSelectedCount(){
@@ -812,28 +845,28 @@ document.addEventListener('DOMContentLoaded', function(){
           <h1>إضافة بطاقة</h1>
           <p>اختر السبب ونوع البطاقة ثم احفظ.</p>
         </div>
-        <form id="global-usage-form" method="POST" onsubmit="return submitUsageModal(this)">
-          <div class="row">
-            <div>
-              <label>سبب البطاقة</label>
-              <select name="usage_reason" required>
-                <option value="">اختر السبب</option>
-                <option value="تنفيذ تجربة">تنفيذ تجربة</option>
-                <option value="تقديم اختبار">تقديم اختبار</option>
-                <option value="حل واجب">حل واجب</option>
-                <option value="دراسة">دراسة</option>
-                <option value="عمل حر">عمل حر</option>
-                <option value="تحميل محاضرات">تحميل محاضرات</option>
-                <option value="أخرى">أخرى</option>
-              </select>
+        <form id="global-usage-form" method="POST" onsubmit="return validateUsageForm(this)">
+          <div class="choice-section">
+            <label>سبب البطاقة</label>
+            <input type="hidden" name="usage_reason" id="usage_reason" value="">
+            <div class="choice-group" id="usage-reason-group">
+              <button class="choice-chip" data-value="تنفيذ تجربة" type="button" onclick="return selectUsageChoice('usage_reason','usage-reason-group',this,'تنفيذ تجربة')">🧪 تنفيذ تجربة</button>
+              <button class="choice-chip" data-value="تقديم اختبار" type="button" onclick="return selectUsageChoice('usage_reason','usage-reason-group',this,'تقديم اختبار')">📝 تقديم اختبار</button>
+              <button class="choice-chip" data-value="حل واجب" type="button" onclick="return selectUsageChoice('usage_reason','usage-reason-group',this,'حل واجب')">📚 حل واجب</button>
+              <button class="choice-chip" data-value="دراسة" type="button" onclick="return selectUsageChoice('usage_reason','usage-reason-group',this,'دراسة')">📖 دراسة</button>
+              <button class="choice-chip" data-value="عمل حر" type="button" onclick="return selectUsageChoice('usage_reason','usage-reason-group',this,'عمل حر')">💻 عمل حر</button>
+              <button class="choice-chip" data-value="تحميل محاضرات" type="button" onclick="return selectUsageChoice('usage_reason','usage-reason-group',this,'تحميل محاضرات')">⬇️ تحميل محاضرات</button>
+              <button class="choice-chip" data-value="أخرى" type="button" onclick="return selectUsageChoice('usage_reason','usage-reason-group',this,'أخرى')">⚙️ أخرى</button>
             </div>
-            <div>
-              <label>نوع البطاقة</label>
-              <select name="card_type" required>
-                <option value="ساعة">ساعة</option>
-                <option value="ساعتين">ساعتين</option>
-                <option value="3 ساعات">3 ساعات</option>
-              </select>
+            <div class="choice-hint">اختر السبب بنقرة واحدة لتسريع التسجيل.</div>
+          </div>
+          <div class="choice-section">
+            <label>نوع البطاقة</label>
+            <input type="hidden" name="card_type" id="card_type" value="ساعة">
+            <div class="choice-group" id="card-type-group">
+              <button class="choice-chip active" data-value="ساعة" type="button" onclick="return selectUsageChoice('card_type','card-type-group',this,'ساعة')">⏱️ ساعة</button>
+              <button class="choice-chip" data-value="ساعتين" type="button" onclick="return selectUsageChoice('card_type','card-type-group',this,'ساعتين')">⏳ ساعتين</button>
+              <button class="choice-chip" data-value="3 ساعات" type="button" onclick="return selectUsageChoice('card_type','card-type-group',this,'3 ساعات')">🔥 3 ساعات</button>
             </div>
           </div>
           <div style="margin-top:12px">
@@ -1905,6 +1938,9 @@ def dashboard():
                OR (user_type='university' AND university_internet_method='نظام البطاقات')
         """)["c"],
         "week_usage_total": query_one("SELECT COALESCE(SUM(weekly_usage_count),0) AS c FROM beneficiaries")["c"],
+        "today_usage_total": query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date = CURRENT_DATE")["c"],
+        "month_usage_total": query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date >= %s", [get_month_start()])["c"],
+        "active_this_week": query_one("SELECT COUNT(*) AS c FROM beneficiaries WHERE COALESCE(weekly_usage_count,0) > 0")["c"],
     }
 
     type_distribution = query_all("""
@@ -1938,6 +1974,39 @@ def dashboard():
         LIMIT 6
     """)
 
+    top_reasons = query_all("""
+        SELECT COALESCE(usage_reason, 'غير محدد') AS label, COUNT(*) AS value
+        FROM beneficiary_usage_logs
+        WHERE usage_date >= %s
+        GROUP BY COALESCE(usage_reason, 'غير محدد')
+        ORDER BY value DESC, label
+        LIMIT 6
+    """, [get_month_start()])
+
+    today_by_card = query_all("""
+        SELECT card_type AS label, COUNT(*) AS value
+        FROM beneficiary_usage_logs
+        WHERE usage_date = CURRENT_DATE
+        GROUP BY card_type
+        ORDER BY value DESC, label
+    """)
+
+    most_active_beneficiaries = query_all("""
+        SELECT b.full_name, b.user_type, b.weekly_usage_count
+        FROM beneficiaries b
+        WHERE COALESCE(b.weekly_usage_count, 0) > 0
+        ORDER BY b.weekly_usage_count DESC, b.full_name ASC
+        LIMIT 5
+    """)
+
+    recent_usage = query_all("""
+        SELECT b.full_name, b.user_type, l.usage_reason, l.card_type, l.usage_time
+        FROM beneficiary_usage_logs l
+        JOIN beneficiaries b ON b.id = l.beneficiary_id
+        ORDER BY l.usage_time DESC, l.id DESC
+        LIMIT 6
+    """)
+
     recent_logs = query_all("""
         SELECT username_snapshot, action_type, target_type, details, created_at
         FROM audit_logs
@@ -1962,29 +2031,44 @@ def dashboard():
             f"<a class='menu-card' href='{url_for('add_beneficiary_page')}?user_type=university'><div class='menu-icon'><i class='fa-solid fa-building-columns'></i></div><h3>إضافة طالب جامعي</h3><p>جامعة، كلية، تخصص وأيام الحضور.</p></a>",
         ])
     quick_cards.append(f"<a class='menu-card' href='{url_for('beneficiaries_page')}'><div class='menu-icon'><i class='fa-solid fa-users-viewfinder'></i></div><h3>المستفيدون</h3><p>فلترة متقدمة، تبويبات، ترتيب، وتعديل منبثق.</p></a>")
+    quick_cards.append(f"<a class='menu-card' href='{url_for('usage_logs_page')}'><div class='menu-icon'><i class='fa-solid fa-ticket'></i></div><h3>سجل البطاقات</h3><p>استعراض السجل التفصيلي مع الفلاتر الذكية والإحصائيات.</p></a>")
     if has_permission("manage_accounts"):
         quick_cards.append(f"<a class='menu-card' href='{url_for('accounts_page')}'><div class='menu-icon'><i class='fa-solid fa-user-shield'></i></div><h3>إدارة المستخدمين</h3><p>الحسابات والصلاحيات وحالة كل مستخدم.</p></a>")
 
+    active_people_html = "<div class='empty-state'>لا توجد استفادات هذا الأسبوع حتى الآن.</div>"
+    if most_active_beneficiaries:
+        active_people_html = "<div class='smart-list'>"
+        for person in most_active_beneficiaries:
+            active_people_html += f"<div class='smart-item'><div><strong>{safe(person['full_name'])}</strong><div class='meta'>{get_type_label(person['user_type'])}</div></div><div class='badge'>{safe(person['weekly_usage_count'])} بطاقات</div></div>"
+        active_people_html += "</div>"
+
+    recent_usage_html = "<div class='empty-state'>لا توجد بطاقات مسجلة حتى الآن.</div>"
+    if recent_usage:
+        recent_usage_html = "<div class='smart-list'>"
+        for item in recent_usage:
+            recent_usage_html += f"<div class='smart-item'><div><strong>{safe(item['full_name'])}</strong><div class='meta'>{get_type_label(item['user_type'])} • {safe(item['usage_reason'])} • {safe(item['card_type'])}</div></div><div class='badge'>{format_dt_compact(item['usage_time'])}</div></div>"
+        recent_usage_html += "</div>"
+
     content = f"""
     <div class="hero">
-      <h1>لوحة التحكم الاحترافية</h1>
-      <p>إحصائيات مباشرة ورسوم مرئية ووصول سريع لكل أجزاء النظام.</p>
+      <h1>لوحة التحكم الذكية</h1>
+      <p>قراءة لحظية للنظام: حركة البطاقات، أكثر المستفيدين نشاطًا، وأهم المؤشرات التي تحتاجها بسرعة.</p>
     </div>
 
     <div class="grid">
       <div class="stat"><h3>إجمالي المستفيدين</h3><div class="num">{stats['all_count']}</div></div>
-      <div class="stat"><h3>طلاب التوجيهي</h3><div class="num">{stats['tawjihi_count']}</div></div>
-      <div class="stat"><h3>الطلاب الجامعيون</h3><div class="num">{stats['university_count']}</div></div>
-      <div class="stat"><h3>الفري لانسر</h3><div class="num">{stats['freelancer_count']}</div></div>
-      <div class="stat"><h3>حسابات النظام</h3><div class="num">{stats['accounts_count']}</div></div>
-      <div class="stat"><h3>الحسابات الفعالة</h3><div class="num">{stats['active_accounts']}</div></div>
+      <div class="stat"><h3>بطاقات اليوم</h3><div class="num">{stats['today_usage_total']}</div></div>
+      <div class="stat"><h3>بطاقات هذا الأسبوع</h3><div class="num">{stats['week_usage_total']}</div></div>
+      <div class="stat"><h3>بطاقات هذا الشهر</h3><div class="num">{stats['month_usage_total']}</div></div>
+      <div class="stat"><h3>مستفيدون نشطون هذا الأسبوع</h3><div class="num">{stats['active_this_week']}</div></div>
+      <div class="stat"><h3>الخاضعون لنظام البطاقات</h3><div class="num">{stats['card_based_count']}</div></div>
     </div>
 
     <div class="kpi-strip">
-      <div class="kpi"><div class="label">إجمالي الاستفادات هذا الأسبوع</div><div class="value">{stats['week_usage_total']}</div></div>
-      <div class="kpi"><div class="label">الخاضعون لنظام البطاقات / الحد الأسبوعي</div><div class="value">{stats['card_based_count']}</div></div>
-      <div class="kpi"><div class="label">نسبة الجامعات من الإجمالي</div><div class="value">{round((stats['university_count'] / stats['all_count']) * 100) if stats['all_count'] else 0}%</div></div>
-      <div class="kpi"><div class="label">نسبة التوجيهي من الإجمالي</div><div class="value">{round((stats['tawjihi_count'] / stats['all_count']) * 100) if stats['all_count'] else 0}%</div></div>
+      <div class="kpi"><div class="label">طلاب التوجيهي</div><div class="value">{stats['tawjihi_count']}</div></div>
+      <div class="kpi"><div class="label">الطلاب الجامعيون</div><div class="value">{stats['university_count']}</div></div>
+      <div class="kpi"><div class="label">الفري لانسر</div><div class="value">{stats['freelancer_count']}</div></div>
+      <div class="kpi"><div class="label">الحسابات الفعالة</div><div class="value">{stats['active_accounts']}/{stats['accounts_count']}</div></div>
     </div>
 
     <div class="grid-3" style="margin-top:16px">
@@ -1999,6 +2083,36 @@ def dashboard():
       <div class="chart-card">
         <h3>أكثر الجامعات حضورًا</h3>
         {build_chart_rows(universities_top)}
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:16px">
+      <div class="chart-card">
+        <h3>أكثر أسباب البطاقات هذا الشهر</h3>
+        {build_chart_rows(top_reasons, empty_text='لا توجد أسباب مسجلة هذا الشهر.')}
+      </div>
+      <div class="chart-card">
+        <h3>أنواع بطاقات اليوم</h3>
+        {build_chart_rows(today_by_card, empty_text='لا توجد بطاقات اليوم حتى الآن.')}
+      </div>
+      <div class="smart-highlight">
+        <h3>تنبيه سريع</h3>
+        <p style="margin:0 0 12px 0;color:var(--muted)">لوحة اليوم تعطيك نظرة فورية على الضغط الحالي داخل القاعة وحجم استخدام البطاقات.</p>
+        <div class="metric-grid">
+          <div class="metric-box"><h4>معدل البطاقة اليومي</h4><div class="num">{stats['today_usage_total']}</div></div>
+          <div class="metric-box"><h4>معدل المستفيد النشط</h4><div class="num">{round(stats['week_usage_total'] / stats['active_this_week'], 1) if stats['active_this_week'] else 0}</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:16px">
+      <div class="smart-highlight">
+        <h3>أكثر المستفيدين نشاطًا هذا الأسبوع</h3>
+        {active_people_html}
+      </div>
+      <div class="smart-highlight">
+        <h3>آخر البطاقات المسجلة</h3>
+        {recent_usage_html}
       </div>
     </div>
 
@@ -2749,7 +2863,7 @@ def add_usage(beneficiary_id):
     category = "success"
 
     usage_reason = clean_csv_value(request.form.get("usage_reason"))
-    card_type = clean_csv_value(request.form.get("card_type"))
+    card_type = clean_csv_value(request.form.get("card_type")) or "ساعة"
     usage_notes = clean_csv_value(request.form.get("usage_notes"))
 
     if not limited:
@@ -2783,13 +2897,6 @@ def add_usage(beneficiary_id):
         category = "success"
 
     flash(message, category)
-
-    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        updated_row = query_one("SELECT * FROM beneficiaries WHERE id=%s", [beneficiary_id])
-        args_dict = build_request_args_dict()
-        row_html, modal_html = build_beneficiary_row_html(updated_row, args_dict.get("user_type", ""), args_dict, page=max(1, int(request.args.get("page", "1") or "1")))
-        return jsonify({"ok": category == "success", "row_html": row_html, "modal_html": "", "message": message, "category": category})
-
     return redirect(request.referrer or url_for("beneficiaries_page"))
 
 
