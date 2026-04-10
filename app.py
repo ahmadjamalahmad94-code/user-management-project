@@ -3931,7 +3931,7 @@ def build_beneficiary_row_html(r, selected_type, args_dict, page=1, display_inde
         actions.append(f"<form class='inline-form' method='POST' action='{delete_url}' onsubmit=\"return confirm('هل أنت متأكد من الحذف؟')\"><button class='btn btn-danger btn-icon' type='submit' title='حذف'><i class='fa-solid fa-trash'></i></button></form>")
     if has_permission("usage_counter") and limited and count < 3:
         usage_url = f"{url_for('add_usage', beneficiary_id=r['id'])}?{current_qs}"
-        actions.append(f"<button class='btn btn-accent btn-icon' type='button' onclick=\"return incrementUsageAjax('{usage_url}', {r['id']}, '{modal_id}')\" title='+1 بطاقة'><i class='fa-solid fa-plus'></i></button>")
+        actions.append(f"<button class='btn btn-accent btn-icon' type='button' onclick=\"return openGlobalUsageModal({r['id']}, '{usage_url}')\" title='+1 بطاقة'><i class='fa-solid fa-plus'></i></button>")
     type_html = f"<span class='type-badge {get_type_css(r.get('user_type'))}'>{get_type_label(r.get('user_type'))}</span>"
     added_by = safe(r.get('added_by_username')) or '-'
     created_at = format_dt_short(r.get('created_at'))
