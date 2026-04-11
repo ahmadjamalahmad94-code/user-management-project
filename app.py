@@ -1506,26 +1506,39 @@ def execute_sql(sql, params=None, fetchone=False):
 def safe(v):
     return "" if v is None else str(v)
 
+def as_local_dt(value):
+    if not value:
+        return None
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value)
+        except Exception:
+            return None
+    try:
+        if getattr(value, "tzinfo", None) is None:
+            value = value.replace(tzinfo=ZoneInfo("UTC"))
+        return value.astimezone(APP_TZ)
+    except Exception:
+        return None
+
 
 def format_dt_short(value):
     if not value:
         return ""
-    try:
-        return value.strftime('%Y-%m-%d %H:%M')
-    except AttributeError:
-        text = str(value)
-        return text[:16] if len(text) >= 16 else text
-
+    localized = as_local_dt(value)
+    if localized is not None:
+        return localized.strftime('%Y-%m-%d %H:%M')
+    text = str(value).replace('T', ' ')
+    return text[:16] if len(text) >= 16 else text
 
 def format_dt_compact(value):
     if not value:
         return ""
-    try:
-        return value.strftime('%Y-%m-%d %H:%M')
-    except AttributeError:
-        text = str(value).replace('T', ' ')
-        return text[:16] if len(text) >= 16 else text
-
+    localized = as_local_dt(value)
+    if localized is not None:
+        return localized.strftime('%Y-%m-%d %H:%M')
+    text = str(value).replace('T', ' ')
+    return text[:16] if len(text) >= 16 else text
 
 def action_type_label(action_type=None):
     return {
@@ -2110,7 +2123,7 @@ def build_power_timer_status(row=None):
     state = (row.get('state') or 'stopped')
     paused_remaining = row.get('paused_remaining_seconds')
     start_at = row.get('cycle_started_at')
-    now = now_local()
+    now = datetime.utcnow()
     payload = {
         'ok': True,
         'state': state,
@@ -2131,8 +2144,12 @@ def build_power_timer_status(row=None):
     if isinstance(start_at, str):
         try:
             start_at = datetime.fromisoformat(start_at)
+            if getattr(start_at, 'tzinfo', None) is not None:
+                start_at = start_at.astimezone(ZoneInfo('UTC')).replace(tzinfo=None)
         except Exception:
             return payload
+    if getattr(start_at, 'tzinfo', None) is not None:
+        start_at = start_at.astimezone(ZoneInfo('UTC')).replace(tzinfo=None)
     elapsed = max(0, int((now - start_at).total_seconds()))
     cycle_total = duration_seconds + restart_delay
     pos = elapsed % cycle_total
@@ -2156,7 +2173,7 @@ def dashboard_live_api():
     payload = {
         "ok": True,
         "all_count": query_one("SELECT COUNT(*) AS c FROM beneficiaries")["c"],
-        "today_usage": query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date = CURRENT_DATE")["c"],
+        "today_usage": query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date = %s", [today_local()])["c"],
         "month_usage": query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date >= %s", [month_start])["c"],
         "archive_total": query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs_archive")["c"],
         "active_week": query_one("SELECT COUNT(DISTINCT beneficiary_id) AS c FROM beneficiary_usage_logs WHERE usage_date >= %s", [week_start])["c"],
@@ -2256,7 +2273,7 @@ def dashboard():
       <div class="stat"><h3>طلاب التوجيهي</h3><div class="num">{stats['tawjihi_count']}</div></div>
       <div class="stat"><h3>الطلاب الجامعيون</h3><div class="num">{stats['university_count']}</div></div>
       <div class="stat"><h3>الفري لانسر</h3><div class="num">{stats['freelancer_count']}</div></div>
-      <div class="stat"><h3>بطاقات اليوم</h3><div class="num" data-live-key="today_usage">{query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date = CURRENT_DATE")["c"]}</div></div>
+      <div class="stat"><h3>بطاقات اليوم</h3><div class="num" data-live-key="today_usage">{query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date = %s", [today_local()])["c"]}</div></div>
       <div class="stat"><h3>أرشيف السجل</h3><div class="num" data-live-key="archive_total">{query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs_archive")["c"]}</div></div>
     </div>
 
