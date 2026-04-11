@@ -329,16 +329,17 @@ textarea{min-height:100px}
 .permission-chip-wrap{display:flex;flex-wrap:wrap;gap:8px}
 .permission-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;background:#f8fbff;border:1px solid var(--line);font-size:12px;color:var(--primary);font-weight:700}
 .choice-section{margin-bottom:16px}
-.choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
-.choice-card{position:relative;min-height:108px;padding:12px 10px;border-radius:18px;text-align:center;cursor:pointer;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease,background .22s ease;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fbff);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.choice-card:before{content:'';position:absolute;inset:auto -20px -20px auto;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.28);transform:scale(0);transition:transform .25s ease}
-.choice-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 14px 24px rgba(15,23,42,.10)}
+.choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.choice-card{position:relative;min-height:82px;height:82px;padding:8px 7px;border-radius:16px;text-align:center;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fbff);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.choice-card:before{content:'';position:absolute;inset:auto -20px -20px auto;width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.24);transform:scale(0);transition:transform .22s ease}
+.choice-card:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 10px 18px rgba(15,23,42,.08)}
 .choice-card:hover:before{transform:scale(1)}
-.choice-card i{display:block;font-size:20px;margin-bottom:6px;animation:choiceFloat 3s ease-in-out infinite}
-.choice-card span{font-size:12px;font-weight:800}
-.choice-card small{display:block;font-size:10px;opacity:.82;margin-top:3px}
-.choice-card.active{color:#fff;border-color:transparent;transform:translateY(-2px) scale(1.03);box-shadow:0 18px 32px rgba(15,23,42,.16)}
+.choice-card i{display:block;font-size:18px;margin-bottom:4px;animation:choiceFloat 3s ease-in-out infinite}
+.choice-card span{font-size:11px;font-weight:800;line-height:1.2}
+.choice-card small{display:block;font-size:9px;opacity:.82;margin-top:2px;line-height:1.15}
+.choice-card.active{color:#fff;border-color:transparent;transform:translateY(-1px) scale(1.02);box-shadow:0 14px 24px rgba(15,23,42,.14);animation:choicePulse .42s ease}
 .choice-card.active i{animation:choiceBounce .45s ease}
+.choice-card .choice-ripple{position:absolute;border-radius:50%;transform:scale(0);background:rgba(255,255,255,.40);animation:choiceRipple .55s ease-out;pointer-events:none}
 .choice-blue{color:#1d4ed8;background:linear-gradient(180deg,#eff6ff,#dbeafe)}
 .choice-green{color:#15803d;background:linear-gradient(180deg,#f0fdf4,#dcfce7)}
 .choice-orange{color:#c2410c;background:linear-gradient(180deg,#fff7ed,#ffedd5)}
@@ -380,6 +381,8 @@ textarea{min-height:100px}
 @keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes choiceFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @keyframes choiceBounce{0%{transform:scale(.8)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes choicePulse{0%{transform:scale(.96)}50%{transform:scale(1.045)}100%{transform:scale(1.02)}}
+@keyframes choiceRipple{to{transform:scale(4);opacity:0}}
 @keyframes fadeInScale{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 .usage-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px}
 .usage-log-meta{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
@@ -495,6 +498,11 @@ textarea{min-height:100px}
   .timer-big{font-size:36px}
   .timer-ring{width:230px;height:230px}
   .timer-big.timer-big-ring{font-size:44px}
+  .choice-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .choice-card{min-height:74px;height:74px;padding:7px 6px;border-radius:14px}
+  .choice-card i{font-size:16px;margin-bottom:3px}
+  .choice-card span{font-size:10px}
+  .choice-card small{font-size:8px}
   .topbar{align-items:flex-start}
   .topbar-left{width:100%;justify-content:space-between}
   .userbox{width:100%;justify-content:flex-start}
@@ -567,6 +575,10 @@ function showLiveFlash(message, category){
 }
 function guardSingleSubmit(form){
   if(form.dataset.submitting === '1') return false;
+  if(form && form.id === 'global-usage-form'){
+    var reason = form.querySelector('#usage_reason');
+    if(reason && reason.value){ bumpChoiceUsage(reason.value); }
+  }
   form.dataset.submitting = '1';
   form.classList.add('ajax-saving');
   var btn = form.querySelector('button[type="submit"]');
@@ -616,23 +628,57 @@ async function submitBeneficiaryEdit(form, rowId, modalId){
   return false;
 }
 
+function getChoiceUsageMap(){
+  try{ return JSON.parse(localStorage.getItem('usage_reason_counts') || '{}'); }catch(e){ return {}; }
+}
+function saveChoiceUsageMap(map){
+  try{ localStorage.setItem('usage_reason_counts', JSON.stringify(map || {})); }catch(e){}
+}
+function bumpChoiceUsage(value){
+  if(!value) return;
+  const map = getChoiceUsageMap();
+  map[value] = (parseInt(map[value] || '0', 10) || 0) + 1;
+  saveChoiceUsageMap(map);
+}
+function addChoiceRipple(card, evt){
+  if(!card) return;
+  const ripple = document.createElement('span');
+  ripple.className = 'choice-ripple';
+  const rect = card.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const x = ((evt && evt.clientX) ? evt.clientX : rect.left + rect.width / 2) - rect.left - size / 2;
+  const y = ((evt && evt.clientY) ? evt.clientY : rect.top + rect.height / 2) - rect.top - size / 2;
+  ripple.style.width = size + 'px';
+  ripple.style.height = size + 'px';
+  ripple.style.left = x + 'px';
+  ripple.style.top = y + 'px';
+  card.appendChild(ripple);
+  setTimeout(()=>ripple.remove(), 600);
+}
 function sortChoiceCards(containerId){
   const wrap = document.getElementById(containerId);
   if(!wrap) return;
+  const counts = getChoiceUsageMap();
   const cards = Array.from(wrap.querySelectorAll('.choice-card'));
-  cards.sort((a,b)=>parseInt(b.dataset.rank||'0',10)-parseInt(a.dataset.rank||'0',10));
+  cards.sort((a,b)=>{
+    const ca = parseInt(counts[a.dataset.value || ''] || '0', 10) || 0;
+    const cb = parseInt(counts[b.dataset.value || ''] || '0', 10) || 0;
+    if(cb !== ca) return cb - ca;
+    return parseInt(b.dataset.rank||'0',10)-parseInt(a.dataset.rank||'0',10);
+  });
   cards.forEach(card=>wrap.appendChild(card));
 }
-function selectChoice(containerId, hiddenId, card){
+function selectChoice(containerId, hiddenId, card, evt){
   const wrap = document.getElementById(containerId);
   const hidden = document.getElementById(hiddenId);
   if(!wrap || !hidden || !card) return;
   wrap.querySelectorAll('.choice-card').forEach(c=>c.classList.remove('active'));
+  addChoiceRipple(card, evt);
   card.classList.add('active');
   hidden.value = card.dataset.value || '';
 }
-function selectReason(card){ selectChoice('usage-reason-grid', 'usage_reason', card); }
-function selectCardType(card){ selectChoice('card-type-grid', 'card_type', card); }
+function selectReason(card, evt){ selectChoice('usage-reason-grid', 'usage_reason', card, evt); }
+function selectCardType(card, evt){ selectChoice('card-type-grid', 'card_type', card, evt); }
 function openGlobalUsageModal(rowId, submitUrl){
   const modal = document.getElementById('global-usage-modal');
   const form = document.getElementById('global-usage-form');
@@ -975,22 +1021,22 @@ document.addEventListener('DOMContentLoaded', function(){
             <label>سبب البطاقة</label>
             <input type="hidden" name="usage_reason" id="usage_reason" required>
             <div id="usage-reason-grid" class="choice-grid">
-              <div class="choice-card choice-blue" data-rank="6" data-value="تقديم اختبار" onclick="selectReason(this)"><i class="fa-solid fa-pen-to-square"></i><span>اختبار</span><small>سريع ومباشر</small></div>
-              <div class="choice-card choice-green" data-rank="5" data-value="دراسة" onclick="selectReason(this)"><i class="fa-solid fa-book-open-reader"></i><span>دراسة</span><small>جلسة تعلم</small></div>
-              <div class="choice-card choice-orange" data-rank="4" data-value="حل واجب" onclick="selectReason(this)"><i class="fa-solid fa-list-check"></i><span>واجب</span><small>إنجاز مهمة</small></div>
-              <div class="choice-card choice-purple" data-rank="3" data-value="عمل حر" onclick="selectReason(this)"><i class="fa-solid fa-laptop-code"></i><span>عمل حر</span><small>شغل مستقل</small></div>
-              <div class="choice-card choice-cyan" data-rank="2" data-value="تحميل محاضرات" onclick="selectReason(this)"><i class="fa-solid fa-cloud-arrow-down"></i><span>تحميل</span><small>محاضرات وملفات</small></div>
-              <div class="choice-card choice-red" data-rank="1" data-value="تنفيذ تجربة" onclick="selectReason(this)"><i class="fa-solid fa-flask-vial"></i><span>تجربة</span><small>اختبار عملي</small></div>
-              <div class="choice-card choice-slate" data-rank="0" data-value="أخرى" onclick="selectReason(this)"><i class="fa-solid fa-shapes"></i><span>أخرى</span><small>سبب مخصص</small></div>
+              <div class="choice-card choice-blue" data-rank="6" data-value="تقديم اختبار" onclick="selectReason(this, event)"><i class="fa-solid fa-pen-to-square"></i><span>اختبار</span><small>سريع ومباشر</small></div>
+              <div class="choice-card choice-green" data-rank="5" data-value="دراسة" onclick="selectReason(this, event)"><i class="fa-solid fa-book-open-reader"></i><span>دراسة</span><small>جلسة تعلم</small></div>
+              <div class="choice-card choice-orange" data-rank="4" data-value="حل واجب" onclick="selectReason(this, event)"><i class="fa-solid fa-list-check"></i><span>واجب</span><small>إنجاز مهمة</small></div>
+              <div class="choice-card choice-purple" data-rank="3" data-value="عمل حر" onclick="selectReason(this, event)"><i class="fa-solid fa-laptop-code"></i><span>عمل حر</span><small>شغل مستقل</small></div>
+              <div class="choice-card choice-cyan" data-rank="2" data-value="تحميل محاضرات" onclick="selectReason(this, event)"><i class="fa-solid fa-cloud-arrow-down"></i><span>تحميل</span><small>محاضرات وملفات</small></div>
+              <div class="choice-card choice-red" data-rank="1" data-value="تنفيذ تجربة" onclick="selectReason(this, event)"><i class="fa-solid fa-flask-vial"></i><span>تجربة</span><small>اختبار عملي</small></div>
+              <div class="choice-card choice-slate" data-rank="0" data-value="أخرى" onclick="selectReason(this, event)"><i class="fa-solid fa-shapes"></i><span>أخرى</span><small>سبب مخصص</small></div>
             </div>
           </div>
           <div class="choice-section">
             <label>نوع البطاقة</label>
             <input type="hidden" name="card_type" id="card_type" value="ساعة" required>
             <div id="card-type-grid" class="choice-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-              <div class="choice-card choice-blue" data-value="ساعة" onclick="selectCardType(this)"><i class="fa-regular fa-clock"></i><span>ساعة</span><small>استخدام سريع</small></div>
-              <div class="choice-card choice-purple" data-value="ساعتين" onclick="selectCardType(this)"><i class="fa-solid fa-hourglass-half"></i><span>ساعتين</span><small>جلسة مركزة</small></div>
-              <div class="choice-card choice-orange" data-value="3 ساعات" onclick="selectCardType(this)"><i class="fa-solid fa-bolt"></i><span>3 ساعات</span><small>جلسة طويلة</small></div>
+              <div class="choice-card choice-blue" data-rank="3" data-value="ساعة" onclick="selectCardType(this, event)"><i class="fa-regular fa-clock"></i><span>ساعة</span><small>استخدام سريع</small></div>
+              <div class="choice-card choice-purple" data-rank="2" data-value="ساعتين" onclick="selectCardType(this, event)"><i class="fa-solid fa-hourglass-half"></i><span>ساعتين</span><small>جلسة مركزة</small></div>
+              <div class="choice-card choice-orange" data-rank="1" data-value="3 ساعات" onclick="selectCardType(this, event)"><i class="fa-solid fa-bolt"></i><span>3 ساعات</span><small>جلسة طويلة</small></div>
             </div>
           </div>
           <div style="margin-top:12px">
