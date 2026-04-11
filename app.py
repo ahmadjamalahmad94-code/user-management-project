@@ -517,6 +517,54 @@ textarea{min-height:100px}
   .topbar-left{width:100%;justify-content:space-between}
   .userbox{width:100%;justify-content:flex-start}
 }
+
+/* ===== Ultra Compact Usage Modal ===== */
+#global-usage-modal{align-items:center;justify-content:center;padding:10px}
+#global-usage-modal .modal-card{width:min(1040px,96vw);max-height:92vh;padding:12px 14px;border-radius:24px;overflow:hidden}
+#global-usage-modal .global-usage-modal-card{width:min(1040px,96vw)}
+#global-usage-modal .hero{padding:16px 22px;border-radius:22px;margin-bottom:10px !important;min-height:auto}
+#global-usage-modal .hero h1{margin:0 0 4px 0;font-size:28px;line-height:1.1}
+#global-usage-modal .hero p{margin:0;font-size:13px;line-height:1.4}
+#global-usage-modal .modal-close{width:44px;height:44px;font-size:24px;left:14px;top:14px}
+#global-usage-modal form{display:grid;grid-template-columns:1fr;gap:8px}
+#global-usage-modal label{margin-bottom:4px;display:block;font-size:13px;font-weight:800;color:var(--primary)}
+#global-usage-modal .choice-section{margin-bottom:2px}
+#global-usage-modal .choice-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:4px}
+#global-usage-modal .choice-card{position:relative;overflow:hidden;min-height:68px;height:68px;max-height:68px;padding:5px 4px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:none}
+#global-usage-modal .choice-card i{font-size:15px;margin-bottom:2px;line-height:1;animation:none}
+#global-usage-modal .choice-card span{font-size:10px;line-height:1.1;font-weight:800;margin:0}
+#global-usage-modal .choice-card small{font-size:7px;line-height:1.05;opacity:.8;margin-top:1px}
+#global-usage-modal .choice-card:hover{transform:translateY(-1px)}
+#global-usage-modal .choice-card.active{transform:scale(1.02)}
+#global-usage-modal textarea{min-height:36px;height:36px;max-height:36px;resize:none;padding:8px 10px;font-size:12px;border-radius:12px}
+#global-usage-modal .actions{margin-top:2px !important;justify-content:flex-start;gap:8px}
+#global-usage-modal .actions .btn{padding:10px 14px;min-height:40px;border-radius:12px}
+#global-usage-modal #card-type-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:8px !important}
+@media (max-width: 900px){
+  #global-usage-modal .modal-card{width:min(760px,96vw);max-height:94vh;padding:10px 12px}
+  #global-usage-modal .hero{padding:14px 18px}
+  #global-usage-modal .hero h1{font-size:24px}
+  #global-usage-modal .choice-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+  #global-usage-modal .choice-card{height:64px;min-height:64px;max-height:64px;border-radius:15px}
+  #global-usage-modal .choice-card i{font-size:14px}
+  #global-usage-modal .choice-card span{font-size:9px}
+  #global-usage-modal .choice-card small{font-size:7px}
+}
+@media (max-width: 640px){
+  #global-usage-modal .modal-card{width:96vw;max-height:95vh;padding:10px}
+  #global-usage-modal .hero{padding:12px 16px;border-radius:20px}
+  #global-usage-modal .hero h1{font-size:21px}
+  #global-usage-modal .hero p{font-size:12px}
+  #global-usage-modal .choice-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  #global-usage-modal .choice-card{height:60px;min-height:60px;max-height:60px;padding:4px 3px;border-radius:14px}
+  #global-usage-modal .choice-card i{font-size:13px;margin-bottom:2px}
+  #global-usage-modal .choice-card span{font-size:8.5px}
+  #global-usage-modal .choice-card small{font-size:6.5px}
+  #global-usage-modal #card-type-grid{gap:6px !important}
+  #global-usage-modal textarea{height:34px;min-height:34px;max-height:34px;font-size:11px}
+  #global-usage-modal .actions .btn{width:100%;justify-content:center}
+}
+
 </style>
 <script>
 function toggleBeneficiarySections(selectEl, scopeId){
@@ -984,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div id="global-usage-modal" class="modal" onclick="if(event.target===this) closeGlobalUsageModal()">
       <div class="modal-card global-usage-modal-card">
         <button class="modal-close" type="button" onclick="return closeGlobalUsageModal()">×</button>
-        <div class="hero" style="margin-bottom:14px">
+        <div class="hero" style="margin-bottom:8px">
           <h1>إضافة بطاقة</h1>
           <p>اختر السبب ونوع البطاقة ثم احفظ.</p>
         </div>
@@ -1011,11 +1059,11 @@ document.addEventListener('DOMContentLoaded', function(){
               <div class="choice-card choice-orange" data-value="3 ساعات" onclick="selectCardType(this)"><i class="fa-solid fa-bolt"></i><span>3 ساعات</span><small>جلسة طويلة</small></div>
             </div>
           </div>
-          <div style="margin-top:12px">
+          <div style="margin-top:4px">
             <label>ملاحظة إضافية</label>
             <textarea name="usage_notes" placeholder="اختياري"></textarea>
           </div>
-          <div class="actions" style="margin-top:14px">
+          <div class="actions" style="margin-top:4px">
             <button class="btn btn-accent" type="submit"><i class="fa-solid fa-check"></i> تثبيت البطاقة</button>
             <button class="btn btn-soft" type="button" onclick="return closeGlobalUsageModal()">إلغاء</button>
           </div>
@@ -1966,7 +2014,7 @@ def login():
             <div><label>اسم المستخدم</label><input name="username" required></div>
             <div><label>كلمة المرور</label><input type="password" name="password" required></div>
           </div>
-          <div class="actions" style="margin-top:14px">
+          <div class="actions" style="margin-top:4px">
             <button class="btn btn-primary" type="submit">دخول</button>
           </div>
         </form>
@@ -2359,7 +2407,7 @@ def format_modal_fields(data=None, action="", scope_id="beneficiary-form", submi
         <div><textarea class="notes-box" name="notes" placeholder="اكتب أي ملاحظة تخص المستفيد">{safe(data.get('notes', ''))}</textarea></div>
       </div>
 
-      <div class="actions" style="margin-top:14px">
+      <div class="actions" style="margin-top:4px">
         <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> {submit_label}</button>
         <a class="btn btn-soft" href="{url_for('beneficiaries_page')}">رجوع</a>
       </div>
@@ -2487,7 +2535,7 @@ def build_beneficiary_row_html(r, selected_type, args_dict, page=1, display_inde
         <div id="{edit_modal_id}" class="modal">
           <div class="modal-card">
             <a href="#!" class="modal-close">×</a>
-            <div class="hero" style="margin-bottom:14px"><h1>تعديل المستفيد #{r['id']}</h1><p>{safe(r.get('full_name'))}</p></div>
+            <div class="hero" style="margin-bottom:8px"><h1>تعديل المستفيد #{r['id']}</h1><p>{safe(r.get('full_name'))}</p></div>
             {modal_body}
           </div>
         </div>
@@ -2776,7 +2824,7 @@ def beneficiaries_page():
           <datalist id="freelancer-companies">{free_company_options}</datalist>
           <datalist id="freelancer-specs">{free_spec_options}</datalist>
 
-          <div class="actions" style="margin-top:14px">
+          <div class="actions" style="margin-top:4px">
             <button class="btn btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> تطبيق البحث</button>
             <a class="btn btn-soft" href="{url_for('beneficiaries_page')}"><i class="fa-solid fa-rotate-left"></i> إعادة ضبط</a>
             {add_button_html}
@@ -3110,7 +3158,7 @@ def import_page():
             <div class="small" style="margin-top:8px">بعد الضغط على البدء سيتم إنشاء مهمة استيراد مستقلة، ويمكنك متابعة التقدم وسير العمليات مباشرة.</div>
           </div>
         </div>
-        <div class="actions" style="margin-top:14px">
+        <div class="actions" style="margin-top:4px">
           <button class="btn btn-primary" type="submit"><i class="fa-solid fa-play"></i> بدء الاستيراد الاحترافي</button>
           <a class="btn btn-outline" href="{url_for('download_template')}">تنزيل القالب</a>
         </div>
@@ -3166,7 +3214,7 @@ def import_status_page(task_id):
         <div><strong>انتهت:</strong> <span id="task-finished">{safe(task.get('finished_at'))}</span></div>
       </div>
 
-      <div class="actions" style="margin-top:14px">
+      <div class="actions" style="margin-top:4px">
         <a class="btn btn-soft" href="{url_for('import_page')}">الرجوع لصفحة الاستيراد</a>
         <a class="btn btn-secondary" href="{url_for('beneficiaries_page')}">فتح المستفيدين</a>
       </div>
@@ -3311,7 +3359,7 @@ def export_center():
             <input type="hidden" name="user_type" value="university">
           </div>
         </div>
-        <div class="actions" style="margin-top:14px">
+        <div class="actions" style="margin-top:4px">
           <button class="btn btn-primary" type="submit"><i class="fa-solid fa-file-excel"></i> تصدير الجامعة المحددة</button>
         </div>
       </form>
@@ -3596,7 +3644,7 @@ def usage_logs_page():
             <div><label>من تاريخ</label><input type="date" name="date_from" value="{safe(filters['date_from'])}"></div>
             <div><label>إلى تاريخ</label><input type="date" name="date_to" value="{safe(filters['date_to'])}"></div>
           </div>
-          <div class="actions" style="margin-top:14px"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> بحث</button><a class="btn btn-soft" href="{url_for('usage_logs_page')}">مسح الفلاتر</a></div>
+          <div class="actions" style="margin-top:4px"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> بحث</button><a class="btn btn-soft" href="{url_for('usage_logs_page')}">مسح الفلاتر</a></div>
         </form>
       </div>
     </div>
@@ -3964,7 +4012,7 @@ def add_account():
           <label>الصلاحيات</label>
           {permissions_checkboxes()}
         </div>
-        <div class="actions" style="margin-top:14px">
+        <div class="actions" style="margin-top:4px">
           <button class="btn btn-primary" type="submit">حفظ</button>
           <a class="btn btn-outline" href="{url_for('accounts_page')}">إلغاء</a>
         </div>
@@ -4028,7 +4076,7 @@ def edit_account(account_id):
           <label>الصلاحيات</label>
           {permissions_checkboxes(assigned_names)}
         </div>
-        <div class="actions" style="margin-top:14px">
+        <div class="actions" style="margin-top:4px">
           <button class="btn btn-primary" type="submit">حفظ التعديلات</button>
           <a class="btn btn-outline" href="{url_for('accounts_page')}">رجوع</a>
         </div>
@@ -4085,7 +4133,7 @@ def profile_page():
           <div><label>كلمة المرور الحالية</label><input type="password" name="current_password" required></div>
           <div><label>كلمة المرور الجديدة</label><input type="password" name="new_password" required></div>
         </div>
-        <div class="actions" style="margin-top:14px"><button class="btn btn-primary" type="submit">حفظ</button></div>
+        <div class="actions" style="margin-top:4px"><button class="btn btn-primary" type="submit">حفظ</button></div>
       </form>
     </div>
     """
@@ -4144,7 +4192,7 @@ def power_timer_page():
           <div><label>مدة الدورة بالدقائق</label><input id="timer-minutes-input" type="number" min="1" step="1" value="30"></div>
           <div><label>إعادة التشغيل التلقائي</label><input value="10 ثوانٍ بعد انتهاء الوقت" disabled></div>
         </div>
-        <div class="actions" style="margin-top:14px">
+        <div class="actions" style="margin-top:4px">
           <button id="timer-start-btn" class="btn btn-primary" type="button" onclick="return startPowerTimer()"><i class="fa-solid fa-play"></i> بدء / إعادة ضبط</button>
           <button id="timer-pause-btn" class="btn btn-accent" type="button" onclick="return pausePowerTimer()" style="display:none"><i class="fa-solid fa-pause"></i> إيقاف مؤقت</button>
           <button id="timer-resume-btn" class="btn btn-secondary" type="button" onclick="return resumePowerTimer()" style="display:none"><i class="fa-solid fa-play"></i> استئناف</button>
@@ -4394,7 +4442,7 @@ def build_add_beneficiary_modal(selected_type='tawjihi'):
     <div id="add-beneficiary-modal" class="modal">
       <div class="modal-card">
         <a href="#!" class="modal-close">×</a>
-        <div class="hero" style="margin-bottom:14px"><h1>إضافة مستفيد</h1><p>اختر النوع من التبويبات أعلى النموذج ثم احفظ بدون إعادة تحميل الصفحة.</p></div>
+        <div class="hero" style="margin-bottom:8px"><h1>إضافة مستفيد</h1><p>اختر النوع من التبويبات أعلى النموذج ثم احفظ بدون إعادة تحميل الصفحة.</p></div>
         {modal_form}
       </div>
     </div>
@@ -4425,7 +4473,7 @@ def build_beneficiary_row_html(r, selected_type, args_dict, page=1, display_inde
         <div id="{modal_id}" class="modal">
           <div class="modal-card">
             <a href="#!" class="modal-close">×</a>
-            <div class="hero" style="margin-bottom:14px"><h1>تعديل المستفيد #{r['id']}</h1><p>{safe(r.get('full_name'))}</p></div>
+            <div class="hero" style="margin-bottom:8px"><h1>تعديل المستفيد #{r['id']}</h1><p>{safe(r.get('full_name'))}</p></div>
             {modal_body}
           </div>
         </div>
@@ -4448,7 +4496,7 @@ def build_beneficiary_row_html(r, selected_type, args_dict, page=1, display_inde
         <div id="{note_modal_id}" class="modal">
           <div class="modal-card" style="width:min(650px,100%)">
             <a href="#!" class="modal-close">×</a>
-            <div class="hero" style="margin-bottom:14px"><h1>ملاحظة المستفيد</h1><p>{safe(r.get('full_name'))}</p></div>
+            <div class="hero" style="margin-bottom:8px"><h1>ملاحظة المستفيد</h1><p>{safe(r.get('full_name'))}</p></div>
             <div class="card"><div class='cell-wrap' style='max-width:none'>{note_full}</div></div>
           </div>
         </div>
