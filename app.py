@@ -77,6 +77,11 @@ PERMISSIONS = [
     "reset_weekly_usage",
     "manage_accounts",
     "view_audit_log",
+    "view_archive",
+    "archive_logs",
+    "restore_archive",
+    "export_archive",
+    "delete_archive",
 ]
 
 PERMISSION_LABELS = {
@@ -91,6 +96,30 @@ PERMISSION_LABELS = {
     "reset_weekly_usage": "تجديد كل البطاقات",
     "manage_accounts": "إدارة المستخدمين والصلاحيات",
     "view_audit_log": "عرض سجل العمليات",
+    "view_archive": "عرض أرشيف السجل",
+    "archive_logs": "أرشفة سجل البطاقات",
+    "restore_archive": "استرجاع من الأرشيف",
+    "export_archive": "تصدير الأرشيف",
+    "delete_archive": "تنظيف الأرشيف",
+}
+
+PERMISSION_DESCRIPTIONS = {
+    "view": "عرض صفحات المستفيدين والسجلات.",
+    "add": "إضافة مستفيدين جدد إلى النظام.",
+    "edit": "تعديل بيانات المستفيدين.",
+    "delete": "حذف المستفيدين من السجل الحالي.",
+    "import": "استيراد بيانات CSV.",
+    "export": "تصدير بيانات المستفيدين.",
+    "backup": "نسخ احتياطي عام وعمليات حساسة.",
+    "usage_counter": "إضافة بطاقات للمستفيدين.",
+    "reset_weekly_usage": "تصفير العدادات الأسبوعية.",
+    "manage_accounts": "إدارة المستخدمين والصلاحيات.",
+    "view_audit_log": "فتح سجل العمليات الإدارية.",
+    "view_archive": "عرض أرشيف سجل البطاقات.",
+    "archive_logs": "أرشفة السجلات الحالية أو الجزئية.",
+    "restore_archive": "استرجاع السجلات المؤرشفة إلى السجل الحالي.",
+    "export_archive": "تصدير الأرشيف إلى Excel.",
+    "delete_archive": "تنظيف الأرشيف نهائيًا.",
 }
 
 TAWJIHI_YEARS = ["2006", "2007", "2008", "2009", "2010", "2011"]
@@ -289,7 +318,47 @@ textarea{min-height:100px}
 .pagination .active{background:var(--primary);color:#fff}
 .login-wrap{max-width:480px;margin:70px auto}
 .inline-form{display:inline}
-.permissions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.permissions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.permission-card{position:relative;display:flex;gap:10px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fbff);box-shadow:0 8px 20px rgba(15,23,42,.04);transition:all .22s ease;cursor:pointer}
+.permission-card:hover{transform:translateY(-2px);box-shadow:0 14px 28px rgba(15,23,42,.08);border-color:#bfd7ea}
+.permission-card input{width:18px;height:18px;margin-top:3px;accent-color:#123b6d}
+.permission-card-title{font-weight:800;color:var(--primary);margin-bottom:4px}
+.permission-card-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.permission-card.checked{border-color:#7dd3fc;background:linear-gradient(135deg,#eff8ff,#f5f3ff)}
+.permission-chip-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.permission-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;background:#f8fbff;border:1px solid var(--line);font-size:12px;color:var(--primary);font-weight:700}
+.choice-section{margin-bottom:16px}
+.choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin-top:10px}
+.choice-card{position:relative;padding:14px 12px;border-radius:18px;text-align:center;cursor:pointer;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease,background .22s ease;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fbff);overflow:hidden}
+.choice-card:before{content:'';position:absolute;inset:auto -20px -20px auto;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.28);transform:scale(0);transition:transform .25s ease}
+.choice-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 14px 24px rgba(15,23,42,.10)}
+.choice-card:hover:before{transform:scale(1)}
+.choice-card i{display:block;font-size:22px;margin-bottom:8px;animation:choiceFloat 3s ease-in-out infinite}
+.choice-card span{font-size:13px;font-weight:800}
+.choice-card small{display:block;font-size:11px;opacity:.8;margin-top:4px}
+.choice-card.active{color:#fff;border-color:transparent;transform:translateY(-2px) scale(1.03);box-shadow:0 18px 32px rgba(15,23,42,.16)}
+.choice-card.active i{animation:choiceBounce .45s ease}
+.choice-blue{color:#1d4ed8;background:linear-gradient(180deg,#eff6ff,#dbeafe)}
+.choice-green{color:#15803d;background:linear-gradient(180deg,#f0fdf4,#dcfce7)}
+.choice-orange{color:#c2410c;background:linear-gradient(180deg,#fff7ed,#ffedd5)}
+.choice-purple{color:#7c3aed;background:linear-gradient(180deg,#f5f3ff,#ede9fe)}
+.choice-cyan{color:#0f766e;background:linear-gradient(180deg,#ecfeff,#cffafe)}
+.choice-red{color:#b91c1c;background:linear-gradient(180deg,#fef2f2,#fee2e2)}
+.choice-slate{color:#334155;background:linear-gradient(180deg,#f8fafc,#e2e8f0)}
+.choice-card.choice-blue.active{background:linear-gradient(135deg,#2563eb,#38bdf8)}
+.choice-card.choice-green.active{background:linear-gradient(135deg,#16a34a,#4ade80)}
+.choice-card.choice-orange.active{background:linear-gradient(135deg,#ea580c,#fb923c)}
+.choice-card.choice-purple.active{background:linear-gradient(135deg,#7c3aed,#a78bfa)}
+.choice-card.choice-cyan.active{background:linear-gradient(135deg,#0891b2,#22d3ee)}
+.choice-card.choice-red.active{background:linear-gradient(135deg,#dc2626,#f87171)}
+.choice-card.choice-slate.active{background:linear-gradient(135deg,#334155,#64748b)}
+.modal-card{animation:fadeInScale .22s ease}
+.smart-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.toolbar-card{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.glass-card{background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,251,255,.96));backdrop-filter:blur(10px);border:1px solid rgba(220,232,243,.95)}
+@keyframes choiceFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes choiceBounce{0%{transform:scale(.8)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes fadeInScale{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 .usage-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px}
 .usage-log-meta{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .info-note{padding:14px;border:1px solid var(--line);background:#f8fbff;border-radius:14px}
@@ -513,6 +582,23 @@ async function submitBeneficiaryEdit(form, rowId, modalId){
   return false;
 }
 
+function sortChoiceCards(containerId){
+  const wrap = document.getElementById(containerId);
+  if(!wrap) return;
+  const cards = Array.from(wrap.querySelectorAll('.choice-card'));
+  cards.sort((a,b)=>parseInt(b.dataset.rank||'0',10)-parseInt(a.dataset.rank||'0',10));
+  cards.forEach(card=>wrap.appendChild(card));
+}
+function selectChoice(containerId, hiddenId, card){
+  const wrap = document.getElementById(containerId);
+  const hidden = document.getElementById(hiddenId);
+  if(!wrap || !hidden || !card) return;
+  wrap.querySelectorAll('.choice-card').forEach(c=>c.classList.remove('active'));
+  card.classList.add('active');
+  hidden.value = card.dataset.value || '';
+}
+function selectReason(card){ selectChoice('usage-reason-grid', 'usage_reason', card); }
+function selectCardType(card){ selectChoice('card-type-grid', 'card_type', card); }
 function openGlobalUsageModal(rowId, submitUrl){
   const modal = document.getElementById('global-usage-modal');
   const form = document.getElementById('global-usage-form');
@@ -520,6 +606,14 @@ function openGlobalUsageModal(rowId, submitUrl){
   form.action = submitUrl;
   form.dataset.rowId = String(rowId);
   form.reset();
+  form.dataset.submitting = '0';
+  const notes = form.querySelector('textarea[name="usage_notes"]');
+  if(notes) notes.value = '';
+  sortChoiceCards('usage-reason-grid');
+  const defaultReason = document.querySelector('#usage-reason-grid .choice-card');
+  const defaultCard = document.querySelector('#card-type-grid .choice-card[data-value="ساعة"]') || document.querySelector('#card-type-grid .choice-card');
+  if(defaultReason) selectReason(defaultReason);
+  if(defaultCard) selectCardType(defaultCard);
   modal.classList.add('show-modal');
   return false;
 }
@@ -532,24 +626,9 @@ function closeGlobalUsageModal(){
     form.reset();
     form.action = '';
     form.dataset.rowId = '';
+    form.dataset.submitting = '0';
   }
-  return false;
-}
-
-async function submitUsageModal(form){
-  form.classList.add('ajax-saving');
-  try{
-    const data = await ajaxPost(form.action, new FormData(form));
-    const rowId = parseInt(form.dataset.rowId || '0', 10);
-    replaceRowAndModal(data, rowId, '');
-    if(data.ok){
-      closeGlobalUsageModal();
-    }
-  }catch(err){
-    showLiveFlash(err.message || 'تعذر إضافة البطاقة', 'error');
-  }finally{
-    form.classList.remove('ajax-saving');
-  }
+  document.querySelectorAll('#usage-reason-grid .choice-card, #card-type-grid .choice-card').forEach(c=>c.classList.remove('active'));
   return false;
 }
 
@@ -762,8 +841,8 @@ document.addEventListener('DOMContentLoaded', function(){
       <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-gauge"></i><span class="nav-label">لوحة التحكم</span></a>
       <a href="{{ url_for('beneficiaries_page') }}"><i class="fa-solid fa-users"></i><span class="nav-label">المستفيدون</span></a>
       <a href="{{ url_for('usage_logs_page') }}"><i class="fa-solid fa-ticket"></i><span class="nav-label">سجل البطاقات</span></a>
-      {% if has_permission('backup') %}
-      <a href="{{ url_for('usage_logs_archive_page') }}"><i class="fa-solid fa-box-archive"></i><span class="nav-label">أرشيف البطاقات</span></a>
+      {% if has_permission('view_archive') %}
+      <a href="{{ url_for('usage_archive_page') }}"><i class="fa-solid fa-box-archive"></i><span class="nav-label">أرشيف البطاقات</span></a>
       {% endif %}
       <a href="{{ url_for('power_timer_page') }}"><i class="fa-solid fa-bolt"></i><span class="nav-label">مؤقت الكهرباء</span></a>
       {% if has_permission('add') %}
@@ -815,28 +894,27 @@ document.addEventListener('DOMContentLoaded', function(){
           <h1>إضافة بطاقة</h1>
           <p>اختر السبب ونوع البطاقة ثم احفظ.</p>
         </div>
-        <form id="global-usage-form" method="POST" onsubmit="return submitUsageModal(this)">
-          <div class="row">
-            <div>
-              <label>سبب البطاقة</label>
-              <select name="usage_reason" required>
-                <option value="">اختر السبب</option>
-                <option value="تنفيذ تجربة">تنفيذ تجربة</option>
-                <option value="تقديم اختبار">تقديم اختبار</option>
-                <option value="حل واجب">حل واجب</option>
-                <option value="دراسة">دراسة</option>
-                <option value="عمل حر">عمل حر</option>
-                <option value="تحميل محاضرات">تحميل محاضرات</option>
-                <option value="أخرى">أخرى</option>
-              </select>
+        <form id="global-usage-form" method="POST" onsubmit="return guardSingleSubmit(this)">
+          <div class="choice-section">
+            <label>سبب البطاقة</label>
+            <input type="hidden" name="usage_reason" id="usage_reason" required>
+            <div id="usage-reason-grid" class="choice-grid">
+              <div class="choice-card choice-blue" data-rank="6" data-value="تقديم اختبار" onclick="selectReason(this)"><i class="fa-solid fa-pen-to-square"></i><span>اختبار</span><small>سريع ومباشر</small></div>
+              <div class="choice-card choice-green" data-rank="5" data-value="دراسة" onclick="selectReason(this)"><i class="fa-solid fa-book-open-reader"></i><span>دراسة</span><small>جلسة تعلم</small></div>
+              <div class="choice-card choice-orange" data-rank="4" data-value="حل واجب" onclick="selectReason(this)"><i class="fa-solid fa-list-check"></i><span>واجب</span><small>إنجاز مهمة</small></div>
+              <div class="choice-card choice-purple" data-rank="3" data-value="عمل حر" onclick="selectReason(this)"><i class="fa-solid fa-laptop-code"></i><span>عمل حر</span><small>شغل مستقل</small></div>
+              <div class="choice-card choice-cyan" data-rank="2" data-value="تحميل محاضرات" onclick="selectReason(this)"><i class="fa-solid fa-cloud-arrow-down"></i><span>تحميل</span><small>محاضرات وملفات</small></div>
+              <div class="choice-card choice-red" data-rank="1" data-value="تنفيذ تجربة" onclick="selectReason(this)"><i class="fa-solid fa-flask-vial"></i><span>تجربة</span><small>اختبار عملي</small></div>
+              <div class="choice-card choice-slate" data-rank="0" data-value="أخرى" onclick="selectReason(this)"><i class="fa-solid fa-shapes"></i><span>أخرى</span><small>سبب مخصص</small></div>
             </div>
-            <div>
-              <label>نوع البطاقة</label>
-              <select name="card_type" required>
-                <option value="ساعة">ساعة</option>
-                <option value="ساعتين">ساعتين</option>
-                <option value="3 ساعات">3 ساعات</option>
-              </select>
+          </div>
+          <div class="choice-section">
+            <label>نوع البطاقة</label>
+            <input type="hidden" name="card_type" id="card_type" value="ساعة" required>
+            <div id="card-type-grid" class="choice-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+              <div class="choice-card choice-blue" data-value="ساعة" onclick="selectCardType(this)"><i class="fa-regular fa-clock"></i><span>ساعة</span><small>استخدام سريع</small></div>
+              <div class="choice-card choice-purple" data-value="ساعتين" onclick="selectCardType(this)"><i class="fa-solid fa-hourglass-half"></i><span>ساعتين</span><small>جلسة مركزة</small></div>
+              <div class="choice-card choice-orange" data-value="3 ساعات" onclick="selectCardType(this)"><i class="fa-solid fa-bolt"></i><span>3 ساعات</span><small>جلسة طويلة</small></div>
             </div>
           </div>
           <div style="margin-top:12px">
@@ -1324,6 +1402,11 @@ def action_type_label(action_type=None):
         'power_timer_stop': 'إيقاف المؤقت',
         'export': 'تصدير',
         'backup': 'نسخة احتياطية',
+        'archive_logs': 'أرشفة سجل البطاقات',
+        'restore_archive': 'استرجاع من الأرشيف',
+        'clear_archive': 'تنظيف الأرشيف',
+        'clear_usage_logs': 'تنظيف سجل البطاقات',
+        'export_archive': 'تصدير الأرشيف',
     }.get(clean_csv_value(action_type), safe(action_type or ''))
 
 
@@ -1443,125 +1526,6 @@ def build_usage_logs_where(filters):
         where.append("l.usage_date <= %s")
         params.append(date_to)
     return " AND ".join(where), params
-
-
-def build_usage_logs_where_for_alias(filters, log_alias="l", beneficiary_alias="b"):
-    where = ["1=1"]
-    params = []
-    if filters["q"]:
-        normalized_q = normalize_search_ar(filters["q"])
-        where.append(f"({beneficiary_alias}.search_name ILIKE %s OR {beneficiary_alias}.phone ILIKE %s)")
-        params.extend([f"%{normalized_q}%", f"%{filters['q']}%"])
-    if filters["reason"]:
-        where.append(f"{log_alias}.usage_reason = %s")
-        params.append(filters["reason"])
-    if filters["card_type"]:
-        where.append(f"{log_alias}.card_type = %s")
-        params.append(filters["card_type"])
-    if filters["user_type"]:
-        where.append(f"{beneficiary_alias}.user_type = %s")
-        params.append(filters["user_type"])
-    date_from = parse_date_or_none(filters["date_from"])
-    date_to = parse_date_or_none(filters["date_to"])
-    if date_from:
-        where.append(f"{log_alias}.usage_date >= %s")
-        params.append(date_from)
-    if date_to:
-        where.append(f"{log_alias}.usage_date <= %s")
-        params.append(date_to)
-    return " AND ".join(where), params
-
-
-def build_usage_excel_response(rows, filename, sheet_title="السجل"):
-    workbook = Workbook()
-    sheet = workbook.active
-    sheet.title = sheet_title
-    sheet.append(["#", "الاسم", "الجوال", "النوع", "سبب البطاقة", "نوع البطاقة", "التاريخ", "الوقت", "سجلها", "ملاحظات", "تاريخ الأرشفة", "أرشفها"])
-    for idx, r in enumerate(rows, start=1):
-        sheet.append([
-            idx,
-            safe(r.get("full_name")),
-            safe(r.get("phone")),
-            get_type_label(r.get("user_type")),
-            safe(r.get("usage_reason")),
-            safe(r.get("card_type")),
-            str(r.get("usage_date") or ""),
-            format_dt_short(r.get("usage_time")),
-            safe(r.get("added_by_username")),
-            safe(r.get("notes")),
-            format_dt_short(r.get("archived_at")),
-            safe(r.get("archived_by_username")),
-        ])
-    out = io.BytesIO()
-    workbook.save(out)
-    out.seek(0)
-    response = Response(out.getvalue(), mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
-    return response
-
-
-def move_usage_logs_to_archive(before_date=None):
-    conn = get_connection()
-    cur = conn.cursor()
-    try:
-        params = [session.get("account_id"), session.get("username", "")]
-        where_clause = ""
-        delete_params = []
-        if before_date:
-            where_clause = "WHERE usage_date < %s"
-            params.append(before_date)
-            delete_params.append(before_date)
-        cur.execute(f"""
-            INSERT INTO beneficiary_usage_logs_archive (
-                original_log_id, beneficiary_id, usage_reason, card_type, usage_date, usage_time,
-                notes, added_by_account_id, added_by_username, archived_by_account_id, archived_by_username
-            )
-            SELECT id, beneficiary_id, usage_reason, card_type, usage_date, usage_time,
-                   notes, added_by_account_id, added_by_username, %s, %s
-            FROM beneficiary_usage_logs
-            {where_clause}
-        """, params)
-        moved = cur.rowcount or 0
-        cur.execute(f"DELETE FROM beneficiary_usage_logs {where_clause}", delete_params)
-        conn.commit()
-        return moved
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        cur.close()
-        release_connection(conn)
-
-
-def restore_usage_logs_from_archive(before_date=None):
-    conn = get_connection()
-    cur = conn.cursor()
-    try:
-        where_clause = ""
-        params = []
-        if before_date:
-            where_clause = "WHERE usage_date < %s"
-            params.append(before_date)
-        cur.execute(f"""
-            INSERT INTO beneficiary_usage_logs (
-                beneficiary_id, usage_reason, card_type, usage_date, usage_time, notes, added_by_account_id, added_by_username
-            )
-            SELECT beneficiary_id, usage_reason, card_type, COALESCE(usage_date, CURRENT_DATE), COALESCE(usage_time, CURRENT_TIMESTAMP),
-                   notes, added_by_account_id, added_by_username
-            FROM beneficiary_usage_logs_archive
-            {where_clause}
-            ORDER BY id ASC
-        """, params)
-        restored = cur.rowcount or 0
-        cur.execute(f"DELETE FROM beneficiary_usage_logs_archive {where_clause}", params)
-        conn.commit()
-        return restored
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        cur.close()
-        release_connection(conn)
 
 
 def log_action(action_type, target_type="", target_id=None, details=""):
@@ -1768,21 +1732,22 @@ def setup_database():
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS beneficiary_usage_logs_archive (
-        id SERIAL PRIMARY KEY,
+        archive_id SERIAL PRIMARY KEY,
         original_log_id INTEGER,
-        beneficiary_id INTEGER REFERENCES beneficiaries(id) ON DELETE SET NULL,
+        beneficiary_id INTEGER,
         usage_reason TEXT NOT NULL DEFAULT '',
         card_type TEXT NOT NULL DEFAULT 'ساعة',
-        usage_date DATE,
-        usage_time TIMESTAMP,
+        usage_date DATE NOT NULL DEFAULT CURRENT_DATE,
+        usage_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         notes TEXT DEFAULT '',
         added_by_account_id INTEGER,
         added_by_username TEXT DEFAULT '',
-        archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        archived_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         archived_by_account_id INTEGER,
         archived_by_username TEXT DEFAULT ''
     )
     """)
+
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS power_timer (
@@ -2923,6 +2888,12 @@ def add_usage(beneficiary_id):
 
     flash(message, category)
 
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        updated_row = query_one("SELECT * FROM beneficiaries WHERE id=%s", [beneficiary_id])
+        args_dict = build_request_args_dict()
+        row_html, modal_html = build_beneficiary_row_html(updated_row, args_dict.get("user_type", ""), args_dict, page=max(1, int(request.args.get("page", "1") or "1")))
+        return jsonify({"ok": category == "success", "row_html": row_html, "modal_html": "", "message": message, "category": category})
+
     return redirect(request.referrer or url_for("beneficiaries_page"))
 
 
@@ -3359,11 +3330,7 @@ def usage_logs_page():
     where, params = build_usage_logs_where(filters)
 
     rows = query_all(f"""
-        SELECT
-            l.*,
-            b.full_name,
-            b.phone,
-            b.user_type
+        SELECT l.*, b.full_name, b.phone, b.user_type
         FROM beneficiary_usage_logs l
         JOIN beneficiaries b ON b.id = l.beneficiary_id
         WHERE {where}
@@ -3375,31 +3342,10 @@ def usage_logs_page():
     week_start = get_week_start(today)
     month_start = get_month_start(today)
     year_start = get_year_start(today)
-
-    week_where = f"{where} AND l.usage_date >= %s"
-    month_where = f"{where} AND l.usage_date >= %s"
-    year_where = f"{where} AND l.usage_date >= %s"
-
-    week_total = query_one(f"""
-        SELECT COUNT(*) AS c
-        FROM beneficiary_usage_logs l
-        JOIN beneficiaries b ON b.id = l.beneficiary_id
-        WHERE {week_where}
-    """, params + [week_start])["c"]
-
-    month_total = query_one(f"""
-        SELECT COUNT(*) AS c
-        FROM beneficiary_usage_logs l
-        JOIN beneficiaries b ON b.id = l.beneficiary_id
-        WHERE {month_where}
-    """, params + [month_start])["c"]
-
-    year_total = query_one(f"""
-        SELECT COUNT(*) AS c
-        FROM beneficiary_usage_logs l
-        JOIN beneficiaries b ON b.id = l.beneficiary_id
-        WHERE {year_where}
-    """, params + [year_start])["c"]
+    week_total = query_one(f"SELECT COUNT(*) AS c FROM beneficiary_usage_logs l JOIN beneficiaries b ON b.id=l.beneficiary_id WHERE {where} AND l.usage_date >= %s", params + [week_start])["c"]
+    month_total = query_one(f"SELECT COUNT(*) AS c FROM beneficiary_usage_logs l JOIN beneficiaries b ON b.id=l.beneficiary_id WHERE {where} AND l.usage_date >= %s", params + [month_start])["c"]
+    year_total = query_one(f"SELECT COUNT(*) AS c FROM beneficiary_usage_logs l JOIN beneficiaries b ON b.id=l.beneficiary_id WHERE {where} AND l.usage_date >= %s", params + [year_start])["c"]
+    archive_total = query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs_archive")["c"]
 
     reason_options = "".join([f"<option value='{safe(x)}' {'selected' if filters['reason']==x else ''}>{safe(x)}</option>" for x in USAGE_REASON_OPTIONS])
     card_options = "".join([f"<option value='{safe(x)}' {'selected' if filters['card_type']==x else ''}>{safe(x)}</option>" for x in CARD_TYPE_OPTIONS])
@@ -3419,266 +3365,279 @@ def usage_logs_page():
           <td class='cell-wrap'>{safe(r['notes']) or '-'}</td>
         </tr>
         """
-
     if not row_html:
         row_html = "<tr><td colspan='9' class='empty-state'>لا توجد بطاقات مطابقة لخيارات البحث الحالية.</td></tr>"
+
+    archive_buttons = ""
+    if has_permission('archive_logs'):
+        archive_buttons += f"""
+        <form method='POST' action='{url_for('archive_usage_logs')}' onsubmit="return confirm('سيتم نقل كل السجل الحالي إلى الأرشيف. متابعة؟')"><button class='btn btn-outline' type='submit'><i class='fa-solid fa-box-archive'></i> أرشفة كاملة</button></form>
+        <form method='POST' action='{url_for('archive_usage_logs_before')}' onsubmit="return confirm('سيتم نقل السجلات الأقدم من التاريخ المحدد إلى الأرشيف. متابعة؟')"><input type='date' name='before_date' required><button class='btn btn-soft' type='submit'><i class='fa-solid fa-calendar-minus'></i> أرشفة ما قبل تاريخ</button></form>
+        """
+    if has_permission('backup'):
+        archive_buttons += f"""
+        <form method='POST' action='{url_for('clear_usage_logs')}' onsubmit="return confirm('سيتم حذف كل السجل الحالي نهائيًا. متابعة؟')"><button class='btn btn-danger' type='submit'><i class='fa-solid fa-trash'></i> تنظيف كامل</button></form>
+        <form method='POST' action='{url_for('clear_usage_logs_before')}' onsubmit="return confirm('سيتم حذف السجلات الأقدم من التاريخ المحدد. متابعة؟')"><input type='date' name='before_date' required><button class='btn btn-soft' type='submit'><i class='fa-solid fa-filter-circle-xmark'></i> تنظيف جزئي</button></form>
+        """
+    if has_permission('view_archive'):
+        archive_buttons += f"<a class='btn btn-secondary' href='{url_for('usage_archive_page')}'><i class='fa-solid fa-box-archive'></i> فتح الأرشيف ({archive_total})</a>"
 
     content = f"""
     <div class="hero">
       <h1>سجل البطاقات التفصيلي</h1>
-      <p>بحث شامل في كل البطاقات مع السبب ونوع البطاقة والتاريخ والوقت والموظف الذي قام بالتسجيل.</p>
+      <p>سجل حي مع أدوات ذكية للتنظيف، الأرشفة، والاستعراض السريع حسب الفلاتر والتاريخ.</p>
     </div>
 
     <div class="usage-summary-grid">
       <div class="metric-box"><h4>هذا الأسبوع</h4><div class="num">{week_total}</div></div>
       <div class="metric-box"><h4>هذا الشهر</h4><div class="num">{month_total}</div></div>
       <div class="metric-box"><h4>هذه السنة</h4><div class="num">{year_total}</div></div>
-      <div class="metric-box"><h4>إجمالي النتائج المعروضة</h4><div class="num">{len(rows)}</div></div>
+      <div class="metric-box"><h4>عدد السجلات بالأرشيف</h4><div class="num">{archive_total}</div></div>
     </div>
 
-    <div class="card">
+    <div class="card glass-card">
       <div class="filter-box">
         <form method="GET">
           <div class="row">
             <div><label>بحث بالاسم أو الجوال</label><input name="q" value="{safe(filters['q'])}" placeholder="مثال: أحمد أحمد أو رقم الجوال"></div>
-            <div>
-              <label>النوع</label>
-              <select name="user_type">
-                <option value="">الكل</option>
-                <option value="tawjihi" {"selected" if filters["user_type"]=="tawjihi" else ""}>توجيهي</option>
-                <option value="university" {"selected" if filters["user_type"]=="university" else ""}>جامعة</option>
-                <option value="freelancer" {"selected" if filters["user_type"]=="freelancer" else ""}>فري لانسر</option>
-              </select>
-            </div>
-            <div>
-              <label>سبب البطاقة</label>
-              <select name="reason">
-                <option value="">الكل</option>
-                {reason_options}
-              </select>
-            </div>
-            <div>
-              <label>نوع البطاقة</label>
-              <select name="card_type">
-                <option value="">الكل</option>
-                {card_options}
-              </select>
-            </div>
+            <div><label>النوع</label><select name="user_type"><option value="">الكل</option><option value="tawjihi" {"selected" if filters["user_type"]=="tawjihi" else ""}>توجيهي</option><option value="university" {"selected" if filters["user_type"]=="university" else ""}>جامعة</option><option value="freelancer" {"selected" if filters["user_type"]=="freelancer" else ""}>فري لانسر</option></select></div>
+            <div><label>سبب البطاقة</label><select name="reason"><option value="">الكل</option>{reason_options}</select></div>
+            <div><label>نوع البطاقة</label><select name="card_type"><option value="">الكل</option>{card_options}</select></div>
             <div><label>من تاريخ</label><input type="date" name="date_from" value="{safe(filters['date_from'])}"></div>
             <div><label>إلى تاريخ</label><input type="date" name="date_to" value="{safe(filters['date_to'])}"></div>
           </div>
-          <div class="actions" style="margin-top:14px">
-            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> بحث</button>
-            <a class="btn btn-soft" href="{url_for('usage_logs_page')}">مسح الفلاتر</a>
-          </div>
+          <div class="actions" style="margin-top:14px"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> بحث</button><a class="btn btn-soft" href="{url_for('usage_logs_page')}">مسح الفلاتر</a></div>
         </form>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="toolbar-card">
+        <div><strong>أدوات السجل</strong><div class="small">نفّذ التنظيف أو الأرشفة أو افتح الأرشيف حسب صلاحياتك.</div></div>
+        <div class="smart-actions">{archive_buttons}</div>
       </div>
     </div>
 
     <div class="card" style="margin-top:16px">
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>الاسم</th>
-              <th>الجوال</th>
-              <th>النوع</th>
-              <th>سبب البطاقة</th>
-              <th>نوع البطاقة</th>
-              <th>التاريخ والوقت</th>
-              <th>سجلها</th>
-              <th>ملاحظات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {row_html}
-          </tbody>
+          <thead><tr><th>#</th><th>الاسم</th><th>الجوال</th><th>النوع</th><th>سبب البطاقة</th><th>نوع البطاقة</th><th>التاريخ والوقت</th><th>سجلها</th><th>ملاحظات</th></tr></thead>
+          <tbody>{row_html}</tbody>
         </table>
-      </div>
-    </div>
-    
-    <div class="card" style="margin-top:16px">
-      <h3 style="margin-top:0">إدارة السجل</h3>
-      <div class="grid-2">
-        <form method="POST" action="{url_for('usage_logs_clear_all')}" onsubmit="return confirm('سيتم حذف كل السجل الحالي. هل أنت متأكد؟')">
-          <div class="info-note">
-            <strong>تنظيف كامل</strong>
-            <div class="small" style="margin:8px 0 12px">يحذف جميع السجلات الحالية.</div>
-            <button class="btn btn-danger" type="submit"><i class="fa-solid fa-trash"></i> حذف الكل</button>
-          </div>
-        </form>
-        <form method="POST" action="{url_for('usage_logs_clear_before')}" onsubmit="return confirm('سيتم حذف السجلات الأقدم من التاريخ المحدد. هل أنت متأكد؟')">
-          <div class="info-note">
-            <strong>تنظيف جزئي</strong>
-            <div class="small" style="margin:8px 0 12px">يحذف كل ما قبل التاريخ الذي تحدده.</div>
-            <div class="row"><div><label>احذف ما قبل تاريخ</label><input type="date" name="before_date" required></div></div>
-            <div class="actions" style="margin-top:12px"><button class="btn btn-outline" type="submit"><i class="fa-solid fa-filter-circle-xmark"></i> حذف قبل التاريخ</button></div>
-          </div>
-        </form>
-      </div>
-      <div class="grid-2" style="margin-top:14px">
-        <form method="POST" action="{url_for('usage_logs_archive_all')}" onsubmit="return confirm('سيتم أرشفة كل السجلات ثم تنظيفها من السجل الحالي. هل أنت متأكد؟')">
-          <div class="info-note">
-            <strong>أرشفة كاملة</strong>
-            <div class="small" style="margin:8px 0 12px">ينقل كل السجلات إلى الأرشيف ثم يفرغ السجل الحالي.</div>
-            <button class="btn btn-secondary" type="submit"><i class="fa-solid fa-box-archive"></i> أرشفة الكل</button>
-          </div>
-        </form>
-        <form method="POST" action="{url_for('usage_logs_archive_before')}" onsubmit="return confirm('سيتم أرشفة السجلات الأقدم من التاريخ المحدد ثم حذفها من السجل الحالي. هل أنت متأكد؟')">
-          <div class="info-note">
-            <strong>أرشفة جزئية</strong>
-            <div class="small" style="margin:8px 0 12px">ينقل كل ما قبل التاريخ إلى الأرشيف.</div>
-            <div class="row"><div><label>أرشف ما قبل تاريخ</label><input type="date" name="before_date" required></div></div>
-            <div class="actions" style="margin-top:12px"><button class="btn btn-accent" type="submit"><i class="fa-solid fa-box"></i> أرشفة قبل التاريخ</button></div>
-          </div>
-        </form>
-      </div>
-      <div class="actions" style="margin-top:14px">
-        <a class="btn btn-soft" href="{url_for('usage_logs_archive_page')}"><i class="fa-solid fa-box-archive"></i> فتح الأرشيف</a>
       </div>
     </div>
     """
     return render_page("سجل البطاقات", content)
 
 
+def _archive_usage_rows(before_date=None):
+    conditions = []
+    params = []
+    if before_date:
+        conditions.append("usage_date < %s")
+        params.append(before_date)
+    where_sql = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+    moved = execute_sql(f"""
+        WITH moved AS (
+            INSERT INTO beneficiary_usage_logs_archive (
+                original_log_id, beneficiary_id, usage_reason, card_type, usage_date, usage_time, notes,
+                added_by_account_id, added_by_username, archived_at, archived_by_account_id, archived_by_username
+            )
+            SELECT id, beneficiary_id, usage_reason, card_type, usage_date, usage_time, notes,
+                   added_by_account_id, added_by_username, CURRENT_TIMESTAMP, %s, %s
+            FROM beneficiary_usage_logs
+            {where_sql}
+            RETURNING original_log_id
+        )
+        SELECT COUNT(*) AS c FROM moved
+    """, [session.get('account_id'), session.get('username', '')] + params, fetchone=True)
+    execute_sql(f"DELETE FROM beneficiary_usage_logs {where_sql}", params)
+    return int((moved or {}).get('c') or 0)
 
 
-@app.route("/usage-logs/archive")
+@app.route("/usage-logs/archive", methods=["POST"])
+@login_required
+@permission_required("archive_logs")
+def archive_usage_logs():
+    moved = _archive_usage_rows()
+    log_action("archive_logs", "beneficiary", None, f"أرشفة كاملة لسجل البطاقات: {moved} سجل")
+    flash(f"تمت أرشفة {moved} سجل بنجاح.", "success")
+    return redirect(url_for("usage_logs_page"))
+
+
+@app.route("/usage-logs/archive-before", methods=["POST"])
+@login_required
+@permission_required("archive_logs")
+def archive_usage_logs_before():
+    before_date = parse_date_or_none(request.form.get("before_date"))
+    if not before_date:
+        flash("اختر تاريخًا صحيحًا للأرشفة الجزئية.", "error")
+        return redirect(url_for("usage_logs_page"))
+    moved = _archive_usage_rows(before_date)
+    log_action("archive_logs", "beneficiary", None, f"أرشفة جزئية قبل {before_date}: {moved} سجل")
+    flash(f"تمت أرشفة {moved} سجل أقدم من {before_date}.", "success")
+    return redirect(url_for("usage_logs_page"))
+
+
+@app.route("/usage-logs/clear", methods=["POST"])
 @login_required
 @permission_required("backup")
-def usage_logs_archive_page():
-    filters = usage_logs_filters_from_request()
-    where, params = build_usage_logs_where_for_alias(filters, log_alias="a", beneficiary_alias="b")
-    rows = query_all(f"""
-        SELECT a.*, b.full_name, b.phone, b.user_type
-        FROM beneficiary_usage_logs_archive a
-        LEFT JOIN beneficiaries b ON b.id = a.beneficiary_id
-        WHERE {where}
-        ORDER BY a.usage_time DESC NULLS LAST, a.id DESC
-        LIMIT 1000
-    """, params)
-    total_archive = query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs_archive")["c"]
-    reason_options = "".join([f"<option value='{safe(x)}' {'selected' if filters['reason']==x else ''}>{safe(x)}</option>" for x in USAGE_REASON_OPTIONS])
-    card_options = "".join([f"<option value='{safe(x)}' {'selected' if filters['card_type']==x else ''}>{safe(x)}</option>" for x in CARD_TYPE_OPTIONS])
-    row_html = ""
-    for idx2, r in enumerate(rows, start=1):
-        row_html += f"""
-        <tr>
-          <td>{idx2}</td><td>{safe(r.get('full_name')) or '-'}</td><td>{safe(r.get('phone')) or '-'}</td><td>{get_type_label(r.get('user_type')) or '-'}</td><td>{safe(r.get('usage_reason'))}</td><td>{safe(r.get('card_type'))}</td><td>{format_dt_short(r.get('usage_time'))}</td><td>{safe(r.get('added_by_username')) or '-'}</td><td>{format_dt_short(r.get('archived_at'))}</td><td>{safe(r.get('archived_by_username')) or '-'}</td><td class='cell-wrap'>{safe(r.get('notes')) or '-'}</td>
-        </tr>
-        """
-    if not row_html:
-        row_html = "<tr><td colspan='11' class='empty-state'>الأرشيف فارغ أو لا توجد نتائج مطابقة.</td></tr>"
-    export_query = build_query_string(filters)
-    export_url = url_for('export_usage_logs_archive_excel') + (f"?{export_query}" if export_query else "")
-    content = f"""
-    <div class="hero"><h1>أرشيف سجل البطاقات</h1><p>عرض السجلات المؤرشفة مع إمكانيات التصدير والاسترجاع والإدارة الكاملة.</p></div>
-    <div class="usage-summary-grid">
-      <div class="metric-box"><h4>إجمالي الأرشيف</h4><div class="num">{total_archive}</div></div>
-      <div class="metric-box"><h4>النتائج المعروضة</h4><div class="num">{len(rows)}</div></div>
-      <div class="metric-box"><h4>تصدير</h4><div class="num"><a class='btn btn-accent' href='{export_url}'><i class='fa-solid fa-file-excel'></i> Excel</a></div></div>
-      <div class="metric-box"><h4>السجل الحالي</h4><div class="num"><a class='btn btn-soft' href='{url_for('usage_logs_page')}'>فتح السجل</a></div></div>
-    </div>
-    <div class="card"><div class="filter-box"><form method="GET"><div class="row"><div><label>بحث بالاسم أو الجوال</label><input name="q" value="{safe(filters['q'])}" placeholder="مثال: أحمد أحمد أو رقم الجوال"></div><div><label>النوع</label><select name="user_type"><option value="">الكل</option><option value="tawjihi" {"selected" if filters["user_type"]=="tawjihi" else ""}>توجيهي</option><option value="university" {"selected" if filters["user_type"]=="university" else ""}>جامعة</option><option value="freelancer" {"selected" if filters["user_type"]=="freelancer" else ""}>فري لانسر</option></select></div><div><label>سبب البطاقة</label><select name="reason"><option value="">الكل</option>{reason_options}</select></div><div><label>نوع البطاقة</label><select name="card_type"><option value="">الكل</option>{card_options}</select></div><div><label>من تاريخ</label><input type="date" name="date_from" value="{safe(filters['date_from'])}"></div><div><label>إلى تاريخ</label><input type="date" name="date_to" value="{safe(filters['date_to'])}"></div></div><div class="actions" style="margin-top:14px"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> بحث</button><a class="btn btn-soft" href="{url_for('usage_logs_archive_page')}">مسح الفلاتر</a><a class="btn btn-accent" href="{export_url}"><i class="fa-solid fa-file-excel"></i> تصدير Excel</a></div></form></div></div>
-    <div class="card" style="margin-top:16px"><div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>الجوال</th><th>النوع</th><th>سبب البطاقة</th><th>نوع البطاقة</th><th>وقت الاستخدام</th><th>سجلها</th><th>وقت الأرشفة</th><th>أرشفها</th><th>ملاحظات</th></tr></thead><tbody>{row_html}</tbody></table></div></div>
-    <div class="card" style="margin-top:16px"><h3 style="margin-top:0">إدارة الأرشيف</h3><div class="grid-2"><form method="POST" action="{url_for('archive_restore_all')}" onsubmit="return confirm('سيتم استرجاع كل سجلات الأرشيف إلى السجل الحالي. هل أنت متأكد؟')"><div class="info-note"><strong>استرجاع كامل</strong><div class="small" style="margin:8px 0 12px">يعيد كل سجلات الأرشيف إلى السجل الحالي ثم يزيلها من الأرشيف.</div><button class="btn btn-primary" type="submit"><i class="fa-solid fa-rotate-left"></i> استرجاع الكل</button></div></form><form method="POST" action="{url_for('archive_restore_before')}" onsubmit="return confirm('سيتم استرجاع السجلات الأقدم من التاريخ المحدد. هل أنت متأكد؟')"><div class="info-note"><strong>استرجاع جزئي</strong><div class="small" style="margin:8px 0 12px">يعيد كل ما قبل التاريخ إلى السجل الحالي.</div><div class="row"><div><label>استرجع ما قبل تاريخ</label><input type="date" name="before_date" required></div></div><div class="actions" style="margin-top:12px"><button class="btn btn-secondary" type="submit"><i class="fa-solid fa-clock-rotate-left"></i> استرجاع قبل التاريخ</button></div></div></form></div><div class="grid-2" style="margin-top:14px"><form method="GET" action="{url_for('export_usage_logs_archive_excel')}"><div class="info-note"><strong>تصدير الأرشيف إلى Excel</strong><div class="small" style="margin:8px 0 12px">ينزل ملف Excel لنتائج الأرشيف.</div><button class="btn btn-accent" type="submit"><i class="fa-solid fa-file-excel"></i> تصدير Excel</button></div></form><form method="POST" action="{url_for('archive_clear_all')}" onsubmit="return confirm('سيتم حذف كل الأرشيف نهائيًا. هل أنت متأكد جدًا؟')"><div class="info-note"><strong>تنظيف الأرشيف بالكامل</strong><div class="small" style="margin:8px 0 12px">يحذف كل السجلات المؤرشفة نهائيًا.</div><button class="btn btn-danger" type="submit"><i class="fa-solid fa-trash-can"></i> حذف الأرشيف</button></div></form></div></div>
-    """
-    return render_page("أرشيف سجل البطاقات", content)
-
-@app.route("/usage-logs/clear-all", methods=["POST"])
-@login_required
-@permission_required("backup")
-def usage_logs_clear_all():
+def clear_usage_logs():
     deleted = query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs")["c"]
     execute_sql("DELETE FROM beneficiary_usage_logs")
-    log_action("delete", "beneficiary", None, f"تنظيف كامل لسجل البطاقات الحالي ({deleted}) سجل")
+    log_action("clear_usage_logs", "beneficiary", None, f"تنظيف كامل لسجل البطاقات: {deleted} سجل")
     flash(f"تم حذف {deleted} سجل من السجل الحالي.", "success")
     return redirect(url_for("usage_logs_page"))
+
 
 @app.route("/usage-logs/clear-before", methods=["POST"])
 @login_required
 @permission_required("backup")
-def usage_logs_clear_before():
+def clear_usage_logs_before():
     before_date = parse_date_or_none(request.form.get("before_date"))
     if not before_date:
-        flash("الرجاء اختيار تاريخ صحيح.", "error")
+        flash("اختر تاريخًا صحيحًا للتنظيف الجزئي.", "error")
         return redirect(url_for("usage_logs_page"))
     deleted = query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date < %s", [before_date])["c"]
     execute_sql("DELETE FROM beneficiary_usage_logs WHERE usage_date < %s", [before_date])
-    log_action("delete", "beneficiary", None, f"تنظيف جزئي لسجل البطاقات الحالي قبل {before_date} بعدد {deleted}")
+    log_action("clear_usage_logs", "beneficiary", None, f"تنظيف جزئي قبل {before_date}: {deleted} سجل")
     flash(f"تم حذف {deleted} سجل أقدم من {before_date}.", "success")
     return redirect(url_for("usage_logs_page"))
 
-@app.route("/usage-logs/archive-all", methods=["POST"])
-@login_required
-@permission_required("backup")
-def usage_logs_archive_all():
-    moved = move_usage_logs_to_archive()
-    log_action("backup", "beneficiary", None, f"أرشفة كاملة لسجل البطاقات الحالي ({moved}) سجل")
-    flash(f"تمت أرشفة {moved} سجل إلى الأرشيف.", "success")
-    return redirect(url_for("usage_logs_page"))
 
-@app.route("/usage-logs/archive-before", methods=["POST"])
+@app.route("/usage-archive")
 @login_required
-@permission_required("backup")
-def usage_logs_archive_before():
-    before_date = parse_date_or_none(request.form.get("before_date"))
-    if not before_date:
-        flash("الرجاء اختيار تاريخ صحيح.", "error")
-        return redirect(url_for("usage_logs_page"))
-    moved = move_usage_logs_to_archive(before_date=before_date)
-    log_action("backup", "beneficiary", None, f"أرشفة جزئية لسجل البطاقات قبل {before_date} بعدد {moved}")
-    flash(f"تمت أرشفة {moved} سجل أقدم من {before_date}.", "success")
-    return redirect(url_for("usage_logs_page"))
-
-@app.route("/usage-logs/archive/export.xlsx")
-@login_required
-@permission_required("backup")
-def export_usage_logs_archive_excel():
-    filters = usage_logs_filters_from_request()
-    where, params = build_usage_logs_where_for_alias(filters, log_alias="a", beneficiary_alias="b")
-    rows = query_all(f"""
+@permission_required("view_archive")
+def usage_archive_page():
+    before_date = parse_date_or_none(request.args.get('date_to'))
+    rows = query_all("""
         SELECT a.*, b.full_name, b.phone, b.user_type
         FROM beneficiary_usage_logs_archive a
         LEFT JOIN beneficiaries b ON b.id = a.beneficiary_id
-        WHERE {where}
-        ORDER BY a.usage_time DESC NULLS LAST, a.id DESC
-    """, params)
-    return build_usage_excel_response(rows, "usage_logs_archive.xlsx", sheet_title="أرشيف البطاقات")
+        ORDER BY a.archived_at DESC, a.archive_id DESC
+        LIMIT 500
+    """)
+    row_html = ""
+    for idx, r in enumerate(rows, start=1):
+        row_html += f"""
+        <tr>
+          <td>{idx}</td><td>{safe(r.get('full_name')) or '-'}</td><td>{safe(r.get('phone')) or '-'}</td><td>{get_type_label(r.get('user_type'))}</td>
+          <td>{safe(r.get('usage_reason'))}</td><td>{safe(r.get('card_type'))}</td><td>{format_dt_short(r.get('usage_time'))}</td>
+          <td>{safe(r.get('archived_by_username')) or '-'}</td><td>{format_dt_short(r.get('archived_at'))}</td><td class='cell-wrap'>{safe(r.get('notes')) or '-'}</td>
+        </tr>
+        """
+    actions = ""
+    if has_permission('restore_archive'):
+        actions += f"""
+        <form method='POST' action='{url_for('restore_archive_logs')}' onsubmit="return confirm('سيتم استرجاع كل الأرشيف إلى السجل الحالي مع حذف النسخ من الأرشيف. متابعة؟')"><button class='btn btn-secondary' type='submit'><i class='fa-solid fa-rotate-left'></i> استرجاع الكل</button></form>
+        <form method='POST' action='{url_for('restore_archive_logs_before')}' onsubmit="return confirm('سيتم استرجاع الأرشيف الأقدم من التاريخ المحدد. متابعة؟')"><input type='date' name='before_date' required><button class='btn btn-soft' type='submit'><i class='fa-solid fa-clock-rotate-left'></i> استرجاع جزئي</button></form>
+        """
+    if has_permission('export_archive'):
+        actions += f"<a class='btn btn-outline' href='{url_for('export_archive_excel')}'><i class='fa-solid fa-file-excel'></i> تصدير Excel</a>"
+    if has_permission('delete_archive'):
+        actions += f'''<form method="POST" action="{url_for('clear_archive_logs')}" onsubmit="return confirm(\'سيتم حذف كامل الأرشيف نهائيًا. متابعة؟\')"><button class="btn btn-danger" type="submit"><i class="fa-solid fa-trash-can"></i> تنظيف الأرشيف</button></form>'''
+    content = f"""
+    <div class='hero'><h1>أرشيف سجل البطاقات</h1><p>منطقة آمنة لحفظ السجلات القديمة مع صلاحيات منفصلة للاستعراض، التصدير، الاسترجاع، والتنظيف.</p></div>
+    <div class='card glass-card'><div class='toolbar-card'><div><strong>عمليات الأرشيف</strong><div class='small'>كل عملية هنا مرتبطة بصلاحية مستقلة.</div></div><div class='smart-actions'>{actions}</div></div></div>
+    <div class='card' style='margin-top:16px'><div class='table-wrap'><table><thead><tr><th>#</th><th>الاسم</th><th>الجوال</th><th>النوع</th><th>السبب</th><th>النوع</th><th>وقت الاستخدام</th><th>أرشفها</th><th>وقت الأرشفة</th><th>ملاحظات</th></tr></thead><tbody>{row_html or "<tr><td colspan='10' class='empty-state'>الأرشيف فارغ حاليًا.</td></tr>"}</tbody></table></div></div>
+    """
+    return render_page("أرشيف سجل البطاقات", content)
 
-@app.route("/usage-logs/archive/restore-all", methods=["POST"])
+
+@app.route("/usage-archive/export")
 @login_required
-@permission_required("backup")
-def archive_restore_all():
-    restored = restore_usage_logs_from_archive()
-    log_action("backup", "beneficiary", None, f"استرجاع كامل من الأرشيف إلى السجل الحالي ({restored}) سجل")
+@permission_required("export_archive")
+def export_archive_excel():
+    rows = query_all("""
+        SELECT a.*, b.full_name, b.phone
+        FROM beneficiary_usage_logs_archive a
+        LEFT JOIN beneficiaries b ON b.id = a.beneficiary_id
+        ORDER BY a.archived_at DESC, a.archive_id DESC
+    """)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Usage Archive"
+    headers = ["الاسم", "الجوال", "سبب البطاقة", "نوع البطاقة", "تاريخ الاستخدام", "وقت الاستخدام", "الملاحظات", "أرشف بواسطة", "وقت الأرشفة"]
+    ws.append(headers)
+    for r in rows:
+        ws.append([
+            safe(r.get('full_name')), safe(r.get('phone')), safe(r.get('usage_reason')), safe(r.get('card_type')),
+            safe(r.get('usage_date')), format_dt_short(r.get('usage_time')), safe(r.get('notes')),
+            safe(r.get('archived_by_username')), format_dt_short(r.get('archived_at')),
+        ])
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill(fill_type='solid', fgColor='DCE8F3')
+        cell.alignment = Alignment(horizontal='center')
+    for col in ws.columns:
+        width = max(len(str(c.value or '')) for c in col) + 2
+        ws.column_dimensions[get_column_letter(col[0].column)].width = min(max(width, 14), 34)
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    log_action("export_archive", "beneficiary", None, "تصدير أرشيف سجل البطاقات إلى Excel")
+    resp = Response(output.getvalue(), mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    resp.headers["Content-Disposition"] = "attachment; filename=usage_archive.xlsx"
+    return resp
+
+
+@app.route("/usage-archive/restore", methods=["POST"])
+@login_required
+@permission_required("restore_archive")
+def restore_archive_logs():
+    rows = query_all("SELECT * FROM beneficiary_usage_logs_archive ORDER BY archive_id")
+    restored = 0
+    for r in rows:
+        execute_sql("""
+            INSERT INTO beneficiary_usage_logs
+            (beneficiary_id, usage_reason, card_type, usage_date, usage_time, notes, added_by_account_id, added_by_username)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        """, [r.get('beneficiary_id'), r.get('usage_reason'), r.get('card_type'), r.get('usage_date'), r.get('usage_time'), r.get('notes'), r.get('added_by_account_id'), r.get('added_by_username')])
+        restored += 1
+    execute_sql("DELETE FROM beneficiary_usage_logs_archive")
+    log_action("restore_archive", "beneficiary", None, f"استرجاع كامل من الأرشيف: {restored} سجل")
     flash(f"تم استرجاع {restored} سجل من الأرشيف إلى السجل الحالي.", "success")
-    return redirect(url_for("usage_logs_archive_page"))
+    return redirect(url_for("usage_archive_page"))
 
-@app.route("/usage-logs/archive/restore-before", methods=["POST"])
+
+@app.route("/usage-archive/restore-before", methods=["POST"])
 @login_required
-@permission_required("backup")
-def archive_restore_before():
-    before_date = parse_date_or_none(request.form.get("before_date"))
+@permission_required("restore_archive")
+def restore_archive_logs_before():
+    before_date = parse_date_or_none(request.form.get('before_date'))
     if not before_date:
-        flash("الرجاء اختيار تاريخ صحيح.", "error")
-        return redirect(url_for("usage_logs_archive_page"))
-    restored = restore_usage_logs_from_archive(before_date=before_date)
-    log_action("backup", "beneficiary", None, f"استرجاع جزئي من الأرشيف قبل {before_date} بعدد {restored}")
-    flash(f"تم استرجاع {restored} سجل أقدم من {before_date} إلى السجل الحالي.", "success")
-    return redirect(url_for("usage_logs_archive_page"))
+        flash("اختر تاريخًا صحيحًا للاسترجاع الجزئي.", "error")
+        return redirect(url_for("usage_archive_page"))
+    rows = query_all("SELECT * FROM beneficiary_usage_logs_archive WHERE usage_date < %s ORDER BY archive_id", [before_date])
+    restored = 0
+    archive_ids = []
+    for r in rows:
+        execute_sql("""
+            INSERT INTO beneficiary_usage_logs
+            (beneficiary_id, usage_reason, card_type, usage_date, usage_time, notes, added_by_account_id, added_by_username)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        """, [r.get('beneficiary_id'), r.get('usage_reason'), r.get('card_type'), r.get('usage_date'), r.get('usage_time'), r.get('notes'), r.get('added_by_account_id'), r.get('added_by_username')])
+        restored += 1
+        archive_ids.append(r['archive_id'])
+    if archive_ids:
+        execute_sql("DELETE FROM beneficiary_usage_logs_archive WHERE archive_id = ANY(%s)", [archive_ids])
+    log_action("restore_archive", "beneficiary", None, f"استرجاع جزئي من الأرشيف قبل {before_date}: {restored} سجل")
+    flash(f"تم استرجاع {restored} سجل أقدم من {before_date}.", "success")
+    return redirect(url_for("usage_archive_page"))
 
-@app.route("/usage-logs/archive/clear-all", methods=["POST"])
+
+@app.route("/usage-archive/clear", methods=["POST"])
 @login_required
-@permission_required("backup")
-def archive_clear_all():
+@permission_required("delete_archive")
+def clear_archive_logs():
     deleted = query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs_archive")["c"]
     execute_sql("DELETE FROM beneficiary_usage_logs_archive")
-    log_action("delete", "beneficiary", None, f"تنظيف كامل لأرشيف البطاقات ({deleted}) سجل")
-    flash(f"تم حذف {deleted} سجل من الأرشيف نهائيًا.", "success")
-    return redirect(url_for("usage_logs_archive_page"))
-@app.route("/accounts")
+    log_action("clear_archive", "beneficiary", None, f"تنظيف كامل للأرشيف: {deleted} سجل")
+    flash(f"تم حذف {deleted} سجل من الأرشيف.", "success")
+    return redirect(url_for("usage_archive_page"))
+
+
+@app.route("/accounts")@app.route("/accounts")
 @login_required
 @permission_required("manage_accounts")
 def accounts_page():
@@ -3691,27 +3650,44 @@ def accounts_page():
         GROUP BY a.id
         ORDER BY a.id DESC
     """)
-    html = """
-    <div class="hero"><h1>إدارة المستخدمين</h1><p>إضافة حسابات، تفعيل وتعطيل، وتخصيص الصلاحيات.</p></div>
-    <div class="actions" style="margin-bottom:14px"><a class="btn btn-primary" href="/accounts/add">إضافة مستخدم</a></div>
-    <div class="card"><table><thead><tr><th>ID</th><th>اسم المستخدم</th><th>الاسم الكامل</th><th>الحالة</th><th>الصلاحيات</th><th>إجراءات</th></tr></thead><tbody>
-    """
+    table_rows = ""
     for r in rows:
-        perms_text = "، ".join(permission_label(p.strip()) for p in safe(r['perms']).split(',') if p.strip()) or "-"
-        html += f"""
+        perms = [x.strip() for x in safe(r['perms']).split(',') if x.strip()]
+        perms_html = "<div class='permission-chip-wrap'>" + ("".join([f"<span class='permission-chip'><i class='fa-solid fa-shield-halved'></i> {permission_label(p)}</span>" for p in perms]) if perms else "<span class='small'>لا توجد صلاحيات محددة</span>") + "</div>"
+        status_badge = "<span class='badge badge-green'>مفعل</span>" if r['is_active'] else "<span class='badge badge-orange'>معطل</span>"
+        table_rows += f"""
         <tr>
           <td>{r['id']}</td>
-          <td>{safe(r['username'])}</td>
-          <td>{safe(r['full_name'])}</td>
-          <td>{"مفعل" if r['is_active'] else "معطل"}</td>
-          <td style="max-width:300px;white-space:normal">{safe(perms_text)}</td>
+          <td><strong>{safe(r['username'])}</strong></td>
+          <td>{safe(r['full_name']) or '-'}</td>
+          <td>{status_badge}</td>
+          <td style='max-width:420px;white-space:normal'>{perms_html}</td>
           <td>
-            <a class="btn btn-secondary" href="/accounts/edit/{r['id']}">تعديل</a>
-            <form class="inline-form" method="POST" action="/accounts/toggle/{r['id']}"><button class="btn btn-outline" type="submit">تفعيل/تعطيل</button></form>
+            <div class='actions' style='justify-content:center'>
+              <a class="btn btn-secondary btn-icon" href="/accounts/edit/{r['id']}" title="تعديل"><i class="fa-solid fa-pen"></i></a>
+              <form class="inline-form" method="POST" action="/accounts/toggle/{r['id']}"><button class="btn btn-outline btn-icon" type="submit" title="تفعيل أو تعطيل"><i class="fa-solid fa-power-off"></i></button></form>
+            </div>
           </td>
         </tr>
         """
-    html += "</tbody></table></div>"
+    html = f"""
+    <div class="hero"><h1>إدارة المستخدمين والصلاحيات</h1><p>واجهة أكثر وضوحًا لتوزيع الصلاحيات، مع بطاقات ملوّنة وسهلة المراجعة لكل مستخدم.</p></div>
+    <div class="card glass-card toolbar-card">
+      <div>
+        <strong>إجمالي الحسابات:</strong> {len(rows)}
+        <div class="small" style="margin-top:4px">أنشئ مستخدمين بصلاحيات دقيقة للسجل، الأرشيف، التصدير، والاسترجاع.</div>
+      </div>
+      <div class="actions"><a class="btn btn-primary" href="/accounts/add"><i class="fa-solid fa-user-plus"></i> إضافة مستخدم</a></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>اسم المستخدم</th><th>الاسم الكامل</th><th>الحالة</th><th>الصلاحيات</th><th>إجراءات</th></tr></thead>
+          <tbody>{table_rows or "<tr><td colspan='6' class='empty-state'>لا توجد حسابات بعد.</td></tr>"}</tbody>
+        </table>
+      </div>
+    </div>
+    """
     return render_page("إدارة المستخدمين", html)
 
 
@@ -3720,7 +3696,16 @@ def permissions_checkboxes(selected=None):
     html = "<div class='permissions-grid'>"
     for p in PERMISSIONS:
         checked = "checked" if p in selected else ""
-        html += f"<label class='info-note' style='display:flex;align-items:center;gap:8px'><input type='checkbox' name='permissions' value='{p}' {checked}> <span>{permission_label(p)}</span></label>"
+        active_cls = " checked" if p in selected else ""
+        html += f"""
+        <label class='permission-card{active_cls}'>
+          <input type='checkbox' name='permissions' value='{p}' {checked} onchange="this.closest('.permission-card').classList.toggle('checked', this.checked)">
+          <div>
+            <div class='permission-card-title'>{permission_label(p)}</div>
+            <div class='permission-card-desc'>{safe(PERMISSION_DESCRIPTIONS.get(p, ''))}</div>
+          </div>
+        </label>
+        """
     html += "</div>"
     return html
 
