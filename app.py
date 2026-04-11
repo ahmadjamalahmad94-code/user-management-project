@@ -2102,6 +2102,9 @@ def dashboard_live_api():
 @login_required
 def dashboard():
     normalize_all_usage()
+    today = date.today()
+    week_start = get_week_start(today)
+    month_start = get_month_start(today)
     stats = {
         "all_count": query_one("SELECT COUNT(*) AS c FROM beneficiaries")["c"],
         "tawjihi_count": query_one("SELECT COUNT(*) AS c FROM beneficiaries WHERE user_type='tawjihi'")["c"],
