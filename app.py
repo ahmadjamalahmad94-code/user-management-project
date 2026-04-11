@@ -309,9 +309,10 @@ textarea{min-height:100px}
 .btn-danger{background:var(--danger);color:#fff}
 .btn-outline{background:#fff7ef;border:1px solid #ffd7af;color:#d97706}
 .btn-soft{background:#f8fbff;border:1px solid var(--line);color:var(--primary)}
-.flash{padding:12px 15px;border-radius:12px;margin-bottom:10px}
+.flash{padding:12px 15px;border-radius:14px;margin-bottom:10px;box-shadow:0 12px 28px rgba(15,23,42,.10)}
 .flash.success{background:#ecfdf3;color:#14532d;border:1px solid #bbf7d0}
 .flash.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.flash.info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
 .small{font-size:12px;color:var(--muted)}
 .pagination{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
 .pagination a,.pagination span{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;text-decoration:none;color:var(--text)}
@@ -328,32 +329,16 @@ textarea{min-height:100px}
 .permission-chip-wrap{display:flex;flex-wrap:wrap;gap:8px}
 .permission-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;background:#f8fbff;border:1px solid var(--line);font-size:12px;color:var(--primary);font-weight:700}
 .choice-section{margin-bottom:16px}
-.choice-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px}
-.choice-card{position:relative;min-height:96px;padding:10px 8px;border-radius:16px;text-align:center;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease,background .2s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fbff);overflow:hidden}
-.choice-card:before{content:'';position:absolute;inset:auto -20px -20px auto;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.26);transform:scale(0);transition:transform .22s ease}
-.choice-card:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 12px 22px rgba(15,23,42,.08)}
+.choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.choice-card{position:relative;min-height:108px;padding:12px 10px;border-radius:18px;text-align:center;cursor:pointer;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease,background .22s ease;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fbff);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.choice-card:before{content:'';position:absolute;inset:auto -20px -20px auto;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.28);transform:scale(0);transition:transform .25s ease}
+.choice-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 14px 24px rgba(15,23,42,.10)}
 .choice-card:hover:before{transform:scale(1)}
-.choice-card i{display:block;font-size:19px;margin-bottom:7px;animation:choiceFloat 3s ease-in-out infinite}
-.choice-card span{font-size:12px;font-weight:800;line-height:1.35}
-.choice-card small{display:block;font-size:10px;opacity:.82;margin-top:3px;line-height:1.35}
-.choice-card.active{color:#fff;border-color:transparent;transform:translateY(-1px) scale(1.02);box-shadow:0 16px 28px rgba(15,23,42,.14)}
+.choice-card i{display:block;font-size:20px;margin-bottom:6px;animation:choiceFloat 3s ease-in-out infinite}
+.choice-card span{font-size:12px;font-weight:800}
+.choice-card small{display:block;font-size:10px;opacity:.82;margin-top:3px}
+.choice-card.active{color:#fff;border-color:transparent;transform:translateY(-2px) scale(1.03);box-shadow:0 18px 32px rgba(15,23,42,.16)}
 .choice-card.active i{animation:choiceBounce .45s ease}
-.choice-section label{display:block;margin-bottom:6px;font-weight:800;color:var(--primary)}
-.archive-ops-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:10px}
-.archive-op-card{background:linear-gradient(180deg,#fff,#f8fbff);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 8px 20px rgba(15,23,42,.05)}
-.archive-op-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
-.archive-op-title{font-size:16px;font-weight:800;color:var(--primary)}
-.archive-op-desc{font-size:12px;color:var(--muted);line-height:1.7;margin-top:4px}
-.archive-op-icon{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#eef4fb;color:var(--primary)}
-.archive-op-card form,.archive-op-card .single-action{display:flex;flex-direction:column;gap:10px}
-.archive-op-card input[type="date"]{min-height:46px}
-.archive-op-card .btn{justify-content:center}
-.archive-op-card.op-archive .archive-op-icon{background:#fff7ed;color:#c2410c}
-.archive-op-card.op-clean .archive-op-icon{background:#fef2f2;color:#b91c1c}
-.archive-op-card.op-view .archive-op-icon{background:#eff6ff;color:#1d4ed8}
-.archive-op-card.op-restore .archive-op-icon{background:#ecfdf3;color:#166534}
-.archive-op-card.op-export .archive-op-icon{background:#f5f3ff;color:#7c3aed}
-.archive-op-card.op-delete .archive-op-icon{background:#fff7ed;color:#9a3412}
 .choice-blue{color:#1d4ed8;background:linear-gradient(180deg,#eff6ff,#dbeafe)}
 .choice-green{color:#15803d;background:linear-gradient(180deg,#f0fdf4,#dcfce7)}
 .choice-orange{color:#c2410c;background:linear-gradient(180deg,#fff7ed,#ffedd5)}
@@ -372,6 +357,27 @@ textarea{min-height:100px}
 .smart-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .toolbar-card{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
 .glass-card{background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,251,255,.96));backdrop-filter:blur(10px);border:1px solid rgba(220,232,243,.95)}
+.toast-stack{position:fixed;left:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:2500;max-width:min(420px,calc(100vw - 36px))}
+.toast{animation:toastIn .28s ease;border-radius:16px;padding:14px 16px;box-shadow:0 18px 32px rgba(15,23,42,.16)}
+.archive-actions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.archive-action-card{padding:16px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fbff);box-shadow:0 8px 20px rgba(15,23,42,.05)}
+.archive-action-card h4{margin:0 0 6px;color:var(--primary);font-size:17px}
+.archive-action-card p{margin:0 0 14px;color:var(--muted);font-size:12px;line-height:1.8}
+.archive-action-card .icon{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:18px}
+.archive-action-card .actions,.archive-action-card form{display:flex;flex-direction:column;gap:10px}
+.archive-action-card input[type='date']{min-height:44px}
+.archive-card-orange .icon{background:#fff7ed;color:#c2410c}
+.archive-card-red .icon{background:#fef2f2;color:#dc2626}
+.archive-card-blue .icon{background:#eff6ff;color:#2563eb}
+.archive-card-green .icon{background:#ecfdf3;color:#16a34a}
+.phone-helper{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:12px}
+.phone-helper .remaining{font-weight:700;color:#64748b}
+.phone-helper.good .remaining{color:#15803d}
+.phone-helper.bad .remaining{color:#dc2626}
+.live-pulse{position:relative}
+.live-pulse:after{content:'';position:absolute;top:8px;left:8px;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.4);animation:pulseDot 1.8s infinite}
+@keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(34,197,94,.35)}70%{box-shadow:0 0 0 10px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes choiceFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @keyframes choiceBounce{0%{transform:scale(.8)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
 @keyframes fadeInScale{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -401,10 +407,10 @@ textarea{min-height:100px}
 .metric-box .num{margin-top:8px;color:var(--primary);font-size:24px;font-weight:bold}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:999}
 .modal:target{display:flex}
-.modal-card{background:#fff;width:min(1100px,100%);max-height:90vh;overflow:auto;border-radius:20px;padding:20px;position:relative}
+.modal-card{background:#fff;width:min(960px,100%);max-height:88vh;overflow:auto;border-radius:20px;padding:18px;position:relative}
 .modal-close{position:absolute;left:16px;top:16px;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f3f6fb;color:var(--text);font-size:20px}
 .modal.show-modal{display:flex}
-.global-usage-modal-card{width:min(660px,100%);max-height:min(88vh,760px);overflow:auto;padding:16px 18px 18px}
+.global-usage-modal-card{width:min(560px,100%)}
 .form-section{display:none}
 .form-section.active{display:block}
 .section-title{margin:18px 0 10px 0;color:var(--primary);font-size:18px}
@@ -459,12 +465,6 @@ textarea{min-height:100px}
 @keyframes pulseRing{0%{transform:scale(.92);opacity:.35}70%{transform:scale(1.08);opacity:0}100%{opacity:0}}
 @keyframes timerAlertIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 @media (max-width:900px){
-  .choice-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-  .choice-card{min-height:84px;padding:8px 6px;border-radius:14px}
-  .choice-card i{font-size:17px;margin-bottom:5px}
-  .choice-card span{font-size:11px}
-  .choice-card small{font-size:9px}
-  .archive-ops-grid{grid-template-columns:1fr}
   .layout{display:block;position:relative}
   .sidebar{
     position:fixed;
@@ -491,7 +491,6 @@ textarea{min-height:100px}
   .layout.sidebar-collapsed .nav details summary{justify-content:center;padding:14px 10px}
   .main{padding:16px;width:100%}
   .modal-card{padding:16px}
-  .global-usage-modal-card{width:min(96vw,100%);max-height:90vh;padding:14px}
   .bar-row{grid-template-columns:100px 1fr 44px}
   .timer-big{font-size:36px}
   .timer-ring{width:230px;height:230px}
@@ -545,6 +544,17 @@ function closeSidebar(){
   applySidebarState(true);
   return false;
 }
+
+function renderToast(message, category){
+  const stack = document.getElementById('toast-stack');
+  if(!stack || !message) return;
+  const toast = document.createElement('div');
+  toast.className = 'flash toast ' + (category || 'success');
+  toast.textContent = message;
+  stack.appendChild(toast);
+  setTimeout(function(){ toast.style.opacity = '0'; toast.style.transform='translateY(8px)'; }, 3200);
+  setTimeout(function(){ toast.remove(); }, 3600);
+}
 function showLiveFlash(message, category){
   var area = document.getElementById('live-flash-area');
   if(!area) return;
@@ -552,7 +562,8 @@ function showLiveFlash(message, category){
   box.className = 'flash ' + (category || 'success');
   box.textContent = message;
   area.prepend(box);
-  setTimeout(function(){ box.remove(); }, 4000);
+  renderToast(message, category || 'success');
+  setTimeout(function(){ box.remove(); }, 1800);
 }
 function guardSingleSubmit(form){
   if(form.dataset.submitting === '1') return false;
@@ -841,8 +852,50 @@ async function pausePowerTimer(){ try{ const data = await postPowerTimer('/api/p
 async function resumePowerTimer(){ try{ const data = await postPowerTimer('/api/power-timer/resume', {}); showLiveFlash(data.message || 'تم الاستئناف.', 'success'); refreshPowerTimerStatus(); }catch(err){ showLiveFlash(err.message || 'تعذر الاستئناف', 'error'); } return false; }
 async function stopPowerTimer(){ if(!confirm('هل تريد إيقاف المؤقت نهائيًا لهذا اليوم؟')) return false; try{ const data = await postPowerTimer('/api/power-timer/stop', {}); showLiveFlash(data.message || 'تم الإيقاف النهائي.', 'success'); dismissPowerTimerAlert(); refreshPowerTimerStatus(); }catch(err){ showLiveFlash(err.message || 'تعذر الإيقاف النهائي', 'error'); } return false; }
 
+
+async function refreshDashboardLive(){
+  const root = document.getElementById('dashboard-live-root');
+  if(!root) return;
+  try{
+    const res = await fetch('/api/dashboard/live', {headers:{'X-Requested-With':'XMLHttpRequest'}});
+    const data = await res.json();
+    if(!res.ok || !data.ok) return;
+    ['all_count','today_usage','month_usage','archive_total','active_week'].forEach(function(key){
+      document.querySelectorAll('[data-live-key="'+key+'"]').forEach(function(el){ el.textContent = String(data[key] ?? '0'); });
+    });
+  }catch(e){}
+}
+function initPhoneCounters(){
+  document.querySelectorAll('input[name="phone"]').forEach(function(input){
+    if(input.dataset.counterReady === '1') return;
+    input.dataset.counterReady = '1';
+    input.setAttribute('maxlength','10');
+    input.setAttribute('inputmode','numeric');
+    input.setAttribute('autocomplete','off');
+    const helper = document.createElement('div');
+    helper.className = 'phone-helper';
+    helper.innerHTML = '<span>رقم الجوال الجديد يجب أن يكون 10 أرقام.</span><span class="remaining"></span>';
+    input.insertAdjacentElement('afterend', helper);
+    const remaining = helper.querySelector('.remaining');
+    const sync = function(){
+      input.value = (input.value || '').replace(/\D/g,'').slice(0,10);
+      const len = input.value.length;
+      const left = Math.max(0, 10 - len);
+      remaining.textContent = left === 0 ? 'مكتمل 10/10' : ('باقي ' + left + ' أرقام');
+      helper.classList.toggle('good', len === 10);
+      helper.classList.toggle('bad', len > 0 && len < 10);
+    };
+    input.addEventListener('input', sync);
+    sync();
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('#live-flash-area .flash').forEach(function(el){ renderToast(el.textContent || '', el.classList.contains('error') ? 'error' : (el.classList.contains('info') ? 'info' : 'success')); setTimeout(function(){ el.remove(); }, 1000); });
   initBeneficiaryForms();
+  initPhoneCounters();
+  refreshDashboardLive();
+  setInterval(refreshDashboardLive, 15000);
   applySidebarState(true);
   updateLiveClock();
   setInterval(updateLiveClock, 1000);
@@ -909,13 +962,13 @@ document.addEventListener('DOMContentLoaded', function(){
         <a class="logout-btn" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
       </div>
     </div>
-    <div id="live-flash-area"></div>
+    <div id="live-flash-area"></div><div id="toast-stack" class="toast-stack"></div>
     <div id="global-usage-modal" class="modal" onclick="if(event.target===this) closeGlobalUsageModal()">
       <div class="modal-card global-usage-modal-card">
         <button class="modal-close" type="button" onclick="return closeGlobalUsageModal()">×</button>
-        <div class="hero" style="margin-bottom:12px;padding:18px 20px;border-radius:22px">
-          <h1 style="font-size:24px;margin-bottom:4px">إضافة بطاقة</h1>
-          <p style="font-size:14px">اختر السبب ونوع البطاقة ثم احفظ.</p>
+        <div class="hero" style="margin-bottom:14px">
+          <h1>إضافة بطاقة</h1>
+          <p>اختر السبب ونوع البطاقة ثم احفظ.</p>
         </div>
         <form id="global-usage-form" method="POST" onsubmit="return guardSingleSubmit(this)">
           <div class="choice-section">
@@ -1770,6 +1823,19 @@ def setup_database():
         archived_by_username TEXT DEFAULT ''
     )
     """)
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS archive_id SERIAL")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS original_log_id INTEGER")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS beneficiary_id INTEGER")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS usage_reason TEXT NOT NULL DEFAULT ''")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS card_type TEXT NOT NULL DEFAULT 'ساعة'")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS usage_date DATE NOT NULL DEFAULT CURRENT_DATE")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS usage_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT ''")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS added_by_account_id INTEGER")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS added_by_username TEXT DEFAULT ''")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS archived_by_account_id INTEGER")
+    cur.execute("ALTER TABLE beneficiary_usage_logs_archive ADD COLUMN IF NOT EXISTS archived_by_username TEXT DEFAULT ''")
 
 
     cur.execute("""
@@ -1873,7 +1939,7 @@ def login():
         flash("اسم المستخدم أو كلمة المرور غير صحيحة.", "error")
     content = """
     <div class="login-wrap">
-      <div class="hero">
+      <div id="dashboard-live-root" class="hero">
         <h1>تسجيل الدخول</h1>
       </div>
       <div class="card">
@@ -2014,6 +2080,24 @@ def build_power_timer_status(row=None):
     return payload
 
 
+@app.route("/api/dashboard/live")
+@login_required
+def dashboard_live_api():
+    normalize_all_usage()
+    today = date.today()
+    month_start = get_month_start(today)
+    week_start = get_week_start(today)
+    payload = {
+        "ok": True,
+        "all_count": query_one("SELECT COUNT(*) AS c FROM beneficiaries")["c"],
+        "today_usage": query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date = CURRENT_DATE")["c"],
+        "month_usage": query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date >= %s", [month_start])["c"],
+        "archive_total": query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs_archive")["c"],
+        "active_week": query_one("SELECT COUNT(DISTINCT beneficiary_id) AS c FROM beneficiary_usage_logs WHERE usage_date >= %s", [week_start])["c"],
+    }
+    return jsonify(payload)
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -2099,16 +2183,16 @@ def dashboard():
     </div>
 
     <div class="grid">
-      <div class="stat"><h3>إجمالي المستفيدين</h3><div class="num">{stats['all_count']}</div></div>
+      <div class="stat live-pulse"><h3>إجمالي المستفيدين</h3><div class="num" data-live-key="all_count">{stats['all_count']}</div></div>
       <div class="stat"><h3>طلاب التوجيهي</h3><div class="num">{stats['tawjihi_count']}</div></div>
       <div class="stat"><h3>الطلاب الجامعيون</h3><div class="num">{stats['university_count']}</div></div>
       <div class="stat"><h3>الفري لانسر</h3><div class="num">{stats['freelancer_count']}</div></div>
-      <div class="stat"><h3>حسابات النظام</h3><div class="num">{stats['accounts_count']}</div></div>
-      <div class="stat"><h3>الحسابات الفعالة</h3><div class="num">{stats['active_accounts']}</div></div>
+      <div class="stat"><h3>بطاقات اليوم</h3><div class="num" data-live-key="today_usage">{query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date = CURRENT_DATE")["c"]}</div></div>
+      <div class="stat"><h3>أرشيف السجل</h3><div class="num" data-live-key="archive_total">{query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs_archive")["c"]}</div></div>
     </div>
 
     <div class="kpi-strip">
-      <div class="kpi"><div class="label">إجمالي الاستفادات هذا الأسبوع</div><div class="value">{stats['week_usage_total']}</div></div>
+      <div class="kpi"><div class="label">إجمالي الاستفادات هذا الأسبوع</div><div class="value">{stats['week_usage_total']}</div></div><div class="kpi"><div class="label">بطاقات هذا الشهر</div><div class="value" data-live-key="month_usage">{query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs WHERE usage_date >= %s", [month_start])["c"]}</div></div><div class="kpi"><div class="label">نشطون هذا الأسبوع</div><div class="value" data-live-key="active_week">{query_one("SELECT COUNT(DISTINCT beneficiary_id) AS c FROM beneficiary_usage_logs WHERE usage_date >= %s", [week_start])["c"]}</div></div>
       <div class="kpi"><div class="label">الخاضعون لنظام البطاقات / الحد الأسبوعي</div><div class="value">{stats['card_based_count']}</div></div>
       <div class="kpi"><div class="label">نسبة الجامعات من الإجمالي</div><div class="value">{round((stats['university_count'] / stats['all_count']) * 100) if stats['all_count'] else 0}%</div></div>
       <div class="kpi"><div class="label">نسبة التوجيهي من الإجمالي</div><div class="value">{round((stats['tawjihi_count'] / stats['all_count']) * 100) if stats['all_count'] else 0}%</div></div>
@@ -2212,7 +2296,7 @@ def format_modal_fields(data=None, action="", scope_id="beneficiary-form", submi
           <div><label>الاسم الثاني</label><input name="second_name" value="{safe(data.get('second_name', ''))}"></div>
           <div><label>الاسم الثالث</label><input name="third_name" value="{safe(data.get('third_name', ''))}"></div>
           <div><label>الاسم الرابع</label><input name="fourth_name" value="{safe(data.get('fourth_name', ''))}"></div>
-          <div><label>الجوال</label><input name="phone" value="{safe(data.get('phone', ''))}"></div>
+          <div><label>الجوال</label><input name="phone" value="{safe(data.get('phone', ''))}" maxlength="10" inputmode="numeric" placeholder="0599123456"></div>
         </div>
 
         <div class="form-section section-tawjihi {'active' if selected_type == 'tawjihi' else ''}">
@@ -2728,6 +2812,20 @@ def beneficiary_form_html(data=None, action="", title=""):
     """
 
 
+def is_valid_new_phone(phone: str) -> bool:
+    phone = normalize_phone(phone)
+    return len(phone) == 10
+
+def is_phone_change_allowed(phone: str, original_phone: str | None = None) -> bool:
+    phone = normalize_phone(phone)
+    original_phone = normalize_phone(original_phone or "")
+    if not phone:
+        return False
+    if phone == original_phone and len(original_phone) != 10:
+        return True
+    return len(phone) == 10
+
+
 def collect_beneficiary_form():
     data = {}
     for col in CSV_IMPORT_COLUMNS:
@@ -2747,6 +2845,9 @@ def collect_beneficiary_form():
 def add_beneficiary_page():
     if request.method == "POST":
         data = collect_beneficiary_form()
+        if not is_valid_new_phone(data.get("phone", "")):
+            flash("رقم الجوال للمستفيد الجديد يجب أن يكون 10 أرقام بالضبط.", "error")
+            return render_page("إضافة مستفيد", beneficiary_form_html(data, action=url_for("add_beneficiary_page"), title=page_title_map.get(data.get('user_type') or clean_csv_value(request.args.get('user_type', 'tawjihi')) or 'tawjihi', "إضافة مستفيد")))
         duplicate = find_duplicate_phone(data.get("phone"))
         if duplicate:
             flash(f"رقم الجوال مستخدم مسبقًا للمستفيد: {safe(duplicate.get('full_name'))}.", "error")
@@ -2800,6 +2901,12 @@ def edit_beneficiary_page(beneficiary_id):
     if request.method == "POST":
         data = collect_beneficiary_form()
         data["id"] = beneficiary_id
+        if not is_phone_change_allowed(data.get("phone", ""), row.get("phone")):
+            message = "رقم الجوال الجديد يجب أن يكون 10 أرقام بالضبط."
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"ok": False, "message": message, "category": "error"}), 400
+            flash(message, "error")
+            return redirect(url_for("beneficiaries_page", user_type=row.get("user_type")))
         duplicate = find_duplicate_phone(data.get("phone"), exclude_id=beneficiary_id)
         if duplicate:
             message = f"رقم الجوال مستخدم مسبقًا للمستفيد: {safe(duplicate.get('full_name'))}."
@@ -3391,47 +3498,56 @@ def usage_logs_page():
     if not row_html:
         row_html = "<tr><td colspan='9' class='empty-state'>لا توجد بطاقات مطابقة لخيارات البحث الحالية.</td></tr>"
 
-    archive_buttons = ""
+    archive_tools = []
     if has_permission('archive_logs'):
-        archive_buttons += f"""
-        <div class='archive-op-card op-archive'>
-          <div class='archive-op-head'><div><div class='archive-op-title'>أرشفة كاملة</div><div class='archive-op-desc'>انقل كل السجل الحالي إلى الأرشيف مع الحفاظ على إمكانية الاسترجاع لاحقًا.</div></div><div class='archive-op-icon'><i class='fa-solid fa-box-archive'></i></div></div>
+        archive_tools.append(f"""
+        <div class='archive-action-card archive-card-orange'>
+          <div class='icon'><i class='fa-solid fa-box-archive'></i></div>
+          <h4>أرشفة كاملة</h4>
+          <p>انقل كل السجل الحالي إلى الأرشيف مع الاحتفاظ بإمكانية الاسترجاع لاحقًا.</p>
           <form method='POST' action='{url_for('archive_usage_logs')}' onsubmit="return confirm('سيتم نقل كل السجل الحالي إلى الأرشيف. متابعة؟')">
             <button class='btn btn-outline' type='submit'><i class='fa-solid fa-box-archive'></i> أرشفة كاملة</button>
           </form>
         </div>
-        <div class='archive-op-card op-archive'>
-          <div class='archive-op-head'><div><div class='archive-op-title'>أرشفة جزئية</div><div class='archive-op-desc'>انقل السجلات الأقدم من التاريخ الذي تحدده فقط.</div></div><div class='archive-op-icon'><i class='fa-solid fa-calendar-minus'></i></div></div>
+        <div class='archive-action-card archive-card-orange'>
+          <div class='icon'><i class='fa-solid fa-calendar-minus'></i></div>
+          <h4>أرشفة جزئية</h4>
+          <p>انقل السجلات الأقدم من التاريخ الذي تحدده فقط.</p>
           <form method='POST' action='{url_for('archive_usage_logs_before')}' onsubmit="return confirm('سيتم نقل السجلات الأقدم من التاريخ المحدد إلى الأرشيف. متابعة؟')">
             <input type='date' name='before_date' required>
             <button class='btn btn-soft' type='submit'><i class='fa-solid fa-calendar-minus'></i> أرشفة ما قبل تاريخ</button>
           </form>
         </div>
-        """
+        """)
     if has_permission('backup'):
-        archive_buttons += f"""
-        <div class='archive-op-card op-clean'>
-          <div class='archive-op-head'><div><div class='archive-op-title'>تنظيف كامل</div><div class='archive-op-desc'>احذف كل السجل الحالي نهائيًا عندما تكون متأكدًا أنك لا تحتاجه.</div></div><div class='archive-op-icon'><i class='fa-solid fa-trash'></i></div></div>
+        archive_tools.append(f"""
+        <div class='archive-action-card archive-card-red'>
+          <div class='icon'><i class='fa-solid fa-trash-can'></i></div>
+          <h4>تنظيف كامل</h4>
+          <p>يحذف كل السجل الحالي نهائيًا. استخدمه فقط بعد التأكد أنك لا تحتاج السجلات.</p>
           <form method='POST' action='{url_for('clear_usage_logs')}' onsubmit="return confirm('سيتم حذف كل السجل الحالي نهائيًا. متابعة؟')">
-            <button class='btn btn-danger' type='submit'><i class='fa-solid fa-trash'></i> تنظيف كامل</button>
+            <button class='btn btn-danger' type='submit'><i class='fa-solid fa-trash-can'></i> تنظيف كامل</button>
           </form>
         </div>
-        <div class='archive-op-card op-clean'>
-          <div class='archive-op-head'><div><div class='archive-op-title'>تنظيف جزئي</div><div class='archive-op-desc'>احذف فقط السجلات الأقدم من التاريخ المحدد واترك الباقي كما هو.</div></div><div class='archive-op-icon'><i class='fa-solid fa-filter-circle-xmark'></i></div></div>
-          <form method='POST' action='{url_for('clear_usage_logs_before')}' onsubmit="return confirm('سيتم حذف السجلات الأقدم من التاريخ المحدد. متابعة؟')">
+        <div class='archive-action-card archive-card-red'>
+          <div class='icon'><i class='fa-solid fa-filter-circle-xmark'></i></div>
+          <h4>تنظيف جزئي</h4>
+          <p>يحذف فقط السجلات الأقدم من التاريخ الذي تحدده كما هي.</p>
+          <form method='POST' action='{url_for('clear_usage_logs_before')}' onsubmit="return confirm('سيتم حذف السجلات الأقدم من التاريخ المحدد نهائيًا. متابعة؟')">
             <input type='date' name='before_date' required>
             <button class='btn btn-soft' type='submit'><i class='fa-solid fa-filter-circle-xmark'></i> تنظيف جزئي</button>
           </form>
         </div>
-        """
+        """)
     if has_permission('view_archive'):
-        archive_buttons += f"""
-        <div class='archive-op-card op-view'>
-          <div class='archive-op-head'><div><div class='archive-op-title'>فتح الأرشيف</div><div class='archive-op-desc'>استعرض السجلات المؤرشفة أو صدّرها أو استرجعها حسب صلاحياتك.</div></div><div class='archive-op-icon'><i class='fa-solid fa-box-open'></i></div></div>
-          <div class='single-action'><a class='btn btn-secondary' href='{url_for('usage_archive_page')}'><i class='fa-solid fa-box-archive'></i> فتح الأرشيف ({archive_total})</a></div>
+        archive_tools.append(f"""
+        <div class='archive-action-card archive-card-blue'>
+          <div class='icon'><i class='fa-solid fa-box-open'></i></div>
+          <h4>فتح الأرشيف</h4>
+          <p>استعرض السجلات المؤرشفة أو صدّرها أو أرجعها حسب صلاحياتك.</p>
+          <div class='actions'><a class='btn btn-secondary' href='{url_for('usage_archive_page')}'><i class='fa-solid fa-box-archive'></i> فتح الأرشيف ({archive_total})</a></div>
         </div>
-        """
-
+        """)
     content = f"""
     <div class="hero">
       <h1>سجل البطاقات التفصيلي</h1>
@@ -3461,11 +3577,11 @@ def usage_logs_page():
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px">
-      <div class="toolbar-card">
-        <div><strong>أدوات السجل</strong><div class="small">نفّذ التنظيف أو الأرشفة أو افتح الأرشيف حسب صلاحياتك.</div></div>
-        <div class="archive-ops-grid">{archive_buttons}</div>
+    <div class="card glass-card" style="margin-top:16px">
+      <div class="toolbar-card" style="margin-bottom:14px">
+        <div><strong>أدوات السجل</strong><div class="small">الأرشفة والتنظيف وفتح الأرشيف بواجهة أوضح وأسرع.</div></div>
       </div>
+      <div class="archive-actions-grid">{''.join(archive_tools)}</div>
     </div>
 
     <div class="card" style="margin-top:16px">
@@ -3576,42 +3692,39 @@ def usage_archive_page():
           <td>{safe(r.get('archived_by_username')) or '-'}</td><td>{format_dt_short(r.get('archived_at'))}</td><td class='cell-wrap'>{safe(r.get('notes')) or '-'}</td>
         </tr>
         """
-    actions = ""
+    action_cards = []
     if has_permission('restore_archive'):
-        actions += f"""
-        <div class='archive-op-card op-restore'>
-          <div class='archive-op-head'><div><div class='archive-op-title'>استرجاع كامل</div><div class='archive-op-desc'>أعد كل محتوى الأرشيف إلى السجل الحالي ثم أزل النسخ من الأرشيف.</div></div><div class='archive-op-icon'><i class='fa-solid fa-rotate-left'></i></div></div>
-          <form method='POST' action='{url_for('restore_archive_logs')}' onsubmit="return confirm('سيتم استرجاع كل الأرشيف إلى السجل الحالي مع حذف النسخ من الأرشيف. متابعة؟')">
-            <button class='btn btn-secondary' type='submit'><i class='fa-solid fa-rotate-left'></i> استرجاع الكل</button>
-          </form>
+        action_cards.append(f"""
+        <div class='archive-action-card archive-card-green'>
+          <div class='icon'><i class='fa-solid fa-rotate-left'></i></div>
+          <h4>استرجاع كامل</h4><p>أعد كل الأرشيف إلى السجل الحالي مع حذف النسخ من الأرشيف.</p>
+          <form method='POST' action='{url_for('restore_archive_logs')}' onsubmit="return confirm('سيتم استرجاع كل الأرشيف إلى السجل الحالي مع حذف النسخ من الأرشيف. متابعة؟')"><button class='btn btn-secondary' type='submit'><i class='fa-solid fa-rotate-left'></i> استرجاع الكل</button></form>
         </div>
-        <div class='archive-op-card op-restore'>
-          <div class='archive-op-head'><div><div class='archive-op-title'>استرجاع جزئي</div><div class='archive-op-desc'>استرجع فقط السجلات الأقدم من التاريخ الذي تختاره.</div></div><div class='archive-op-icon'><i class='fa-solid fa-clock-rotate-left'></i></div></div>
-          <form method='POST' action='{url_for('restore_archive_logs_before')}' onsubmit="return confirm('سيتم استرجاع الأرشيف الأقدم من التاريخ المحدد. متابعة؟')">
-            <input type='date' name='before_date' required>
-            <button class='btn btn-soft' type='submit'><i class='fa-solid fa-clock-rotate-left'></i> استرجاع جزئي</button>
-          </form>
+        <div class='archive-action-card archive-card-green'>
+          <div class='icon'><i class='fa-solid fa-clock-rotate-left'></i></div>
+          <h4>استرجاع جزئي</h4><p>استرجع فقط السجلات المؤرشفة الأقدم من التاريخ المحدد.</p>
+          <form method='POST' action='{url_for('restore_archive_logs_before')}' onsubmit="return confirm('سيتم استرجاع الأرشيف الأقدم من التاريخ المحدد. متابعة؟')"><input type='date' name='before_date' required><button class='btn btn-soft' type='submit'><i class='fa-solid fa-clock-rotate-left'></i> استرجاع جزئي</button></form>
         </div>
-        """
+        """)
     if has_permission('export_archive'):
-        actions += f"""
-        <div class='archive-op-card op-export'>
-          <div class='archive-op-head'><div><div class='archive-op-title'>تصدير الأرشيف</div><div class='archive-op-desc'>نزّل نسخة Excel من كامل الأرشيف لمراجعة خارجية أو حفظ احتياطي.</div></div><div class='archive-op-icon'><i class='fa-solid fa-file-excel'></i></div></div>
-          <div class='single-action'><a class='btn btn-outline' href='{url_for('export_archive_excel')}'><i class='fa-solid fa-file-excel'></i> تصدير Excel</a></div>
+        action_cards.append(f"""
+        <div class='archive-action-card archive-card-blue'>
+          <div class='icon'><i class='fa-solid fa-file-excel'></i></div>
+          <h4>تصدير الأرشيف</h4><p>نزّل نسخة Excel منظمة لكل ما هو محفوظ في الأرشيف.</p>
+          <div class='actions'><a class='btn btn-outline' href='{url_for('export_archive_excel')}'><i class='fa-solid fa-file-excel'></i> تصدير Excel</a></div>
         </div>
-        """
+        """)
     if has_permission('delete_archive'):
-        actions += f"""
-        <div class='archive-op-card op-delete'>
-          <div class='archive-op-head'><div><div class='archive-op-title'>تنظيف الأرشيف</div><div class='archive-op-desc'>احذف كل ما داخل الأرشيف نهائيًا. استخدمه فقط عند التأكد التام.</div></div><div class='archive-op-icon'><i class='fa-solid fa-trash-can'></i></div></div>
-          <form method='POST' action='{url_for('clear_archive_logs')}' onsubmit="return confirm('سيتم حذف كامل الأرشيف نهائيًا. متابعة؟')">
-            <button class='btn btn-danger' type='submit'><i class='fa-solid fa-trash-can'></i> تنظيف الأرشيف</button>
-          </form>
+        action_cards.append(f"""
+        <div class='archive-action-card archive-card-red'>
+          <div class='icon'><i class='fa-solid fa-trash-can'></i></div>
+          <h4>تنظيف الأرشيف</h4><p>يحذف كل الأرشيف نهائيًا. هذه العملية حساسة وغير قابلة للتراجع.</p>
+          <form method='POST' action='{url_for('clear_archive_logs')}' onsubmit="return confirm('سيتم حذف كامل الأرشيف نهائيًا. متابعة؟')"><button class='btn btn-danger' type='submit'><i class='fa-solid fa-trash-can'></i> تنظيف الأرشيف</button></form>
         </div>
-        """
+        """)
     content = f"""
     <div class='hero'><h1>أرشيف سجل البطاقات</h1><p>منطقة آمنة لحفظ السجلات القديمة مع صلاحيات منفصلة للاستعراض، التصدير، الاسترجاع، والتنظيف.</p></div>
-    <div class='card glass-card'><div class='toolbar-card'><div><strong>عمليات الأرشيف</strong><div class='small'>كل عملية هنا مرتبطة بصلاحية مستقلة.</div></div></div><div class='archive-ops-grid'>{actions}</div></div>
+    <div class='card glass-card'><div class='toolbar-card' style='margin-bottom:14px'><div><strong>عمليات الأرشيف</strong><div class='small'>كل عملية هنا مرتبطة بصلاحية مستقلة.</div></div></div><div class='archive-actions-grid'>{''.join(action_cards)}</div></div>
     <div class='card' style='margin-top:16px'><div class='table-wrap'><table><thead><tr><th>#</th><th>الاسم</th><th>الجوال</th><th>النوع</th><th>السبب</th><th>النوع</th><th>وقت الاستخدام</th><th>أرشفها</th><th>وقت الأرشفة</th><th>ملاحظات</th></tr></thead><tbody>{row_html or "<tr><td colspan='10' class='empty-state'>الأرشيف فارغ حاليًا.</td></tr>"}</tbody></table></div></div>
     """
     return render_page("أرشيف سجل البطاقات", content)
