@@ -22,6 +22,7 @@ import os
 import re
 import threading
 from datetime import date, timedelta, datetime
+from zoneinfo import ZoneInfo
 from functools import wraps
 from uuid import uuid4
 
@@ -56,6 +57,14 @@ IMPORT_TASKS = {}
 IMPORT_TASKS_LOCK = threading.Lock()
 IMPORT_LOG_LIMIT = 300
 IMPORT_BATCH_SIZE = int(os.getenv("IMPORT_BATCH_SIZE", "250"))
+
+APP_TZ = ZoneInfo("Asia/Gaza")
+
+def now_local() -> datetime:
+    return datetime.now(APP_TZ)
+
+def today_local() -> date:
+    return now_local().date()
 
 
 def get_database_url() -> str:
@@ -328,18 +337,17 @@ textarea{min-height:100px}
 .permission-card.checked{border-color:#7dd3fc;background:linear-gradient(135deg,#eff8ff,#f5f3ff)}
 .permission-chip-wrap{display:flex;flex-wrap:wrap;gap:8px}
 .permission-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;background:#f8fbff;border:1px solid var(--line);font-size:12px;color:var(--primary);font-weight:700}
-.choice-section{margin-bottom:16px}
-.choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
-.choice-card{position:relative;min-height:82px;height:82px;padding:8px 7px;border-radius:16px;text-align:center;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fbff);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.choice-card:before{content:'';position:absolute;inset:auto -20px -20px auto;width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.24);transform:scale(0);transition:transform .22s ease}
-.choice-card:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 10px 18px rgba(15,23,42,.08)}
+.choice-section{margin-bottom:14px}
+.choice-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:8px}
+.choice-card{position:relative;height:82px;min-height:82px;max-height:82px;padding:8px 6px;border-radius:16px;text-align:center;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fbff);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.choice-card:before{content:'';position:absolute;inset:auto -18px -18px auto;width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.24);transform:scale(0);transition:transform .22s ease}
+.choice-card:hover{transform:translateY(-3px) scale(1.015);box-shadow:0 10px 18px rgba(15,23,42,.08)}
 .choice-card:hover:before{transform:scale(1)}
-.choice-card i{display:block;font-size:18px;margin-bottom:4px;animation:choiceFloat 3s ease-in-out infinite}
-.choice-card span{font-size:11px;font-weight:800;line-height:1.2}
+.choice-card i{display:block;font-size:18px;margin-bottom:4px;animation:choiceFloat 3s ease-in-out infinite;line-height:1}
+.choice-card span{font-size:11px;font-weight:800;line-height:1.15}
 .choice-card small{display:block;font-size:9px;opacity:.82;margin-top:2px;line-height:1.15}
-.choice-card.active{color:#fff;border-color:transparent;transform:translateY(-1px) scale(1.02);box-shadow:0 14px 24px rgba(15,23,42,.14);animation:choicePulse .42s ease}
+.choice-card.active{color:#fff;border-color:transparent;transform:translateY(-2px) scale(1.02);box-shadow:0 14px 24px rgba(15,23,42,.12)}
 .choice-card.active i{animation:choiceBounce .45s ease}
-.choice-card .choice-ripple{position:absolute;border-radius:50%;transform:scale(0);background:rgba(255,255,255,.40);animation:choiceRipple .55s ease-out;pointer-events:none}
 .choice-blue{color:#1d4ed8;background:linear-gradient(180deg,#eff6ff,#dbeafe)}
 .choice-green{color:#15803d;background:linear-gradient(180deg,#f0fdf4,#dcfce7)}
 .choice-orange{color:#c2410c;background:linear-gradient(180deg,#fff7ed,#ffedd5)}
@@ -381,8 +389,6 @@ textarea{min-height:100px}
 @keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes choiceFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @keyframes choiceBounce{0%{transform:scale(.8)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
-@keyframes choicePulse{0%{transform:scale(.96)}50%{transform:scale(1.045)}100%{transform:scale(1.02)}}
-@keyframes choiceRipple{to{transform:scale(4);opacity:0}}
 @keyframes fadeInScale{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 .usage-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px}
 .usage-log-meta{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
@@ -467,7 +473,16 @@ textarea{min-height:100px}
 .timer-pulse:after{content:'';position:absolute;inset:-6px;border-radius:inherit;border:2px solid currentColor;opacity:0;animation:pulseRing 1.8s infinite}
 @keyframes pulseRing{0%{transform:scale(.92);opacity:.35}70%{transform:scale(1.08);opacity:0}100%{opacity:0}}
 @keyframes timerAlertIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@media (max-width:1200px){
+  .choice-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
 @media (max-width:900px){
+  .choice-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .choice-card{height:76px;min-height:76px;max-height:76px;padding:7px 5px;border-radius:14px}
+  .choice-card i{font-size:16px;margin-bottom:3px}
+  .choice-card span{font-size:10px}
+  .choice-card small{font-size:8px}
+
   .layout{display:block;position:relative}
   .sidebar{
     position:fixed;
@@ -498,11 +513,6 @@ textarea{min-height:100px}
   .timer-big{font-size:36px}
   .timer-ring{width:230px;height:230px}
   .timer-big.timer-big-ring{font-size:44px}
-  .choice-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .choice-card{min-height:74px;height:74px;padding:7px 6px;border-radius:14px}
-  .choice-card i{font-size:16px;margin-bottom:3px}
-  .choice-card span{font-size:10px}
-  .choice-card small{font-size:8px}
   .topbar{align-items:flex-start}
   .topbar-left{width:100%;justify-content:space-between}
   .userbox{width:100%;justify-content:flex-start}
@@ -575,10 +585,6 @@ function showLiveFlash(message, category){
 }
 function guardSingleSubmit(form){
   if(form.dataset.submitting === '1') return false;
-  if(form && form.id === 'global-usage-form'){
-    var reason = form.querySelector('#usage_reason');
-    if(reason && reason.value){ bumpChoiceUsage(reason.value); }
-  }
   form.dataset.submitting = '1';
   form.classList.add('ajax-saving');
   var btn = form.querySelector('button[type="submit"]');
@@ -628,57 +634,23 @@ async function submitBeneficiaryEdit(form, rowId, modalId){
   return false;
 }
 
-function getChoiceUsageMap(){
-  try{ return JSON.parse(localStorage.getItem('usage_reason_counts') || '{}'); }catch(e){ return {}; }
-}
-function saveChoiceUsageMap(map){
-  try{ localStorage.setItem('usage_reason_counts', JSON.stringify(map || {})); }catch(e){}
-}
-function bumpChoiceUsage(value){
-  if(!value) return;
-  const map = getChoiceUsageMap();
-  map[value] = (parseInt(map[value] || '0', 10) || 0) + 1;
-  saveChoiceUsageMap(map);
-}
-function addChoiceRipple(card, evt){
-  if(!card) return;
-  const ripple = document.createElement('span');
-  ripple.className = 'choice-ripple';
-  const rect = card.getBoundingClientRect();
-  const size = Math.max(rect.width, rect.height);
-  const x = ((evt && evt.clientX) ? evt.clientX : rect.left + rect.width / 2) - rect.left - size / 2;
-  const y = ((evt && evt.clientY) ? evt.clientY : rect.top + rect.height / 2) - rect.top - size / 2;
-  ripple.style.width = size + 'px';
-  ripple.style.height = size + 'px';
-  ripple.style.left = x + 'px';
-  ripple.style.top = y + 'px';
-  card.appendChild(ripple);
-  setTimeout(()=>ripple.remove(), 600);
-}
 function sortChoiceCards(containerId){
   const wrap = document.getElementById(containerId);
   if(!wrap) return;
-  const counts = getChoiceUsageMap();
   const cards = Array.from(wrap.querySelectorAll('.choice-card'));
-  cards.sort((a,b)=>{
-    const ca = parseInt(counts[a.dataset.value || ''] || '0', 10) || 0;
-    const cb = parseInt(counts[b.dataset.value || ''] || '0', 10) || 0;
-    if(cb !== ca) return cb - ca;
-    return parseInt(b.dataset.rank||'0',10)-parseInt(a.dataset.rank||'0',10);
-  });
+  cards.sort((a,b)=>parseInt(b.dataset.rank||'0',10)-parseInt(a.dataset.rank||'0',10));
   cards.forEach(card=>wrap.appendChild(card));
 }
-function selectChoice(containerId, hiddenId, card, evt){
+function selectChoice(containerId, hiddenId, card){
   const wrap = document.getElementById(containerId);
   const hidden = document.getElementById(hiddenId);
   if(!wrap || !hidden || !card) return;
   wrap.querySelectorAll('.choice-card').forEach(c=>c.classList.remove('active'));
-  addChoiceRipple(card, evt);
   card.classList.add('active');
   hidden.value = card.dataset.value || '';
 }
-function selectReason(card, evt){ selectChoice('usage-reason-grid', 'usage_reason', card, evt); }
-function selectCardType(card, evt){ selectChoice('card-type-grid', 'card_type', card, evt); }
+function selectReason(card){ selectChoice('usage-reason-grid', 'usage_reason', card); }
+function selectCardType(card){ selectChoice('card-type-grid', 'card_type', card); }
 function openGlobalUsageModal(rowId, submitUrl){
   const modal = document.getElementById('global-usage-modal');
   const form = document.getElementById('global-usage-form');
@@ -1021,22 +993,22 @@ document.addEventListener('DOMContentLoaded', function(){
             <label>سبب البطاقة</label>
             <input type="hidden" name="usage_reason" id="usage_reason" required>
             <div id="usage-reason-grid" class="choice-grid">
-              <div class="choice-card choice-blue" data-rank="6" data-value="تقديم اختبار" onclick="selectReason(this, event)"><i class="fa-solid fa-pen-to-square"></i><span>اختبار</span><small>سريع ومباشر</small></div>
-              <div class="choice-card choice-green" data-rank="5" data-value="دراسة" onclick="selectReason(this, event)"><i class="fa-solid fa-book-open-reader"></i><span>دراسة</span><small>جلسة تعلم</small></div>
-              <div class="choice-card choice-orange" data-rank="4" data-value="حل واجب" onclick="selectReason(this, event)"><i class="fa-solid fa-list-check"></i><span>واجب</span><small>إنجاز مهمة</small></div>
-              <div class="choice-card choice-purple" data-rank="3" data-value="عمل حر" onclick="selectReason(this, event)"><i class="fa-solid fa-laptop-code"></i><span>عمل حر</span><small>شغل مستقل</small></div>
-              <div class="choice-card choice-cyan" data-rank="2" data-value="تحميل محاضرات" onclick="selectReason(this, event)"><i class="fa-solid fa-cloud-arrow-down"></i><span>تحميل</span><small>محاضرات وملفات</small></div>
-              <div class="choice-card choice-red" data-rank="1" data-value="تنفيذ تجربة" onclick="selectReason(this, event)"><i class="fa-solid fa-flask-vial"></i><span>تجربة</span><small>اختبار عملي</small></div>
-              <div class="choice-card choice-slate" data-rank="0" data-value="أخرى" onclick="selectReason(this, event)"><i class="fa-solid fa-shapes"></i><span>أخرى</span><small>سبب مخصص</small></div>
+              <div class="choice-card choice-blue" data-rank="6" data-value="تقديم اختبار" onclick="selectReason(this)"><i class="fa-solid fa-pen-to-square"></i><span>اختبار</span><small>سريع ومباشر</small></div>
+              <div class="choice-card choice-green" data-rank="5" data-value="دراسة" onclick="selectReason(this)"><i class="fa-solid fa-book-open-reader"></i><span>دراسة</span><small>جلسة تعلم</small></div>
+              <div class="choice-card choice-orange" data-rank="4" data-value="حل واجب" onclick="selectReason(this)"><i class="fa-solid fa-list-check"></i><span>واجب</span><small>إنجاز مهمة</small></div>
+              <div class="choice-card choice-purple" data-rank="3" data-value="عمل حر" onclick="selectReason(this)"><i class="fa-solid fa-laptop-code"></i><span>عمل حر</span><small>شغل مستقل</small></div>
+              <div class="choice-card choice-cyan" data-rank="2" data-value="تحميل محاضرات" onclick="selectReason(this)"><i class="fa-solid fa-cloud-arrow-down"></i><span>تحميل</span><small>محاضرات وملفات</small></div>
+              <div class="choice-card choice-red" data-rank="1" data-value="تنفيذ تجربة" onclick="selectReason(this)"><i class="fa-solid fa-flask-vial"></i><span>تجربة</span><small>اختبار عملي</small></div>
+              <div class="choice-card choice-slate" data-rank="0" data-value="أخرى" onclick="selectReason(this)"><i class="fa-solid fa-shapes"></i><span>أخرى</span><small>سبب مخصص</small></div>
             </div>
           </div>
           <div class="choice-section">
             <label>نوع البطاقة</label>
             <input type="hidden" name="card_type" id="card_type" value="ساعة" required>
-            <div id="card-type-grid" class="choice-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-              <div class="choice-card choice-blue" data-rank="3" data-value="ساعة" onclick="selectCardType(this, event)"><i class="fa-regular fa-clock"></i><span>ساعة</span><small>استخدام سريع</small></div>
-              <div class="choice-card choice-purple" data-rank="2" data-value="ساعتين" onclick="selectCardType(this, event)"><i class="fa-solid fa-hourglass-half"></i><span>ساعتين</span><small>جلسة مركزة</small></div>
-              <div class="choice-card choice-orange" data-rank="1" data-value="3 ساعات" onclick="selectCardType(this, event)"><i class="fa-solid fa-bolt"></i><span>3 ساعات</span><small>جلسة طويلة</small></div>
+            <div id="card-type-grid" class="choice-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+              <div class="choice-card choice-blue" data-value="ساعة" onclick="selectCardType(this)"><i class="fa-regular fa-clock"></i><span>ساعة</span><small>استخدام سريع</small></div>
+              <div class="choice-card choice-purple" data-value="ساعتين" onclick="selectCardType(this)"><i class="fa-solid fa-hourglass-half"></i><span>ساعتين</span><small>جلسة مركزة</small></div>
+              <div class="choice-card choice-orange" data-value="3 ساعات" onclick="selectCardType(this)"><i class="fa-solid fa-bolt"></i><span>3 ساعات</span><small>جلسة طويلة</small></div>
             </div>
           </div>
           <div style="margin-top:12px">
@@ -1115,7 +1087,7 @@ def release_connection(conn, close=False):
 
 
 def _now_text():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return now_local().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def create_import_task(username: str, account_id: int | None, filename: str) -> str:
@@ -1587,18 +1559,18 @@ def full_name_from_parts(first, second, third, fourth):
 
 
 def get_week_start(today=None):
-    today = today or date.today()
+    today = today or today_local()
     delta = (today.weekday() - 5) % 7
     return today - timedelta(days=delta)
 
 
 def get_month_start(today=None):
-    today = today or date.today()
+    today = today or today_local()
     return today.replace(day=1)
 
 
 def get_year_start(today=None):
-    today = today or date.today()
+    today = today or today_local()
     return today.replace(month=1, day=1)
 
 
@@ -2090,7 +2062,7 @@ def build_power_timer_status(row=None):
     state = (row.get('state') or 'stopped')
     paused_remaining = row.get('paused_remaining_seconds')
     start_at = row.get('cycle_started_at')
-    now = datetime.now()
+    now = now_local()
     payload = {
         'ok': True,
         'state': state,
@@ -2130,7 +2102,7 @@ def build_power_timer_status(row=None):
 @login_required
 def dashboard_live_api():
     normalize_all_usage()
-    today = date.today()
+    today = today_local()
     month_start = get_month_start(today)
     week_start = get_week_start(today)
     payload = {
@@ -2148,7 +2120,7 @@ def dashboard_live_api():
 @login_required
 def dashboard():
     normalize_all_usage()
-    today = date.today()
+    today = today_local()
     week_start = get_week_start(today)
     month_start = get_month_start(today)
     stats = {
@@ -3049,14 +3021,17 @@ def add_usage(beneficiary_id):
         category = "error"
     else:
         execute_sql("UPDATE beneficiaries SET weekly_usage_count=COALESCE(weekly_usage_count,0)+1 WHERE id=%s", [beneficiary_id])
+        current_now = now_local()
         execute_sql("""
             INSERT INTO beneficiary_usage_logs
             (beneficiary_id, usage_reason, card_type, usage_date, usage_time, notes, added_by_account_id, added_by_username)
-            VALUES (%s,%s,%s,CURRENT_DATE,CURRENT_TIMESTAMP,%s,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
         """, [
             beneficiary_id,
             usage_reason,
             card_type,
+            current_now.date(),
+            current_now,
             usage_notes,
             session.get("account_id"),
             session.get("username", ""),
@@ -3080,7 +3055,7 @@ def add_usage(beneficiary_id):
 @login_required
 @permission_required("reset_weekly_usage")
 def reset_weekly_usage():
-    reset_start = get_week_start(date.today() + timedelta(days=1))
+    reset_start = get_week_start(today_local() + timedelta(days=1))
     execute_sql("""
         UPDATE beneficiaries
         SET weekly_usage_count = 0, weekly_usage_week_start = %s
@@ -3517,7 +3492,7 @@ def usage_logs_page():
         LIMIT 500
     """, params)
 
-    today = date.today()
+    today = today_local()
     week_start = get_week_start(today)
     month_start = get_month_start(today)
     year_start = get_year_start(today)
