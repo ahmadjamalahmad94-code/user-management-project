@@ -1228,6 +1228,8 @@ def _normalize_import_row(row: dict) -> dict:
     data["full_name"] = full_name_from_parts(data["first_name"], data["second_name"], data["third_name"], data["fourth_name"])
     data["search_name"] = normalize_search_ar(data["full_name"])
     data["user_type"] = _infer_user_type(data)
+    data["freelancer_internet_method"] = normalize_internet_method(data.get("freelancer_internet_method", ""), "freelancer")
+    data["university_internet_method"] = normalize_internet_method(data.get("university_internet_method", ""), "university")
     data["weekly_usage_week_start"] = get_week_start()
     return data
 
@@ -1604,6 +1606,53 @@ def normalize_phone(phone):
     if len(digits) == 9 and not digits.startswith("0"):
         digits = "0" + digits
     return digits
+
+
+def normalize_internet_method(value, user_type=""):
+    text = clean_csv_value(value)
+    normalized = normalize_search_ar(text)
+    if not normalized:
+        return "يمتلك اسم مستخدم" if user_type in ("freelancer", "university") else ""
+
+    cards_aliases = {
+        "نظام البطاقات",
+        "بطاقات",
+        "بطاقه",
+        "بطاقة",
+        "بطاقات فقط",
+        "نظام بطاقات",
+        "نظام البطايق",
+    }
+    username_aliases = {
+        "يمتلك اسم مستخدم",
+        "اسم مستخدم",
+        "يوزر",
+        "يوزرنيم",
+        "username",
+        "user name",
+        "login",
+    }
+    ambiguous_aliases = {
+        "حسب الحاجة",
+        "حسب الحاجه",
+        "بطاقة حسب الحاجة",
+        "بطاقه حسب الحاجه",
+        "نظام بطاقة حسب الحاجة",
+        "نظام بطاقه حسب الحاجه",
+        "نظام بطاقات حسب الحاجة",
+        "نظام بطاقات حسب الحاجه",
+        "بحسب الحاجة",
+        "بحسب الحاجه",
+    }
+
+    if text in cards_aliases or normalized in {normalize_search_ar(x) for x in cards_aliases}:
+        return "نظام البطاقات"
+    if text in username_aliases or normalized in {normalize_search_ar(x) for x in username_aliases}:
+        return "يمتلك اسم مستخدم"
+    if text in ambiguous_aliases or normalized in {normalize_search_ar(x) for x in ambiguous_aliases}:
+        return "يمتلك اسم مستخدم"
+
+    return "يمتلك اسم مستخدم" if user_type in ("freelancer", "university") else text
 
 
 def normalize_search_ar(text):
@@ -2931,6 +2980,9 @@ def collect_beneficiary_form():
         if col == "phone":
             val = normalize_phone(val)
         data[col] = val
+    data["user_type"] = clean_csv_value(data.get("user_type"))
+    data["freelancer_internet_method"] = normalize_internet_method(data.get("freelancer_internet_method", ""), "freelancer")
+    data["university_internet_method"] = normalize_internet_method(data.get("university_internet_method", ""), "university")
     data["full_name"] = full_name_from_parts(data["first_name"], data["second_name"], data["third_name"], data["fourth_name"])
     data["search_name"] = normalize_search_ar(data["full_name"])
     data["weekly_usage_week_start"] = get_week_start()
