@@ -1228,8 +1228,6 @@ def _normalize_import_row(row: dict) -> dict:
     data["full_name"] = full_name_from_parts(data["first_name"], data["second_name"], data["third_name"], data["fourth_name"])
     data["search_name"] = normalize_search_ar(data["full_name"])
     data["user_type"] = _infer_user_type(data)
-    data["freelancer_internet_method"] = normalize_internet_method(data.get("freelancer_internet_method", ""), "freelancer")
-    data["university_internet_method"] = normalize_internet_method(data.get("university_internet_method", ""), "university")
     data["weekly_usage_week_start"] = get_week_start()
     return data
 
@@ -1606,53 +1604,6 @@ def normalize_phone(phone):
     if len(digits) == 9 and not digits.startswith("0"):
         digits = "0" + digits
     return digits
-
-
-def normalize_internet_method(value, user_type=""):
-    text = clean_csv_value(value)
-    normalized = normalize_search_ar(text)
-    if not normalized:
-        return "يمتلك اسم مستخدم" if user_type in ("freelancer", "university") else ""
-
-    cards_aliases = {
-        "نظام البطاقات",
-        "بطاقات",
-        "بطاقه",
-        "بطاقة",
-        "بطاقات فقط",
-        "نظام بطاقات",
-        "نظام البطايق",
-    }
-    username_aliases = {
-        "يمتلك اسم مستخدم",
-        "اسم مستخدم",
-        "يوزر",
-        "يوزرنيم",
-        "username",
-        "user name",
-        "login",
-    }
-    ambiguous_aliases = {
-        "حسب الحاجة",
-        "حسب الحاجه",
-        "بطاقة حسب الحاجة",
-        "بطاقه حسب الحاجه",
-        "نظام بطاقة حسب الحاجة",
-        "نظام بطاقه حسب الحاجه",
-        "نظام بطاقات حسب الحاجة",
-        "نظام بطاقات حسب الحاجه",
-        "بحسب الحاجة",
-        "بحسب الحاجه",
-    }
-
-    if text in cards_aliases or normalized in {normalize_search_ar(x) for x in cards_aliases}:
-        return "نظام البطاقات"
-    if text in username_aliases or normalized in {normalize_search_ar(x) for x in username_aliases}:
-        return "يمتلك اسم مستخدم"
-    if text in ambiguous_aliases or normalized in {normalize_search_ar(x) for x in ambiguous_aliases}:
-        return "يمتلك اسم مستخدم"
-
-    return "يمتلك اسم مستخدم" if user_type in ("freelancer", "university") else text
 
 
 def normalize_search_ar(text):
@@ -2125,11 +2076,10 @@ def get_type_css(user_type=None):
 def get_usage_label(row):
     count = row.get("weekly_usage_count") or 0
     limited = (
-        row.get("user_type") == "tawjihi"
-        or (row.get("user_type") == "freelancer" and safe(row.get("freelancer_internet_method")) == "نظام البطاقات")
+        (row.get("user_type") == "freelancer" and safe(row.get("freelancer_internet_method")) == "نظام البطاقات")
         or (row.get("user_type") == "university" and safe(row.get("university_internet_method")) == "نظام البطاقات")
     )
-    return (f"{count} / 3" if limited else "غير محدود"), limited, count
+    return (f"{count} / 3" if limited else "غير متاح"), limited, count
 
 
 def distinct_values(column, user_type=None):
@@ -2258,8 +2208,7 @@ def dashboard():
         "active_accounts": query_one("SELECT COUNT(*) AS c FROM app_accounts WHERE is_active=TRUE")["c"],
         "card_based_count": query_one("""
             SELECT COUNT(*) AS c FROM beneficiaries
-            WHERE user_type='tawjihi'
-               OR (user_type='freelancer' AND freelancer_internet_method='نظام البطاقات')
+            WHERE (user_type='freelancer' AND freelancer_internet_method='نظام البطاقات')
                OR (user_type='university' AND university_internet_method='نظام البطاقات')
         """)["c"],
         "week_usage_total": query_one("SELECT COALESCE(SUM(weekly_usage_count),0) AS c FROM beneficiaries")["c"],
@@ -2556,8 +2505,7 @@ def build_beneficiary_filters(args_dict):
     if args_dict["internet_method"] == "cards":
         filters.append("""
         (
-          user_type='tawjihi'
-          OR (user_type='freelancer' AND freelancer_internet_method='نظام البطاقات')
+          (user_type='freelancer' AND freelancer_internet_method='نظام البطاقات')
           OR (user_type='university' AND university_internet_method='نظام البطاقات')
         )
         """)
@@ -2980,9 +2928,6 @@ def collect_beneficiary_form():
         if col == "phone":
             val = normalize_phone(val)
         data[col] = val
-    data["user_type"] = clean_csv_value(data.get("user_type"))
-    data["freelancer_internet_method"] = normalize_internet_method(data.get("freelancer_internet_method", ""), "freelancer")
-    data["university_internet_method"] = normalize_internet_method(data.get("university_internet_method", ""), "university")
     data["full_name"] = full_name_from_parts(data["first_name"], data["second_name"], data["third_name"], data["fourth_name"])
     data["search_name"] = normalize_search_ar(data["full_name"])
     data["weekly_usage_week_start"] = get_week_start()
