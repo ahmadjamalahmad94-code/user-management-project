@@ -1,0 +1,89 @@
+{% extends "admin/cards/_cards_layout.html" %}
+{% block title %}طلبات بطاقات معلّقة{% endblock %}
+{% block page_title %}طلبات البطاقات المعلّقة{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+{% endblock %}
+
+{% block cards_content %}
+
+<div class="d-notice">
+  <i class="fa-solid fa-hourglass-half"></i>
+  <div>
+    <strong>صفحة تنفيذ فنية.</strong>
+    المتابعة اليومية الموحدة أصبحت من مركز الطلبات، وهذه الصفحة تبقى لتسليم طلبات البطاقات اليدوية فقط.
+    <br>
+    <strong>قائمة الطلبات اليدوية.</strong>
+    اكتب اسم المستخدم وكلمة المرور للبطاقة (من مخزونك أو من الراوتر يدويًا)، ثم اضغط "تسليم". سيُسجَّل في سجل التسليم تلقائيًا.
+    <div style="margin-top:8px">
+      <a class="d-card-action" href="{{ url_for('admin_request_center', type='card') }}"><i class="fa-solid fa-inbox"></i>فتحها داخل مركز الطلبات الموحد</a>
+    </div>
+  </div>
+</div>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title">
+      <i class="fa-solid fa-hourglass-half"></i>
+      الطلبات المعلّقة
+      {% if pending_actions %}<span class="d-badge">{{ pending_actions | length }}</span>{% endif %}
+    </h3>
+    <a class="d-card-action" href="{{ url_for('admin_cards_pending') }}">تحديث</a>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="cards-pending">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>المشترك</th>
+          <th>الفئة</th>
+          <th>وقت الطلب</th>
+          <th>تسليم</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in pending_actions %}
+        <tr class="d-pending-row">
+          <td>#{{ a.id }}</td>
+          <td>
+            <strong>{{ a.beneficiary_name or '—' }}</strong>
+            {% if a.beneficiary_phone %}
+            <div style="font-size:11.5px;color:var(--d-text-muted)">{{ a.beneficiary_phone }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if a.category_label %}
+              <span class="d-badge">{{ a.category_label }}</span>
+            {% else %}
+              <span class="d-badge d-badge--neutral">{{ a.payload.get('category_code', '—') }}</span>
+            {% endif %}
+          </td>
+          <td>{{ a.requested_at }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_cards_pending_fulfill', action_id=a.id) }}"
+                  style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              {{ csrf_token_input() | safe }}
+              <input class="d-field" name="card_username" placeholder="اسم البطاقة" required style="max-width:140px;padding:8px 10px">
+              <input class="d-field" name="card_password" placeholder="كلمة المرور" required style="max-width:140px;padding:8px 10px">
+              <button class="d-pill-btn d-pill-btn--gold" type="submit" style="padding:8px 14px" onclick="return confirm('تأكيد تسليم البطاقة لهذا الطلب؟')">
+                <i class="fa-solid fa-check"></i>تسليم
+              </button>
+              <button class="d-pill-btn d-pill-btn--ghost" type="submit"
+                      formaction="{{ url_for('admin_cards_pending_cancel', action_id=a.id) }}"
+                      style="padding:8px 14px" onclick="return confirm('إلغاء طلب البطاقة؟')">
+                <i class="fa-solid fa-xmark"></i>إلغاء
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="5" style="text-align:center;color:var(--d-text-muted);padding:32px">لا طلبات معلّقة الآن.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}

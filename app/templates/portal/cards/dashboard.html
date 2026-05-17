@@ -1,0 +1,500 @@
+{% extends "dashboard/_layout.html" %}
+
+{% block title %}بوابتي — البطاقات{% endblock %}
+{% block sidebar_subtitle %}بوابة البطاقات{% endblock %}
+{% block user_initial %}{{ beneficiary_full_name[0] if beneficiary_full_name else 'م' }}{% endblock %}
+{% block user_name %}{{ beneficiary_full_name | default('مشترك') }}{% endblock %}
+{% block user_role %}مشترك بطاقات{% endblock %}
+
+{% block page_title %}مرحبًا 👋{% endblock %}
+{% block crumbs %}
+  <span>بوابة المشترك</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>البطاقات</span>
+{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+:root{ --kid-radius:22px; --kid-radius-sm:16px; }
+
+/* HERO */
+.kid-hero{
+  border-radius:var(--kid-radius);padding:32px 36px;
+  background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 100%);
+  color:#fff;position:relative;overflow:hidden;
+  box-shadow:0 10px 30px rgba(30,30,30,.18);
+}
+.kid-hero::after{
+  content:"";position:absolute;inset:auto -80px -120px auto;
+  width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(244,186,42,.30),transparent 70%);
+}
+.kid-hero h1{margin:0 0 6px;font-size:32px;font-weight:800;letter-spacing:-.2px}
+.kid-hero h1 .name{color:var(--d-gold)}
+.kid-hero p.sub{margin:0;font-size:17px;color:rgba(255,255,255,.75);line-height:1.55}
+
+.kid-quota{
+  margin-top:20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:18px 20px;border-radius:var(--kid-radius-sm);
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);
+}
+.kid-quota-num{font-size:60px;font-weight:800;line-height:1;color:var(--d-gold);font-feature-settings:"tnum" 1}
+.kid-quota-num small{font-size:22px;color:rgba(255,255,255,.55);font-weight:600;margin-inline-start:8px}
+.kid-quota-info{flex:1;display:flex;flex-direction:column;gap:4px}
+.kid-quota-info strong{font-size:18px;color:#fff;font-weight:800}
+.kid-quota-info span{font-size:14px;color:rgba(255,255,255,.65);line-height:1.65}
+.kid-quota-bar{margin-top:14px;height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden}
+.kid-quota-bar .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--d-gold) 0%,#FFD96A 100%);transition:width .4s ease}
+
+/* الزر المركزي */
+.kid-main-action{
+  margin-top:24px;display:block;width:100%;
+  padding:30px 24px;border-radius:var(--kid-radius);
+  background:linear-gradient(135deg,#F4BA2A 0%,#FFD96A 100%);
+  color:#1E1E1E;text-align:center;font-weight:800;
+  border:0;cursor:pointer;font-family:inherit;
+  box-shadow:0 8px 24px rgba(244,186,42,.35);
+  transition:.22s ease;text-decoration:none;
+}
+.kid-main-action:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(244,186,42,.45)}
+.kid-main-action.is-disabled{background:#F4F3EF;color:#8a8675;cursor:not-allowed;box-shadow:none}
+.kid-main-action .ico{font-size:42px;margin-bottom:10px;display:block}
+.kid-main-action .label{font-size:24px;display:block}
+.kid-main-action .hint{display:block;margin-top:8px;font-size:14px;font-weight:600;color:rgba(30,30,30,.65)}
+.kid-main-action.is-disabled .hint{color:#8a8675}
+
+/* chips فئة البطاقة */
+.kid-category-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
+.kid-cat-chip{
+  padding:14px 22px;border-radius:999px;
+  background:#fff;border:2px solid #cfcab7;
+  color:#1E1E1E;font-size:16px;font-weight:800;cursor:pointer;
+  transition:.18s ease;font-family:inherit;
+}
+.kid-cat-chip:hover{border-color:var(--d-gold)}
+.kid-cat-chip.is-selected{background:#1E1E1E;color:#fff;border-color:#1E1E1E}
+.kid-cat-chip .dur{font-size:13px;color:rgba(0,0,0,.55);margin-top:2px;display:block;font-weight:600}
+.kid-cat-chip.is-selected .dur{color:rgba(255,255,255,.7)}
+
+/* الأزرار الثانوية */
+.kid-secondary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:24px}
+.kid-tile{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:24px 18px;border-radius:var(--kid-radius-sm);
+  background:#fff;border:2px solid var(--d-border);
+  color:#1E1E1E;text-decoration:none;text-align:center;transition:.22s ease;
+}
+.kid-tile:hover{transform:translateY(-3px);border-color:var(--d-gold);box-shadow:0 8px 22px rgba(244,186,42,.18)}
+.kid-tile .kt-ico{width:64px;height:64px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:28px;background:rgba(244,186,42,.16);color:#7c2d12}
+.kid-tile .kt-label{font-size:17px;font-weight:800;line-height:1.4}
+.kid-tile .kt-sub{font-size:13px;color:#8a8675;font-weight:600}
+.kid-tile.tile-whatsapp{background:linear-gradient(135deg,#ecfff3,#fff);border-color:#b7efcc}
+.kid-tile.tile-whatsapp .kt-ico{background:#25D366;color:#102316}
+.kid-tile.tile-whatsapp:hover{border-color:#25D366;box-shadow:0 8px 22px rgba(37,211,102,.18)}
+.kid-tile.has-badge .kt-ico{position:relative}
+.kid-tile.has-badge .kt-ico::after{
+  content:attr(data-badge);position:absolute;top:-6px;left:-6px;
+  background:#b91c1c;color:#fff;min-width:22px;height:22px;border-radius:11px;padding:0 6px;
+  font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;
+}
+
+/* بطاقات اليوم */
+.today-section{margin-top:30px}
+.today-section h3{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:20px;font-weight:800;color:#1E1E1E}
+.today-section h3 i{color:var(--d-gold)}
+.today-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.today-card{padding:18px;border-radius:var(--kid-radius-sm);background:#fff;border:2px solid var(--d-border)}
+.today-card .tc-dur{font-size:22px;font-weight:800;color:#1E1E1E}
+.today-card .tc-code{font-size:12.5px;color:#8a8675;font-family:monospace;margin-top:4px;word-break:break-all}
+.today-card .tc-time{font-size:12px;color:#8a8675;margin-top:8px}
+.tc-status-box{margin-top:12px;padding:12px;border-radius:14px;background:#FAFAF8;border:1px solid var(--d-border);display:grid;gap:8px}
+.tc-status-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tc-status-label{font-size:13px;font-weight:800;color:#1E1E1E}
+.tc-refresh{border:0;background:#fff;border:1px solid var(--d-border);border-radius:10px;padding:7px 10px;font-family:inherit;font-weight:800;font-size:12px;color:#1E1E1E;cursor:pointer}
+.tc-refresh:hover{border-color:var(--d-gold)}
+.tc-status-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tc-status-grid span{display:block;font-size:11px;color:#8a8675;font-weight:700}
+.tc-status-grid strong{display:block;margin-top:2px;font-size:12.5px;color:#1E1E1E}
+.tc-last-seen{font-size:11.5px;color:#8a8675}
+.tc-api-note{font-size:11.5px;color:#8a8675;line-height:1.6}
+
+/* Modal اختيار السبب */
+.kid-modal-backdrop{
+  position:fixed;inset:0;background:rgba(30,30,30,.65);
+  display:none;align-items:center;justify-content:center;
+  z-index:9999;padding:20px;backdrop-filter:blur(3px);
+}
+.kid-modal-backdrop.is-open{display:flex;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.kid-modal{
+  background:#fff;border-radius:var(--kid-radius);
+  max-width:560px;width:100%;padding:28px 30px;
+  box-shadow:0 30px 80px rgba(0,0,0,.4);
+  animation:slideUp .25s ease;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.kid-modal h3{margin:0 0 6px;font-size:22px;font-weight:800;color:#1E1E1E;display:flex;align-items:center;gap:10px}
+.kid-modal h3 i{color:var(--d-gold)}
+.kid-modal p.lead{margin:0 0 20px;font-size:14px;color:#5b5849;line-height:1.6}
+.reason-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.reason-chip{
+  padding:14px 16px;border-radius:14px;
+  background:#FAFAF8;border:2px solid var(--d-border);
+  color:#1E1E1E;font-size:14px;font-weight:700;cursor:pointer;
+  transition:.18s ease;font-family:inherit;text-align:center;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.reason-chip:hover{border-color:var(--d-gold)}
+.reason-chip.is-selected{
+  background:linear-gradient(135deg,#F4BA2A 0%,#FFD96A 100%);
+  border-color:var(--d-black);color:#1E1E1E;
+  box-shadow:0 4px 14px rgba(244,186,42,.30);
+}
+.reason-chip i{font-size:18px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.modal-btn{padding:12px 22px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;border:0;font-family:inherit;transition:.18s ease}
+.modal-btn-cancel{background:#F4F3EF;color:#5b5849}
+.modal-btn-cancel:hover{background:#e9e6dd}
+.modal-btn-confirm{background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 100%);color:#fff;display:inline-flex;align-items:center;gap:8px}
+.modal-btn-confirm:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(30,30,30,.25)}
+.modal-btn-confirm:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.kid-router-tip{
+  margin-top:20px;padding:14px 18px;border-radius:var(--kid-radius-sm);
+  background:rgba(244,186,42,.10);border:1px dashed rgba(244,186,42,.45);
+  font-size:14px;color:#7c2d12;line-height:1.6;
+}
+.kid-router-tip strong{color:#1E1E1E}
+.kid-router-tip a{color:#1E1E1E;font-weight:800;text-decoration:underline;font-family:monospace}
+
+.kid-empty{padding:30px;text-align:center;color:#8a8675;font-size:15px}
+.kid-empty i{font-size:42px;color:#cfcab7;display:block;margin-bottom:10px}
+</style>
+{% endblock %}
+
+{% block sidebar_nav %}
+{% set p = request.path %}
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-house"></i><span>الرئيسية</span></div>
+  <a class="d-nav-item {% if p in ('/card', '/cards', '/user/cards', '/user/dashboard') %}is-active{% endif %}"
+     href="/card" data-label="بطاقاتي">
+    <i class="fa-solid fa-ticket"></i><span>بطاقاتي</span>
+  </a>
+</div>
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-list-check"></i><span>الطلبات</span></div>
+  <a class="d-nav-item {% if p in ('/card/pending', '/cards/pending', '/user/cards/pending') %}is-active{% endif %}"
+     href="/card/pending" data-label="طلباتي المعلّقة">
+    <i class="fa-solid fa-hourglass-half"></i><span>المعلّقة</span>
+    {% if my_pending_count and my_pending_count > 0 %}<span class="d-nav-badge">{{ my_pending_count }}</span>{% endif %}
+  </a>
+  <a class="d-nav-item {% if p in ('/card/history', '/cards/history', '/user/cards/history') %}is-active{% endif %}"
+     href="/card/history" data-label="السجل">
+    <i class="fa-solid fa-clock-rotate-left"></i><span>السجل الكامل</span>
+  </a>
+  <a class="d-nav-item {% if p == '/card/notifications' %}is-active{% endif %}"
+     href="/card/notifications" data-label="إشعاراتي">
+    <i class="fa-solid fa-bell"></i><span>إشعاراتي</span>
+    {% if notification_count and notification_count > 0 %}<span class="d-nav-badge">{{ notification_count }}</span>{% endif %}
+  </a>
+</div>
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-user"></i><span>حسابي</span></div>
+  <a class="d-nav-item" href="{{ url_for('user_profile_page') }}" data-label="ملفي">
+    <i class="fa-solid fa-id-card"></i><span>ملفي الشخصي</span>
+  </a>
+  <a class="d-nav-item" href="/card/logout" data-label="خروج">
+    <i class="fa-solid fa-arrow-right-from-bracket"></i><span>تسجيل خروج</span>
+  </a>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<section class="kid-hero">
+  <h1>مرحبًا <span class="name">{{ (beneficiary_full_name or 'مشترك').split(' ')[0] }}</span> 👋</h1>
+  <p class="sub">احصل على بطاقتك اليومية بضغطة واحدة. الإنترنت في انتظارك.</p>
+
+  {% set used = quota.daily_used | default(0) %}
+  {% set total = quota.daily_limit | default(3) %}
+  {% set remaining = (total - used) if total else 0 %}
+  {% if remaining < 0 %}{% set remaining = 0 %}{% endif %}
+  {% set pct = ((used / total * 100) if total else 0) | round %}
+  {% if pct > 100 %}{% set pct = 100 %}{% endif %}
+
+  <div class="kid-quota">
+    <div class="kid-quota-num">{{ remaining }}<small>/ {{ total }}</small></div>
+    <div class="kid-quota-info">
+      <strong>{% if remaining > 0 %}بطاقات متاحة اليوم{% else %}استنفدت حصتك اليوم{% endif %}</strong>
+      <span>
+        {% if remaining > 0 %}
+          استخدمت <strong>{{ used }}</strong> بطاقة. تبقّى <strong>{{ remaining }}</strong> بطاقات.
+        {% else %}
+          عُد غدًا للحصول على بطاقات جديدة.
+        {% endif %}
+      </span>
+      <div class="kid-quota-bar"><div class="fill" style="width:{{ pct }}%"></div></div>
+    </div>
+  </div>
+</section>
+
+{% include "components/power_timer_viewer.html" %}
+
+{% if quota.allowed and categories %}
+<form method="POST" action="/card/request" id="request-form" style="margin-top:24px">
+  {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+  <input type="hidden" name="category_code" id="category-input" value="{{ categories[0].code if categories else '' }}">
+  <input type="hidden" name="usage_reason" id="reason-input" value="">
+
+  <button type="button" class="kid-main-action" id="request-btn">
+    <span class="ico"><i class="fa-solid fa-ticket"></i></span>
+    <span class="label">احصل على بطاقة الآن</span>
+    <span class="hint">اطلب بطاقة الآن</span>
+  </button>
+
+  {% if categories|length > 1 %}
+  <div class="kid-category-chips">
+    {% for c in categories %}
+    <button type="button" class="kid-cat-chip {% if loop.first %}is-selected{% endif %}"
+            data-code="{{ c.code }}" data-label="{{ c.label_ar }}">
+      {{ c.label_ar }}
+      <small class="dur">{{ c.duration_minutes }} دقيقة</small>
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
+</form>
+{% else %}
+<div class="kid-main-action is-disabled" style="margin-top:24px">
+  <span class="ico"><i class="fa-solid fa-ban"></i></span>
+  <span class="label">لا يمكنك طلب بطاقة الآن</span>
+  <span class="hint">{{ quota.reason | default('استنفدت حصتك اليومية. عُد غدًا.') }}</span>
+</div>
+{% endif %}
+
+<section class="kid-secondary">
+  <a class="kid-tile {% if my_pending_count %}has-badge{% endif %}" href="/card/pending">
+    <span class="kt-ico" data-badge="{{ my_pending_count if my_pending_count else '' }}">
+      <i class="fa-solid fa-hourglass-half"></i>
+    </span>
+    <span class="kt-label">طلباتي المعلّقة</span>
+    <span class="kt-sub">{% if my_pending_count %}{{ my_pending_count }} طلب بانتظار{% else %}لا توجد طلبات{% endif %}</span>
+  </a>
+
+  <a class="kid-tile" href="/card/history">
+    <span class="kt-ico"><i class="fa-solid fa-clock-rotate-left"></i></span>
+    <span class="kt-label">سجل بطاقاتي</span>
+    <span class="kt-sub">كل بطاقاتي السابقة</span>
+  </a>
+
+  {% if whatsapp_group_url %}
+  <a class="kid-tile tile-whatsapp" href="{{ whatsapp_group_url }}" target="_blank" rel="noopener noreferrer">
+    <span class="kt-ico"><i class="fa-brands fa-whatsapp"></i></span>
+    <span class="kt-label">مجموعة واتساب</span>
+    <span class="kt-sub">ادخل مجموعة فئتك الخاصة للتنبيهات والمتابعة</span>
+  </a>
+  {% endif %}
+
+  <a class="kid-tile" href="{{ url_for('user_profile_page') }}">
+    <span class="kt-ico"><i class="fa-solid fa-user-pen"></i></span>
+    <span class="kt-label">ملفي الشخصي</span>
+    <span class="kt-sub">عرض وتعديل بياناتي</span>
+  </a>
+</section>
+
+{% if today_cards %}
+<section class="today-section">
+  <h3><i class="fa-solid fa-sparkles"></i> بطاقات اليوم ({{ today_cards|length }})</h3>
+  <div class="today-cards">
+    {% for c in today_cards %}
+    {% set st = card_statuses.get(c.id) if card_statuses else None %}
+    <div class="today-card">
+      <div class="tc-dur">{{ c.duration_label or (c.duration_minutes ~ ' دقيقة') }}</div>
+      <div class="tc-code">{{ c.card_username }} / {{ c.card_password }}</div>
+      <div class="tc-time"><i class="fa-regular fa-clock"></i> {{ c.issued_at }}</div>
+      {% if st %}
+      <div class="tc-status-box" data-card-status-card="{{ c.id }}">
+        <div class="tc-status-head">
+          <span class="tc-status-label"><i class="fa-solid fa-signal"></i> <b data-card-status-label>{{ st.status_label }}</b></span>
+          <button class="tc-refresh" type="button" data-card-refresh="{{ c.id }}"><i class="fa-solid fa-rotate"></i> تحديث</button>
+        </div>
+        <div class="tc-status-grid">
+          <div><span>متصلة الآن</span><strong data-card-online>{{ 'نعم' if st.is_online else 'لا' }}</strong></div>
+          <div><span>الوقت المستخدم</span><strong data-card-used>{{ st.used_label }}</strong></div>
+          <div><span>الوقت المتبقي</span><strong data-card-remaining>{{ st.remaining_label }}</strong></div>
+          <div><span>آخر ظهور</span><strong data-card-last-seen>{{ st.last_seen_at or 'لم تصل قراءة بعد' }}</strong></div>
+        </div>
+        {% if st.message %}
+        <div class="tc-api-note" data-card-message>{{ st.message }}</div>
+        {% else %}
+        <div class="tc-api-note" data-card-message style="display:none"></div>
+        {% endif %}
+      </div>
+      {% endif %}
+      <a class="modal-btn modal-btn-confirm" href="{{ url_for('user_cards_connect', card_id=c.id) }}" style="margin-top:12px;text-decoration:none;justify-content:center">
+        <i class="fa-solid fa-right-to-bracket"></i> دخول بالبطاقة
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if router_url %}
+<div class="kid-router-tip">
+  <strong>كيف تستخدم البطاقة؟</strong><br>
+  افتح متصفحك واذهب إلى <a href="{{ router_url }}" target="_blank" rel="noopener">{{ router_url }}</a>
+  ثم أدخل اسم المستخدم وكلمة المرور الموجودة على البطاقة.
+</div>
+{% endif %}
+
+{% if quota.allowed and categories %}
+<div class="kid-modal-backdrop" id="reason-modal">
+  <div class="kid-modal">
+    <h3><i class="fa-solid fa-circle-question"></i> لأي سبب تحتاج البطاقة؟</h3>
+    <p class="lead">اختيارك يساعد الإدارة على فهم احتياجات المشتركين.</p>
+
+    <div class="reason-grid">
+      {% set reasons = reason_options if reason_options else ['تنفيذ تجربة','تقديم اختبار','حل واجب','دراسة','عمل حر','تحميل محاضرات','أخرى'] %}
+      {% set reason_icons = {
+        'تنفيذ تجربة':'fa-flask',
+        'تقديم اختبار':'fa-pen-to-square',
+        'حل واجب':'fa-book-open',
+        'دراسة':'fa-graduation-cap',
+        'عمل حر':'fa-laptop-code',
+        'تحميل محاضرات':'fa-cloud-arrow-down',
+        'أخرى':'fa-ellipsis'
+      } %}
+      {% for r in reasons %}
+      <button type="button" class="reason-chip" data-reason="{{ r }}">
+        <i class="fa-solid {{ reason_icons.get(r, 'fa-circle') }}"></i>
+        <span>{{ r }}</span>
+      </button>
+      {% endfor %}
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-cancel" id="reason-cancel">إلغاء</button>
+      <button type="button" class="modal-btn modal-btn-confirm" id="reason-confirm" disabled>
+        <i class="fa-solid fa-check"></i> تأكيد وإصدار البطاقة
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+(function(){
+  // اختيار فئة البطاقة
+  var chips = document.querySelectorAll('.kid-cat-chip');
+  var catInput = document.getElementById('category-input');
+  var btn = document.getElementById('request-btn');
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      chips.forEach(function(c){ c.classList.remove('is-selected'); });
+      chip.classList.add('is-selected');
+      if(catInput) catInput.value = chip.dataset.code;
+      if(btn){
+        var lbl = btn.querySelector('.label');
+        if(lbl) lbl.textContent = 'احصل على بطاقة ' + chip.dataset.label;
+      }
+    });
+  });
+
+  // Modal سبب البطاقة
+  var form = document.getElementById('request-form');
+  var modal = document.getElementById('reason-modal');
+  var reasonInput = document.getElementById('reason-input');
+  var reasonChips = document.querySelectorAll('.reason-chip');
+  var confirmBtn = document.getElementById('reason-confirm');
+  var cancelBtn = document.getElementById('reason-cancel');
+
+  // هل نتخطى مودال السبب لهذا النوع من المشتركين؟
+  var SKIP_REASON = {{ 'true' if skip_reason_modal else 'false' }};
+
+  if(btn && modal){
+    btn.addEventListener('click', function(){
+      if(SKIP_REASON){
+        // التوجيهي وأمثاله: إرسال مباشر بدون اختيار سبب
+        if(reasonInput) reasonInput.value = 'تلقائي';
+        if(form) form.submit();
+        return;
+      }
+      modal.classList.add('is-open');
+      reasonChips.forEach(function(c){ c.classList.remove('is-selected'); });
+      reasonInput.value = '';
+      if(confirmBtn) confirmBtn.disabled = true;
+    });
+  }
+
+  reasonChips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      reasonChips.forEach(function(c){ c.classList.remove('is-selected'); });
+      chip.classList.add('is-selected');
+      reasonInput.value = chip.dataset.reason;
+      if(confirmBtn) confirmBtn.disabled = false;
+    });
+  });
+
+  if(cancelBtn) cancelBtn.addEventListener('click', function(){
+    modal.classList.remove('is-open');
+  });
+  if(modal) modal.addEventListener('click', function(e){
+    if(e.target === modal) modal.classList.remove('is-open');
+  });
+  if(confirmBtn) confirmBtn.addEventListener('click', function(){
+    if(!reasonInput.value) return;
+    form.submit();
+  });
+
+  function setText(root, selector, value){
+    var el = root.querySelector(selector);
+    if(el) el.textContent = value || 'لم تصل قراءة بعد';
+  }
+
+  document.querySelectorAll('[data-card-refresh]').forEach(function(button){
+    button.addEventListener('click', function(){
+      var cardId = button.getAttribute('data-card-refresh');
+      var box = document.querySelector('[data-card-status-card="' + cardId + '"]');
+      if(!box) return;
+      var oldText = button.textContent;
+      button.disabled = true;
+      button.textContent = 'جارٍ التحديث...';
+      fetch('/card/status/' + encodeURIComponent(cardId), {
+        headers: {'Accept': 'application/json'}
+      })
+      .then(function(response){ return response.json(); })
+      .then(function(payload){
+        if(!payload || !payload.ok || !payload.status){
+          throw new Error('تعذر تحديث الحالة');
+        }
+        var st = payload.status;
+        setText(box, '[data-card-status-label]', st.status_label);
+        setText(box, '[data-card-online]', st.is_online ? 'نعم' : 'لا');
+        setText(box, '[data-card-used]', st.used_label);
+        setText(box, '[data-card-remaining]', st.remaining_label);
+        setText(box, '[data-card-last-seen]', st.last_seen_at || 'لم تصل قراءة بعد');
+        var message = box.querySelector('[data-card-message]');
+        if(message){
+          message.textContent = st.message || '';
+          message.style.display = st.message ? '' : 'none';
+        }
+      })
+      .catch(function(){
+        var message = box.querySelector('[data-card-message]');
+        if(message){
+          message.textContent = 'تعذر تحديث الحالة الآن. ستبقى آخر قراءة ظاهرة.';
+          message.style.display = '';
+        }
+      })
+      .finally(function(){
+        button.disabled = false;
+        button.textContent = oldText;
+      });
+    });
+  });
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>HobeHub — معاينة شاملة</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#0F0F0F;color:#fff;height:100vh;display:flex;flex-direction:column}
+header{padding:12px 20px;background:#000;border-bottom:1px solid #1f1f1f;display:flex;flex-direction:column;gap:8px}
+.title-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:15px;font-weight:800;color:#F4BA2A}
+.meta{font-size:12px;color:#9aa6bd}
+.groups{display:flex;gap:14px;flex-wrap:wrap}
+.group{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.group-label{font-size:11px;font-weight:800;color:#8A8884;letter-spacing:.6px;text-transform:uppercase}
+.tab{padding:7px 13px;border-radius:999px;border:1px solid #2A2A2A;background:#1E1E1E;color:#cfdcef;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+.tab:hover{background:#2A2A2A;color:#fff}
+.tab.active{background:#F4BA2A;color:#1E1E1E;border-color:#F4BA2A;box-shadow:0 6px 14px -4px rgba(244,186,42,.5)}
+.stage{flex:1;background:#F5F4F0;overflow:hidden}
+iframe{width:100%;height:100%;border:0;display:block;background:#F5F4F0}
+</style>
+</head>
+<body>
+<header>
+  <div class="title-row">
+    <h1>HobeHub — معاينة شاملة</h1>
+    <span class="meta">Premium Corporate • أسود + ذهبي • RTL</span>
+  </div>
+  <div class="groups">
+    <div class="group">
+      <span class="group-label">صفحات Auth</span>
+      <button class="tab" data-target="portal_entry.html" data-group="auth">الإقلاع</button><button class="tab" data-target="admin_login.html" data-group="auth">دخول الإدارة</button><button class="tab" data-target="user_login.html" data-group="auth">دخول المشترك</button><button class="tab" data-target="user_activate.html" data-group="auth">تفعيل</button><button class="tab" data-target="user_register.html" data-group="auth">تسجيل اشتراك</button>
+    </div>
+    <div class="group">
+      <span class="group-label">داشبوردات</span>
+      <button class="tab" data-target="admin_dashboard.html" data-group="dash">داشبورد الإدارة</button><button class="tab" data-target="user_dashboard.html" data-group="dash">داشبورد المشترك</button>
+    </div>
+  </div>
+</header>
+<div class="stage">
+  <iframe id="frame" src="portal_entry.html" title="Preview"></iframe>
+</div>
+<script>
+const tabs = document.querySelectorAll('.tab');
+const frame = document.getElementById('frame');
+tabs[0].classList.add('active');
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  frame.src = t.dataset.target;
+}));
+</script>
+</body>
+</html>

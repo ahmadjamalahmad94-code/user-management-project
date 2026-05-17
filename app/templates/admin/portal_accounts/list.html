@@ -1,0 +1,573 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}حسابات بوابة المشتركين{% endblock %}
+{% block page_title %}حسابات بوابة المشتركين{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span><i class="fa-solid fa-chevron-left"></i>
+  <span>المشتركون</span><i class="fa-solid fa-chevron-left"></i>
+  <span>حسابات البوابة</span>
+{% endblock %}
+
+{% block head_extra %}{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_hub.css') }}">
+<style>
+.row-username{font-family:monospace;font-weight:700;color:var(--d-black)}
+.row-name{font-weight:700;color:var(--d-black)}
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700}
+.st-on{background:#e8f6ee;color:#1f8f51}
+.st-off{background:#fde2e2;color:#b91c1c}
+.st-warn{background:#fef0c7;color:#92400e}
+.utype-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.utype-tawjihi{background:#e8f6ee;color:#1f8f51}
+.utype-university{background:#FDF1CF;color:#7c2d12}
+.utype-freelancer{background:#F4F3EF;color:var(--d-text-soft)}
+.access-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:900;white-space:nowrap}
+.access-badge.access-username{background:#e8f6ee;color:#166534;border:1px solid rgba(22,101,52,.12)}
+.access-badge.access-cards{background:#fff7df;color:#7c2d12;border:1px solid rgba(244,186,42,.35)}
+.access-badge.access-unknown{background:#F4F3EF;color:var(--d-text-muted);border:1px solid var(--d-border)}
+
+/* Hub-pill: active state (gold on dark hub) */
+.hub-pill.pa-section-pill.active{
+  background:linear-gradient(135deg,#F4BA2A,#FFD96A);
+  color:#1E1E1E;border-color:transparent;
+  box-shadow:0 6px 14px rgba(244,186,42,.30);
+}
+.hub-pill.pa-section-pill.active .qa-count{background:#1E1E1E;color:#fff}
+.pa-tab{display:none}
+.pa-tab.is-active{display:block}
+
+/* Action icons */
+.act-icon{padding:4px 10px;border:1px solid var(--d-border);background:#fff;cursor:pointer;border-radius:8px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:.18s ease}
+.act-icon:hover{border-color:var(--d-gold)}
+.act-icon i{color:var(--d-gold)}
+.act-icon.act-reset i{color:#1c52a8}
+.act-icon.act-reset:hover{border-color:#1c52a8}
+.act-icon.act-creds i{color:#7c3aed}
+.act-icon.act-creds:hover{border-color:#7c3aed}
+.act-icon.act-resend i{color:#16a34a}
+.act-icon.act-resend:hover{border-color:#16a34a}
+.act-icon.act-issue-code i{color:#16a34a}
+.act-icon.act-issue-code:hover{border-color:#16a34a;background:rgba(22,163,74,.06)}
+.act-icon.act-profile i{color:#0891b2}
+.act-icon.act-profile:hover{border-color:#0891b2}
+.act-icon.act-delete i{color:#b91c1c}
+.act-icon.act-delete:hover{border-color:#b91c1c}
+
+/* Generic Modal */
+.pa-backdrop{position:fixed;inset:0;background:rgba(30,30,30,.65);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;backdrop-filter:blur(3px)}
+.pa-backdrop.is-open{display:flex;animation:paFade .2s ease}
+@keyframes paFade{from{opacity:0}to{opacity:1}}
+.pa-modal{background:#fff;border-radius:18px;max-width:560px;width:100%;padding:24px 28px;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:paSlide .25s ease;max-height:92vh;overflow-y:auto}
+@keyframes paSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.pa-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--d-border)}
+.pa-head h3{margin:0;font-size:17px;font-weight:800;color:var(--d-black);display:flex;align-items:center;gap:8px}
+.pa-head h3 i{color:var(--d-gold)}
+.pa-close{background:none;border:0;color:var(--d-text-muted);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px}
+.pa-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
+.pa-field{display:flex;flex-direction:column;gap:5px}
+.pa-field label{font-size:12.5px;font-weight:700;color:var(--d-text)}
+.pa-field input, .pa-field select{padding:10px 13px;border-radius:11px;border:1.5px solid var(--d-border-strong);font-size:14px;font-family:inherit;background:#FAFAF8;transition:.18s ease}
+.pa-field input:focus, .pa-field select:focus{outline:0;border-color:var(--d-gold);background:#fff;box-shadow:0 0 0 3px rgba(244,186,42,.20)}
+.pa-msg{padding:10px 14px;border-radius:10px;font-size:12.5px;font-weight:700;margin-bottom:12px;display:none}
+.pa-msg.is-show{display:block}
+.pa-msg.error{background:#fde2e2;color:#b91c1c}
+.pa-msg.success{background:#e8f6ee;color:#1f8f51}
+.pa-msg.info{background:#e8eef9;color:#1c52a8}
+.pa-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.pa-btn{padding:11px 22px;border-radius:11px;font-size:13.5px;font-weight:800;cursor:pointer;border:0;font-family:inherit;transition:.18s ease;display:inline-flex;align-items:center;gap:6px}
+.pa-btn-save{background:linear-gradient(135deg,#F4BA2A 0%,#FFD96A 100%);color:#1E1E1E}
+.pa-btn-save:hover{transform:translateY(-1px)}
+.pa-btn-save:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.pa-btn-cancel{background:#F4F3EF;color:var(--d-text-soft)}
+.pa-btn-success{background:linear-gradient(135deg,#16a34a 0%,#22c55e 100%);color:#fff}
+.pa-btn-success:hover{transform:translateY(-1px)}
+
+/* Activation code display */
+.code-display{background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 100%);color:#fff;padding:22px 18px;border-radius:14px;text-align:center;margin-bottom:14px}
+.code-display .code-label{font-size:11.5px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.code-display .code-value{font-family:monospace;font-size:36px;font-weight:900;color:var(--d-gold);letter-spacing:8px;line-height:1}
+.code-display .code-info{font-size:11.5px;color:rgba(255,255,255,.55);margin-top:8px}
+.code-display .code-copy{margin-top:12px;font-size:12px;font-weight:700;background:rgba(244,186,42,.15);color:var(--d-gold);padding:6px 14px;border-radius:8px;border:1px solid rgba(244,186,42,.3);cursor:pointer;font-family:inherit}
+.code-display .code-copy:hover{background:rgba(244,186,42,.25)}
+.code-display .code-copy.copied{background:#16a34a;color:#fff;border-color:#16a34a}
+
+/* Credentials display */
+.cred-box{background:#FAFAF8;border:1px dashed var(--d-border-strong);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.cred-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--d-border)}
+.cred-row:last-child{border-bottom:0}
+.cred-label{font-size:11.5px;font-weight:700;color:var(--d-text-muted);text-transform:uppercase;letter-spacing:.3px}
+.cred-value{font-family:monospace;font-size:14px;font-weight:800;color:var(--d-black)}
+
+.pa-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.pa-search{flex:1;min-width:240px;position:relative}
+.pa-search i{position:absolute;top:50%;inset-inline-start:14px;transform:translateY(-50%);color:var(--d-text-muted);font-size:13px}
+.pa-search input{width:100%;padding:11px 14px 11px 38px;border-radius:11px;border:1.5px solid var(--d-border-strong);background:#fff;font-family:inherit;font-size:13.5px;transition:.18s ease}
+.pa-search input:focus{outline:0;border-color:var(--d-gold);box-shadow:0 0 0 3px rgba(244,186,42,.20)}
+.pa-loading{opacity:.5;pointer-events:none;transition:opacity .15s ease}
+</style>{% endblock %}
+
+{% block content %}
+{% include "admin/beneficiaries/_beneficiary_nav.html" %}
+
+<!-- ─── Unified Control Hub ─── -->
+<section class="hub">
+  <div class="hub-stats">
+    <div class="hub-stat">
+      <span class="hub-stat-ico"><i class="fa-solid fa-id-card-clip"></i></span>
+      <div><span class="lbl">داخل البوابة</span><span class="val" id="kpi-inside">{{ inside_count }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico ok{% if active_count and active_count > 0 %} has-pulse{% endif %}"><i class="fa-solid fa-circle-check"></i></span>
+      <div><span class="lbl">نشط</span><span class="val" id="kpi-active">{{ active_count }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico muted"><i class="fa-solid fa-circle-pause"></i></span>
+      <div><span class="lbl">معطّل</span><span class="val" id="kpi-inactive">{{ inactive_count }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico warn{% if outside_count and outside_count > 0 %} has-pulse{% endif %}"><i class="fa-solid fa-user-clock"></i></span>
+      <div><span class="lbl">خارج البوابة</span><span class="val" id="kpi-outside">{{ outside_count }}</span></div>
+    </div>
+  </div>
+
+  <div class="hub-pills">
+    <button type="button" class="hub-pill pa-section-pill active" data-section="inside">
+      <i class="fa-solid fa-user-check"></i>داخل البوابة<span class="qa-count" id="cnt-inside">{{ inside_count }}</span>
+    </button>
+    <button type="button" class="hub-pill pa-section-pill{% if outside_count == 0 %} is-zero{% endif %}" data-section="outside">
+      <i class="fa-solid fa-user-clock"></i>خارج البوابة<span class="qa-count" id="cnt-outside">{{ outside_count }}</span>
+    </button>
+  </div>
+
+  <form class="hub-search" id="pa-filter-form" autocomplete="off" onsubmit="return false">
+    <div class="hub-search-input">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" id="pa-search-input" value="{{ q or '' }}" placeholder="ابحث بالاسم / الجوال / اسم المستخدم…">
+      <span class="hub-search-spinner" id="pa-search-status" aria-hidden="true"></span>
+    </div>
+    <button type="button" class="hub-search-clear" id="pa-clear-btn" title="مسح"><i class="fa-solid fa-xmark"></i></button>
+  </form>
+</section>
+
+<!-- ── Section: داخل البوابة ── -->
+<section class="d-card pa-tab is-active" id="tab-inside">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list"></i>المشتركون داخل البوابة</h3>
+    <span style="font-size:11.5px;color:var(--d-text-muted)"><span id="total-inside">{{ inside_count }}</span> حساب</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="portal-inside">
+      <thead><tr>
+        <th>#</th><th>المستفيد</th><th>اسم المستخدم</th><th>الجوال</th><th>النوع</th><th>نظام الإنترنت</th><th>الحالة</th><th>آخر دخول</th><th>إجراءات</th>
+      </tr></thead>
+      <tbody id="inside-rows">
+        {% include "admin/portal_accounts/_inside_rows.html" %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Section: خارج البوابة ── -->
+<section class="d-card pa-tab" id="tab-outside">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-user-clock"></i>مشتركون خارج البوابة</h3>
+    <span style="font-size:11.5px;color:var(--d-text-muted)"><span id="total-outside">{{ outside_count }}</span> مستفيد</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="portal-outside">
+      <thead><tr>
+        <th>#</th><th>الاسم</th><th>الجوال</th><th>النوع</th><th>نظام الإنترنت</th><th>إجراءات</th>
+      </tr></thead>
+      <tbody id="outside-rows">
+        {% include "admin/portal_accounts/_outside_rows.html" %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Modal: تأكيد قبل إنشاء الكود ── -->
+<div class="pa-backdrop" id="confirm-code-modal">
+  <div class="pa-modal">
+    <div class="pa-head">
+      <h3 style="color:#d97706"><i class="fa-solid fa-circle-exclamation"></i> تأكيد إنشاء رمز تفعيل</h3>
+      <button type="button" class="pa-close" onclick="document.getElementById('confirm-code-modal').classList.remove('is-open')">✕</button>
+    </div>
+    <div style="background:#FDF6E3;border:1px dashed rgba(217,119,6,.4);border-radius:12px;padding:14px 16px;margin-bottom:14px;color:#7c2d12;font-size:13px;line-height:1.8">
+      <strong>سيتم:</strong>
+      <ul style="margin:6px 0 0;padding-inline-start:20px">
+        <li>إلغاء كلمة المرور الحالية لـ <strong id="confirm-target-name">—</strong></li>
+        <li>توليد رمز تفعيل جديد من 6 أرقام صالح <strong>72 ساعة</strong></li>
+        <li>ستظهر نافذة فيها الكود + خياران: نقل شفهي أو إرسال SMS</li>
+      </ul>
+    </div>
+    <div class="pa-actions">
+      <button type="button" class="pa-btn pa-btn-cancel" onclick="document.getElementById('confirm-code-modal').classList.remove('is-open')">إلغاء</button>
+      <button type="button" class="pa-btn pa-btn-save" id="confirm-issue-btn"><i class="fa-solid fa-key"></i> نعم، أنشئ الكود</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: عرض كود التفعيل بعد التصفير/النقل ── -->
+<div class="pa-backdrop" id="code-modal">
+  <div class="pa-modal">
+    <div class="pa-head">
+      <h3><i class="fa-solid fa-key"></i> رمز تفعيل البوابة</h3>
+      <button type="button" class="pa-close" onclick="document.getElementById('code-modal').classList.remove('is-open')">✕</button>
+    </div>
+    <div class="pa-msg success is-show"><i class="fa-solid fa-check-circle"></i> تم توليد الكود بنجاح. الكود القديم بطل.</div>
+    <div class="code-display">
+      <div class="code-label">رمز التفعيل</div>
+      <div class="code-value" id="code-value">— — — — — —</div>
+      <button type="button" class="code-copy" id="code-copy-btn"><i class="fa-solid fa-copy"></i> نسخ الكود</button>
+      <div class="code-info">صالح <strong style="color:#F4BA2A" id="code-hours">72</strong> ساعة • للمشترك: <strong id="code-target">—</strong></div>
+    </div>
+    <div style="font-size:12.5px;color:var(--d-text-soft);margin-bottom:10px;text-align:center;font-weight:600">كيف تريد إيصال الرمز للمشترك؟</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button type="button" class="pa-btn" id="dictate-done-btn" style="background:#fff;border:2px solid #16a34a;color:#16a34a;padding:14px 12px;border-radius:11px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <i class="fa-solid fa-comment-dots" style="font-size:18px"></i>
+        <span>نقلته شفهياً</span>
+        <span style="font-size:10.5px;font-weight:600;color:var(--d-text-muted)">إغلاق</span>
+      </button>
+      <button type="button" id="send-sms-btn" style="background:#F4F3EF;color:var(--d-text-soft);padding:14px 12px;border-radius:11px;font-weight:800;font-size:13px;border:1px dashed var(--d-border-strong);cursor:not-allowed;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px" title="إرسال SMS سيُفعَّل عند ربط مزوّد الرسائل" disabled>
+        <i class="fa-solid fa-paper-plane" style="font-size:18px;opacity:.5"></i>
+        <span>إرسال SMS</span>
+        <span style="font-size:10.5px;font-weight:600;opacity:.75">قيد التطوير — انقل الكود يدوياً</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: عرض كلمة المرور ── -->
+<div class="pa-backdrop" id="creds-modal">
+  <div class="pa-modal">
+    <div class="pa-head">
+      <h3><i class="fa-solid fa-key"></i> بيانات الدخول</h3>
+      <button type="button" class="pa-close" onclick="document.getElementById('creds-modal').classList.remove('is-open')">✕</button>
+    </div>
+    <div class="cred-box">
+      <div class="cred-row"><span class="cred-label">المستفيد</span><span class="cred-value" id="creds-name">—</span></div>
+      <div class="cred-row"><span class="cred-label">اسم المستخدم</span><span class="cred-value" id="creds-username">—</span></div>
+      <div class="cred-row"><span class="cred-label">كلمة المرور</span><span class="cred-value" id="creds-password">—</span></div>
+    </div>
+    <p style="font-size:11.5px;color:var(--d-text-muted);margin:6px 0 14px">إن كانت كلمة المرور «—» فهذا يعني أن المشترك غيّرها من بوابته، أو أن الحساب مصفّر بانتظار التفعيل.</p>
+    <div class="pa-actions">
+      <button type="button" class="pa-btn pa-btn-cancel" onclick="document.getElementById('creds-modal').classList.remove('is-open')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: نقل مستفيد للبوابة ── -->
+<div class="pa-backdrop" id="movein-modal">
+  <div class="pa-modal">
+    <div class="pa-head">
+      <h3><i class="fa-solid fa-right-to-bracket"></i> نقل للبوابة</h3>
+      <button type="button" class="pa-close" onclick="document.getElementById('movein-modal').classList.remove('is-open')">✕</button>
+    </div>
+    <div class="pa-msg" id="movein-msg"></div>
+    <form id="movein-form">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" name="beneficiary_id" id="movein-bid">
+      <div class="pa-grid">
+        <div class="pa-field"><label>المستفيد</label><input type="text" id="movein-name" readonly style="background:#F4F3EF"></div>
+        <div class="pa-field"><label>اسم المستخدم</label><input name="username" id="movein-username" required></div>
+      </div>
+      <div class="pa-actions">
+        <button type="button" class="pa-btn pa-btn-cancel" onclick="document.getElementById('movein-modal').classList.remove('is-open')">إلغاء</button>
+        <button type="submit" class="pa-btn pa-btn-save"><i class="fa-solid fa-right-to-bracket"></i> نقل وتوليد كود</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Modal: تعديل حساب ── -->
+<div class="pa-backdrop" id="edit-modal">
+  <div class="pa-modal">
+    <div class="pa-head">
+      <h3><i class="fa-solid fa-pen"></i> تعديل حساب البوابة</h3>
+      <button type="button" class="pa-close" onclick="document.getElementById('edit-modal').classList.remove('is-open')">✕</button>
+    </div>
+    <div class="pa-msg" id="edit-msg"></div>
+    <form id="edit-form">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" id="edit-pa-id">
+      <div class="pa-grid">
+        <div class="pa-field"><label>اسم المستخدم</label><input name="username" id="edit-username" required></div>
+        <div class="pa-field"><label>كلمة المرور <span style="font-weight:600;color:var(--d-text-muted);font-size:10.5px">(فارغ = بدون تغيير)</span></label><input type="text" name="password" id="edit-password" autocomplete="new-password"></div>
+        <div class="pa-field"><label>الحالة</label>
+          <select name="is_active" id="edit-active">
+            <option value="1">نشط</option>
+            <option value="0">معطَّل</option>
+          </select>
+        </div>
+      </div>
+      <div class="pa-actions">
+        <button type="button" class="pa-btn pa-btn-cancel" onclick="document.getElementById('edit-modal').classList.remove('is-open')">إلغاء</button>
+        <button type="submit" class="pa-btn pa-btn-save"><i class="fa-solid fa-floppy-disk"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  function showToast(text, type){
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:12px;font-weight:800;font-size:13.5px;z-index:10001;box-shadow:0 8px 24px rgba(0,0,0,.18);'+(type==='success'?'background:#1f8f51;color:#fff':type==='info'?'background:#1c52a8;color:#fff':'background:#b91c1c;color:#fff');
+    t.textContent = text; document.body.appendChild(t);
+    setTimeout(()=>{ t.style.opacity='0';t.style.transition='opacity .35s'; }, 2200);
+    setTimeout(()=>{ try{ document.body.removeChild(t); }catch(e){} }, 2700);
+  }
+
+  // ── Section pills ──
+  document.querySelectorAll('.pa-section-pill').forEach(function(p){
+    p.addEventListener('click', function(){
+      var s = p.dataset.section;
+      document.querySelectorAll('.pa-section-pill').forEach(function(x){ x.classList.toggle('active', x === p); });
+      document.querySelectorAll('.pa-tab').forEach(function(x){ x.classList.toggle('is-active', x.id === 'tab-'+s); });
+    });
+  });
+
+  // ── Search (AJAX) with spinner ──
+  var searchInput = document.getElementById('pa-search-input');
+  var searchStatus = document.getElementById('pa-search-status');
+  var clearBtn = document.getElementById('pa-clear-btn');
+  var searchTimer = null;
+
+  function setSearchStatus(state, txt){
+    if(!searchStatus) return;
+    searchStatus.innerHTML = '';
+    searchStatus.classList.remove('is-on');
+    searchStatus.removeAttribute('title');
+    if(state === 'searching'){ searchStatus.classList.add('is-on'); searchStatus.title = 'جارٍ البحث…'; }
+    else if(state === 'error'){ searchStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#b91c1c"></i>'; searchStatus.title = txt || 'فشل البحث'; }
+    else if(state === 'done'){
+      searchStatus.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#166534"></i>';
+      setTimeout(function(){ searchStatus.innerHTML = ''; }, 900);
+    }
+  }
+
+  function reloadList(q){
+    var inside = document.getElementById('inside-rows');
+    var outside = document.getElementById('outside-rows');
+    if(inside) inside.classList.add('pa-loading');
+    if(outside) outside.classList.add('pa-loading');
+    setSearchStatus('searching');
+    // تحديث الـ URL ليبقى يعكس الفلتر
+    try {
+      var url = window.location.pathname + (q ? ('?q=' + encodeURIComponent(q)) : '');
+      history.replaceState(null, '', url);
+    } catch(e) {}
+    fetch('/admin/portal-accounts/list-ajax?q=' + encodeURIComponent(q || ''), {credentials:'same-origin'})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if(!d || !d.ok){ setSearchStatus('error'); return; }
+        inside.innerHTML = d.inside_html;
+        outside.innerHTML = d.outside_html;
+        document.getElementById('total-inside').textContent = d.counts.inside;
+        document.getElementById('total-outside').textContent = d.counts.outside;
+        document.getElementById('cnt-inside').textContent = d.counts.inside;
+        document.getElementById('cnt-outside').textContent = d.counts.outside;
+        document.getElementById('kpi-inside').textContent = d.counts.inside;
+        document.getElementById('kpi-outside').textContent = d.counts.outside;
+        document.getElementById('kpi-active').textContent = d.counts.active;
+        document.getElementById('kpi-inactive').textContent = d.counts.inactive;
+        setSearchStatus('done');
+      }).catch(function(){ setSearchStatus('error', 'تعذّر الاتصال'); })
+      .finally(function(){
+        inside.classList.remove('pa-loading');
+        outside.classList.remove('pa-loading');
+      });
+  }
+  searchInput.addEventListener('input', function(){
+    if(searchTimer) clearTimeout(searchTimer);
+    setSearchStatus('searching');
+    searchTimer = setTimeout(function(){ reloadList(searchInput.value); }, 280);
+  });
+  if(clearBtn){
+    clearBtn.addEventListener('click', function(){
+      searchInput.value = '';
+      reloadList('');
+      searchInput.focus();
+    });
+  }
+
+  // ── Code modal helpers ──
+  var codeModal = document.getElementById('code-modal');
+  var confirmCodeModal = document.getElementById('confirm-code-modal');
+  var lastPortalIdForSms = null;
+  var pendingAction = null;  // {paId, name, phone, url}
+  function showCode(code, target, phone, hours){
+    var cv = document.getElementById('code-value');
+    var ct = document.getElementById('code-target');
+    var ctp = document.getElementById('code-target-phone');
+    var ch = document.getElementById('code-hours');
+    var cb = document.getElementById('code-copy-btn');
+    if(cv) cv.textContent = code;
+    if(ct) ct.textContent = target || '—';
+    if(ctp) ctp.textContent = phone || '—';
+    if(ch) ch.textContent = hours || 72;
+    if(cb){
+      cb.classList.remove('copied');
+      cb.innerHTML = '<i class="fa-solid fa-copy"></i> نسخ الكود';
+    }
+    codeModal.classList.add('is-open');
+  }
+  function openConfirmCode(name, paId, phone){
+    pendingAction = {paId: paId, name: name, phone: phone};
+    document.getElementById('confirm-target-name').textContent = name || '—';
+    confirmCodeModal.classList.add('is-open');
+  }
+  document.getElementById('confirm-issue-btn').addEventListener('click', function(){
+    if(!pendingAction) return;
+    var btn = this; btn.disabled = true;
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ التوليد...';
+    fetch('/admin/portal-accounts/'+pendingAction.paId+'/reset', {method:'POST', credentials:'same-origin'})
+      .then(function(r){ return r.json(); }).then(function(d){
+        btn.disabled = false; btn.innerHTML = orig;
+        if(!d.ok){ showToast(d.message || 'فشل', 'error'); return; }
+        lastPortalIdForSms = pendingAction.paId;
+        confirmCodeModal.classList.remove('is-open');
+        showCode(d.code, pendingAction.phone || pendingAction.name, pendingAction.phone, d.expires_hours);
+        reloadList(searchInput.value);
+      }).catch(function(){
+        btn.disabled = false; btn.innerHTML = orig;
+        showToast('فشل الاتصال', 'error');
+      });
+  });
+  document.getElementById('code-copy-btn').addEventListener('click', function(){
+    var code = document.getElementById('code-value').textContent;
+    if(navigator.clipboard) navigator.clipboard.writeText(code);
+    this.classList.add('copied');
+    this.innerHTML = '<i class="fa-solid fa-check"></i> تم النسخ';
+    setTimeout(()=>{ this.classList.remove('copied'); this.innerHTML='<i class="fa-solid fa-copy"></i> نسخ الكود'; }, 1800);
+  });
+  document.getElementById('dictate-done-btn').addEventListener('click', function(){
+    codeModal.classList.remove('is-open');
+    showToast('تم. تأكد إن المشترك حفظ الكود.', 'success');
+  });
+  document.getElementById('send-sms-btn').addEventListener('click', function(){
+    if(!lastPortalIdForSms) return;
+    var btn = this; btn.disabled = true;
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:18px"></i><span>جارٍ الإرسال...</span>';
+    fetch('/admin/portal-accounts/'+lastPortalIdForSms+'/send-sms', {method:'POST', credentials:'same-origin'})
+      .then(function(r){ return r.json(); }).then(function(d){
+        showToast(d.message || (d.ok ? 'تم' : 'فشل'), d.ok ? 'success' : 'error');
+        if(d.ok) setTimeout(()=>{ codeModal.classList.remove('is-open'); }, 1000);
+      }).catch(function(){ showToast('فشل الاتصال', 'error'); })
+      .finally(function(){ btn.disabled = false; btn.innerHTML = orig; });
+  });
+
+  // ── Reset/Issue/Resend — كلها تفتح modal التأكيد ──
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && (
+      e.target.closest('.reset-pa-btn') ||
+      e.target.closest('.issue-code-btn') ||
+      e.target.closest('.resend-code-btn')
+    );
+    if(!btn) return;
+    openConfirmCode(btn.dataset.name || '', btn.dataset.paId, btn.dataset.phone || '');
+  });
+
+  // ── Show credentials ──
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('.show-creds-btn');
+    if(!btn) return;
+    var paId = btn.dataset.paId;
+    fetch('/admin/portal-accounts/'+paId+'/credentials', {credentials:'same-origin'})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if(!d.ok){ showToast(d.message || 'فشل', 'error'); return; }
+        document.getElementById('creds-name').textContent = d.full_name || '—';
+        document.getElementById('creds-username').textContent = d.username || '—';
+        document.getElementById('creds-password').textContent = d.password || (d.must_set_password ? '— (مصفّر، بانتظار تفعيل)' : '—');
+        document.getElementById('creds-modal').classList.add('is-open');
+      });
+  });
+
+  // ── Delete portal account ──
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('.delete-pa-btn');
+    if(!btn) return;
+    if(!confirm('حذف حساب "'+btn.dataset.name+'"؟ المستفيد يبقى لكن يفقد دخول البوابة.')) return;
+    fetch('/admin/portal-accounts/'+btn.dataset.paId+'/delete', {method:'POST', credentials:'same-origin'})
+      .then(function(r){ return r.json(); }).then(function(d){
+        showToast(d.message || (d.ok?'تم':'فشل'), d.ok ? 'success' : 'error');
+        if(d.ok) reloadList(searchInput.value);
+      });
+  });
+
+  // ── Edit (inline modal) ──
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('.edit-pa-btn');
+    if(!btn) return;
+    document.getElementById('edit-pa-id').value = btn.dataset.paId;
+    document.getElementById('edit-username').value = btn.dataset.username || '';
+    document.getElementById('edit-password').value = '';
+    document.getElementById('edit-active').value = btn.dataset.active === '1' ? '1' : '0';
+    document.getElementById('edit-msg').className = 'pa-msg';
+    document.getElementById('edit-modal').classList.add('is-open');
+  });
+  document.getElementById('edit-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var paId = document.getElementById('edit-pa-id').value;
+    var fd = new FormData(this);
+    fetch('/admin/portal-accounts/'+paId+'/set-credentials', {method:'POST', credentials:'same-origin', body:fd})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if(d.ok){
+          showToast(d.message, 'success');
+          document.getElementById('edit-modal').classList.remove('is-open');
+          reloadList(searchInput.value);
+        } else {
+          var m = document.getElementById('edit-msg');
+          m.className = 'pa-msg is-show error'; m.textContent = d.message || 'فشل الحفظ';
+        }
+      });
+  });
+
+  // ── Move-in (outside → inside) ──
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('.move-in-btn');
+    if(!btn) return;
+    document.getElementById('movein-bid').value = btn.dataset.bid;
+    document.getElementById('movein-name').value = btn.dataset.name + ' — ' + btn.dataset.phone;
+    document.getElementById('movein-username').value = btn.dataset.phone || '';
+    document.getElementById('movein-msg').className = 'pa-msg';
+    document.getElementById('movein-modal').classList.add('is-open');
+  });
+  document.getElementById('movein-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var fd = new FormData(this);
+    fetch('/admin/portal-accounts/move-in', {method:'POST', credentials:'same-origin', body:fd})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if(d.ok){
+          document.getElementById('movein-modal').classList.remove('is-open');
+          lastPortalIdForSms = d.portal_id;
+          showCode(d.code, d.phone || d.username, d.expires_hours);
+          reloadList(searchInput.value);
+        } else {
+          var m = document.getElementById('movein-msg');
+          m.className = 'pa-msg is-show error';
+          m.textContent = d.message || 'فشل النقل';
+        }
+      }).catch(function(){
+        var m = document.getElementById('movein-msg');
+        m.className = 'pa-msg is-show error';
+        m.textContent = 'فشل الاتصال';
+      });
+  });
+
+  document.addEventListener('click', function(e){
+    var modal = e.target.closest && e.target.closest('.pa-backdrop');
+    if(!modal || e.target !== modal) return;
+    modal.classList.remove('is-open');
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape') return;
+    document.querySelectorAll('.pa-backdrop.is-open').forEach(function(modal){
+      modal.classList.remove('is-open');
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,306 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}سجل البطاقات{% endblock %}
+{% block page_title %}سجل البطاقات التفصيلي{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>السجلات</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>سجل البطاقات</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_hub.css') }}">
+<style>
+.usage-row td{vertical-align:middle;font-size:13px}
+.usage-row td.col-id{font-family:monospace;color:var(--d-text-muted);font-size:11.5px}
+.usage-row td.col-name{font-weight:700;color:var(--d-black)}
+.usage-row td.col-phone{font-family:monospace;font-size:12.5px;color:var(--d-text-soft)}
+.usage-row td.col-when{font-size:11.5px;color:var(--d-text-muted);font-family:monospace;white-space:nowrap}
+.usage-row td.col-notes{font-size:12px;color:var(--d-text-soft);max-width:240px;white-space:normal;line-height:1.5}
+
+.user-type-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
+.utype-tawjihi{background:#e8f6ee;color:#1f8f51}
+.utype-university{background:#FDF1CF;color:#7c2d12}
+.utype-freelancer{background:#F4F3EF;color:var(--d-text-soft)}
+
+.reason-tag, .card-tag{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 8px;
+  border-radius:8px;font-size:11px;font-weight:600;
+}
+.reason-tag{background:rgba(244,186,42,.14);color:#7c2d12}
+.card-tag{background:rgba(30,30,30,.06);color:var(--d-text-soft)}
+
+.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+
+.archive-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px}
+.archive-card{
+  border-radius:14px;padding:14px;
+  background:#fff;border:1px solid var(--d-border);
+  display:flex;flex-direction:column;gap:8px;
+}
+.archive-card.archive-orange{border-color:rgba(244,186,42,.5);background:rgba(244,186,42,.06)}
+.archive-card.archive-red{border-color:rgba(185,28,28,.35);background:rgba(185,28,28,.04)}
+.archive-card.archive-blue{border-color:rgba(28,82,168,.35);background:rgba(28,82,168,.05)}
+.archive-card .archive-icon{font-size:20px;color:var(--d-gold)}
+.archive-card.archive-red .archive-icon{color:#b91c1c}
+.archive-card.archive-blue .archive-icon{color:#1c52a8}
+.archive-card h4{margin:0;font-size:14px;color:var(--d-black)}
+.archive-card p{margin:0;font-size:12px;color:var(--d-text-soft);line-height:1.5}
+.archive-card input[type=date]{
+  padding:7px 10px;border-radius:10px;border:1px solid var(--d-border);
+  font-size:12px;font-family:inherit;
+}
+.archive-card .btn-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.archive-card button, .archive-card .archive-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 12px;border-radius:10px;
+  font-size:12px;font-weight:700;cursor:pointer;
+  border:1px solid var(--d-border-strong);background:#fff;color:var(--d-text);
+  transition:var(--d-transition);
+}
+.archive-card .btn-primary{background:var(--d-black);color:#fff;border-color:var(--d-black)}
+.archive-card .btn-danger{background:#b91c1c;color:#fff;border-color:#b91c1c}
+.archive-card .btn-soft{background:var(--d-gold-faint);color:var(--d-black);border-color:transparent}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ─── Unified Control Hub ─── -->
+<section class="hub">
+  <div class="hub-stats">
+    <div class="hub-stat">
+      <span class="hub-stat-ico"><i class="fa-solid fa-calendar-week"></i></span>
+      <div><span class="lbl">هذا الأسبوع</span><span class="val">{{ week_total }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico warn"><i class="fa-solid fa-calendar-days"></i></span>
+      <div><span class="lbl">هذا الشهر</span><span class="val">{{ month_total }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico muted"><i class="fa-solid fa-calendar"></i></span>
+      <div><span class="lbl">هذه السنة</span><span class="val">{{ year_total }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico ok"><i class="fa-solid fa-box-archive"></i></span>
+      <div><span class="lbl">في الأرشيف</span><span class="val">{{ archive_total }}</span></div>
+    </div>
+  </div>
+
+  <div class="hub-pills">
+    {% if can_view_archive %}
+    <a class="hub-pill" href="/admin/usage-archive" title="استعرض السجلات المؤرشفة">
+      <i class="fa-solid fa-box-open"></i>فتح الأرشيف<span class="qa-count">{{ archive_total }}</span>
+    </a>
+    {% endif %}
+
+    {% if can_archive %}
+    <form method="POST" action="{{ url_for('archive_usage_logs') }}" style="display:inline"
+          onsubmit="return confirm('سيتم نقل كل السجل الحالي إلى الأرشيف. متابعة؟')">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <button class="hub-pill hub-pill--warn" type="submit" title="نقل كل السجل الحالي إلى الأرشيف">
+        <i class="fa-solid fa-box-archive"></i>أرشفة كاملة
+      </button>
+    </form>
+
+    <span class="hub-pill-date warn" title="نقل السجلات الأقدم من تاريخ معيّن إلى الأرشيف">
+      <i class="fa-solid fa-calendar-minus"></i>
+      <form method="POST" action="{{ url_for('archive_usage_logs_before') }}"
+            onsubmit="return this.before_date.value && confirm('أرشفة السجلات الأقدم من ' + this.before_date.value + '؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <span>أرشفة قبل:</span>
+        <input type="date" name="before_date" required>
+        <button type="submit" title="تطبيق الأرشفة"><i class="fa-solid fa-check"></i></button>
+      </form>
+    </span>
+    {% endif %}
+
+    {% if can_clear %}
+    <form method="POST" action="{{ url_for('clear_usage_logs') }}" style="display:inline"
+          onsubmit="return confirm('سيتم حذف كل السجل الحالي نهائيًا. متابعة؟')">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <button class="hub-pill hub-pill--danger" type="submit" title="حذف كل السجل الحالي نهائيًا">
+        <i class="fa-solid fa-trash-can"></i>تنظيف كامل
+      </button>
+    </form>
+
+    <span class="hub-pill-date" title="حذف السجلات الأقدم من تاريخ معيّن نهائياً">
+      <i class="fa-solid fa-filter-circle-xmark"></i>
+      <form method="POST" action="{{ url_for('clear_usage_logs_before') }}"
+            onsubmit="return this.before_date.value && confirm('حذف السجلات الأقدم من ' + this.before_date.value + ' نهائيًا؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <span>حذف قبل:</span>
+        <input type="date" name="before_date" required>
+        <button type="submit" title="تنفيذ الحذف"><i class="fa-solid fa-check"></i></button>
+      </form>
+    </span>
+    {% endif %}
+  </div>
+
+  <form class="hub-search" id="ul-filter-form" method="GET" autocomplete="off">
+    <div class="hub-search-input">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" name="q" id="ul-q" value="{{ filters.q or '' }}" placeholder="ابحث بالاسم أو رقم الجوال…">
+      <span class="hub-search-spinner" id="ul-search-status" aria-hidden="true"></span>
+    </div>
+    <select name="user_type" id="ul-user-type" class="hub-search-select">
+      <option value="">كل الأنواع</option>
+      <option value="tawjihi" {% if filters.user_type == 'tawjihi' %}selected{% endif %}>توجيهي</option>
+      <option value="university" {% if filters.user_type == 'university' %}selected{% endif %}>جامعي</option>
+      <option value="freelancer" {% if filters.user_type == 'freelancer' %}selected{% endif %}>عمل حر</option>
+    </select>
+    <select name="reason" id="ul-reason" class="hub-search-select" title="سبب البطاقة">
+      <option value="">السبب</option>
+      {% for opt in reason_options %}<option value="{{ opt }}" {% if filters.reason == opt %}selected{% endif %}>{{ opt }}</option>{% endfor %}
+    </select>
+    <select name="card_type" id="ul-card-type" class="hub-search-select" title="نوع البطاقة">
+      <option value="">النوع</option>
+      {% for opt in card_options %}<option value="{{ opt }}" {% if filters.card_type == opt %}selected{% endif %}>{{ opt }}</option>{% endfor %}
+    </select>
+    <input class="hub-search-select" type="date" name="date_from" id="ul-date-from" value="{{ filters.date_from or '' }}" title="من تاريخ" style="min-width:130px">
+    <input class="hub-search-select" type="date" name="date_to" id="ul-date-to" value="{{ filters.date_to or '' }}" title="إلى تاريخ" style="min-width:130px">
+    <button type="button" class="hub-search-clear" id="ul-clear-btn" title="مسح"><i class="fa-solid fa-xmark"></i></button>
+  </form>
+</section>
+
+{# Table — أدوات السجل صارت ضمن الـ Control Hub أعلاه #}
+<section class="d-card" style="margin-top:16px">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list"></i>السجلات</h3>
+    <span style="font-size:11.5px;color:var(--d-text-muted)">آخر 500 سجل مطابق</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" id="ul-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="usage-logs">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الاسم</th>
+          <th>الجوال</th>
+          <th>النوع</th>
+          <th>سبب البطاقة</th>
+          <th>نوع البطاقة</th>
+          <th>التاريخ والوقت</th>
+          <th>سجّلها</th>
+          <th>ملاحظات</th>
+        </tr>
+      </thead>
+      <tbody id="ul-tbody">
+        {% for r in rows %}
+        <tr class="usage-row">
+          <td class="col-id">{{ loop.index }}</td>
+          <td class="col-name">{{ r.full_name or '—' }}</td>
+          <td class="col-phone">{{ r.phone or '—' }}</td>
+          <td>
+            {% if r.user_type == 'tawjihi' %}
+              <span class="user-type-badge utype-tawjihi"><i class="fa-solid fa-user-graduate"></i>توجيهي</span>
+            {% elif r.user_type == 'university' %}
+              <span class="user-type-badge utype-university"><i class="fa-solid fa-building-columns"></i>جامعي</span>
+            {% elif r.user_type == 'freelancer' %}
+              <span class="user-type-badge utype-freelancer"><i class="fa-solid fa-laptop-code"></i>عمل حر</span>
+            {% else %}
+              <span class="user-type-badge utype-freelancer">{{ r.user_type or '—' }}</span>
+            {% endif %}
+          </td>
+          <td>{% if r.usage_reason %}<span class="reason-tag">{{ r.usage_reason }}</span>{% else %}—{% endif %}</td>
+          <td>{% if r.card_type %}<span class="card-tag">{{ r.card_type }}</span>{% else %}—{% endif %}</td>
+          <td class="col-when">{{ format_dt_short(r.usage_time) }}</td>
+          <td style="font-size:12px;color:var(--d-text-soft)">{{ r.added_by_username or '—' }}</td>
+          <td class="col-notes">{{ r.notes or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="9" class="empty-state" style="text-align:center;padding:28px;color:var(--d-text-muted)">لا توجد سجلات مطابقة لخيارات البحث الحالية.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+(function(){
+  var qInput = document.getElementById('ul-q');
+  var userType = document.getElementById('ul-user-type');
+  var reason = document.getElementById('ul-reason');
+  var cardType = document.getElementById('ul-card-type');
+  var dateFrom = document.getElementById('ul-date-from');
+  var dateTo = document.getElementById('ul-date-to');
+  var clearBtn = document.getElementById('ul-clear-btn');
+  var statusEl = document.getElementById('ul-search-status');
+  var tbody = document.getElementById('ul-tbody');
+  var form = document.getElementById('ul-filter-form');
+  if(!qInput || !tbody || !form) return;
+
+  form.addEventListener('submit', function(e){ e.preventDefault(); doFetch(true); });
+
+  var debounceTimer = null;
+  function scheduleFetch(){
+    clearTimeout(debounceTimer);
+    setStatus('searching');
+    debounceTimer = setTimeout(function(){ doFetch(true); }, 280);
+  }
+  function setStatus(state){
+    if(!statusEl) return;
+    statusEl.innerHTML = ''; statusEl.classList.remove('is-on');
+    if(state === 'searching') statusEl.classList.add('is-on');
+    else if(state === 'done'){
+      statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#166534"></i>';
+      setTimeout(function(){ statusEl.innerHTML = ''; }, 800);
+    } else if(state === 'error') statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#b91c1c"></i>';
+  }
+  function buildParams(){
+    var p = new URLSearchParams();
+    if(qInput.value.trim()) p.set('q', qInput.value.trim());
+    if(userType.value) p.set('user_type', userType.value);
+    if(reason.value) p.set('reason', reason.value);
+    if(cardType.value) p.set('card_type', cardType.value);
+    if(dateFrom.value) p.set('date_from', dateFrom.value);
+    if(dateTo.value) p.set('date_to', dateTo.value);
+    return p;
+  }
+  function updateUrl(p){ history.replaceState(null, '', window.location.pathname + (p.toString() ? ('?'+p.toString()) : '')); }
+  function reinitPagination(){
+    var t = document.getElementById('ul-table');
+    if(t && window.DashboardTable && window.DashboardTable.reattach) window.DashboardTable.reattach(t);
+  }
+  function updateStats(s){
+    if(!s) return;
+    var hubVals = document.querySelectorAll('.hub-stat .val');
+    if(hubVals.length >= 4){
+      hubVals[0].textContent = s.week || 0;
+      hubVals[1].textContent = s.month || 0;
+      hubVals[2].textContent = s.year || 0;
+      hubVals[3].textContent = s.archive || 0;
+    }
+  }
+  function doFetch(showStatus){
+    var p = buildParams();
+    updateUrl(p);
+    if(showStatus) setStatus('searching');
+    fetch(window.location.pathname + '?' + p.toString() + '&ajax=1', {
+      credentials:'same-origin',
+      headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){ tbody.innerHTML = j.tbody_html; updateStats(j.stats); reinitPagination(); setStatus('done'); }
+      else setStatus('error');
+    })
+    .catch(function(){ setStatus('error'); });
+  }
+  qInput.addEventListener('input', scheduleFetch);
+  [userType, reason, cardType, dateFrom, dateTo].forEach(function(el){
+    el.addEventListener('change', function(){ doFetch(true); });
+  });
+  if(clearBtn){
+    clearBtn.addEventListener('click', function(){
+      qInput.value=''; userType.value=''; reason.value=''; cardType.value='';
+      dateFrom.value=''; dateTo.value='';
+      doFetch(true); qInput.focus();
+    });
+  }
+})();
+</script>
+
+{% endblock %}

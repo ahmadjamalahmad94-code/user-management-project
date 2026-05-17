@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1E1E1E">
+  <title>{% block title %}HobeHub{% endblock %} — Hobe Hub</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="auth-body">
+
+  <div class="auth-shell">
+    {# ─── Topbar ──────────────────────────────────────────────── #}
+    <header class="auth-topbar">
+      <a href="{{ url_for('portal_entry') }}" class="auth-brand" aria-label="الصفحة الرئيسية">
+        <span class="auth-brand-mark">H</span>
+        <span>
+          Hobe Hub
+          <small>منصة إدارة وخدمات الإنترنت</small>
+        </span>
+      </a>
+      <nav class="auth-topbar-nav" aria-label="تنقل سريع">
+        {% set active = active_nav | default('') %}
+        <a href="{{ url_for('portal_entry') }}"
+           class="auth-topbar-link {% if active == 'portal' %}is-active{% endif %}">
+          <i class="fa-solid fa-house" aria-hidden="true"></i>&nbsp;الرئيسية
+        </a>
+        <a href="/login"
+           class="auth-topbar-link {% if active == 'login' %}is-active{% endif %}">
+          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>&nbsp;تسجيل الدخول
+        </a>
+        <a href="{{ url_for('user_register') }}"
+           class="auth-topbar-link {% if active == 'register' %}is-active{% endif %}">
+          <i class="fa-solid fa-user-plus" aria-hidden="true"></i>&nbsp;اشتراك جديد
+        </a>
+      </nav>
+    </header>
+
+    {# ─── Main ────────────────────────────────────────────────── #}
+    <main class="auth-main">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="auth-flashes" role="status" aria-live="polite">
+            {% for category, msg in messages %}
+              {% set kind = ({'error':'error','danger':'error','success':'success','info':'info','warning':'warn'}).get(category, 'info') %}
+              {% set icon = ({'error':'fa-circle-exclamation','success':'fa-circle-check','info':'fa-circle-info','warn':'fa-triangle-exclamation'})[kind] %}
+              <div class="auth-flash auth-flash--{{ kind }}">
+                <i class="fa-solid {{ icon }}" aria-hidden="true"></i>
+                <span>{{ msg }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    {# ─── Footer ──────────────────────────────────────────────── #}
+    <footer class="auth-footer">
+      <div>© {{ (now_year | default(2026)) }} Hobe Hub — جميع الحقوق محفوظة.</div>
+      <div class="auth-footer-meta">
+        <span><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>&nbsp;اتصال آمن داخلي</span>
+        <span><i class="fa-solid fa-clock" aria-hidden="true"></i>&nbsp;{{ footer_time | default('') }}</span>
+      </div>
+    </footer>
+  </div>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

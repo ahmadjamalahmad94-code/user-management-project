@@ -1,0 +1,25 @@
+{% set p = request.path %}
+<style>
+.beneficiary-subnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.beneficiary-subnav a{
+  display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;
+  border:1px solid var(--d-border-strong);background:#fff;color:var(--d-text-soft);
+  font-size:12.5px;font-weight:800;text-decoration:none;transition:var(--d-transition)
+}
+.beneficiary-subnav a:hover{border-color:var(--d-gold);color:var(--d-black)}
+.beneficiary-subnav a.is-active{background:var(--d-black);border-color:var(--d-black);color:#fff}
+</style>
+<nav class="beneficiary-subnav" aria-label="تنقل المستفيدين وحسابات البوابة">
+  <a class="{% if p == '/admin/beneficiaries' or p.startswith('/admin/users/') %}is-active{% endif %}" href="{{ url_for('beneficiaries_page') }}">
+    <i class="fa-solid fa-users-viewfinder"></i>السجل الرئيسي
+  </a>
+  <a class="{% if p == '/admin/beneficiaries/add' %}is-active{% endif %}" href="{{ url_for('add_beneficiary_page') }}">
+    <i class="fa-solid fa-user-plus"></i>إضافة مستفيد
+  </a>
+  <a class="{% if p.startswith('/admin/portal-accounts') %}is-active{% endif %}" href="{{ url_for('admin_portal_accounts_page') }}">
+    <i class="fa-solid fa-id-card-clip"></i>تشغيل حسابات البوابة
+  </a>
+  <a class="{% if p.startswith('/admin/users-account') %}is-active{% endif %}" href="{{ url_for('admin_users_account_overview') }}">
+    <i class="fa-solid fa-circle-user"></i>تشغيل حسابات الإنترنت
+  </a>
+</nav>

@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+</head>
+<body>
+<div class="main" style="max-width:1100px;margin:0 auto;padding-top:18px">
+  <div class="topbar">
+    <div class="topbar-left"><strong>{{ title }}</strong></div>
+    {% if session.get('portal_type') == 'beneficiary' %}
+    <div class="userbox">
+      <span class="badge">{{ session.get('beneficiary_username','') }}</span>
+      {% if session.get('beneficiary_full_name') %}<span class="badge">{{ session.get('beneficiary_full_name') }}</span>{% endif %}
+      <a class="logout-btn" href="{{ url_for('user_logout') }}"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+    </div>
+    {% endif %}
+  </div>
+  {% if session.get('portal_type') == 'beneficiary' %}
+  <div class="card" style="margin-bottom:18px">
+    <div class="actions">
+      <a class="btn btn-soft" href="{{ url_for('user_dashboard') }}">الرئيسية</a>
+      <a class="btn btn-soft" href="{{ url_for('user_profile_page') }}">بياناتي</a>
+      <a class="btn btn-soft" href="{{ url_for('user_internet_access_page') }}">حساب الإنترنت</a>
+      <a class="btn btn-soft" href="{{ url_for('user_internet_request_page') }}">طلب خدمة</a>
+      <a class="btn btn-soft" href="{{ url_for('user_internet_my_requests_page') }}">طلباتي</a>
+      <a class="btn btn-soft" href="{{ url_for('user_logout') }}">تسجيل الخروج</a>
+    </div>
+  </div>
+  {% endif %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+        <div class="flash {{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {{ content|safe }}
+</div>
+<script src="{{ url_for('static', filename='js/app.js') }}?v=20260515-foundation01"></script>
+</body>
+</html>

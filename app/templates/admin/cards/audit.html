@@ -1,0 +1,82 @@
+{% extends "admin/cards/_cards_layout.html" %}
+{% block title %}تدقيق البطاقات{% endblock %}
+{% block page_title %}سجل التدقيق{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+{% endblock %}
+
+{% block cards_content %}
+
+<div class="d-notice d-notice--info">
+  <i class="fa-solid fa-shield-halved"></i>
+  <div>
+    <strong>السجل الكامل لكل عمليات البطاقات.</strong>
+    يشمل: الطلبات، التسليمات، الرفض بسبب الحصة، الإلغاءات. لا يمكن مسح هذا السجل.
+  </div>
+</div>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list"></i>الأحداث</h3>
+    <span style="font-size:12px;color:var(--d-text-muted)">آخر {{ audit | length }} حدث</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="cards-audit">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الحدث</th>
+          <th>المشترك</th>
+          <th>الفئة</th>
+          <th>المنفّذ</th>
+          <th>النوع</th>
+          <th>التاريخ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in audit %}
+        <tr>
+          <td>#{{ e.id }}</td>
+          <td>
+            {% set ev = e.event_type %}
+            {% if ev == 'card_issued_from_inventory' %}
+              <span class="d-badge d-badge--success">صرف من المخزون</span>
+            {% elif ev == 'card_issued_manual' %}
+              <span class="d-badge d-badge--success">تسليم يدوي</span>
+            {% elif ev == 'card_request_queued' %}
+              <span class="d-badge">طلب جديد</span>
+            {% elif ev == 'card_request_sent' %}
+              <span class="d-badge">طلب أُرسل للـ API</span>
+            {% elif ev == 'request_rejected_quota' %}
+              <span class="d-badge d-badge--warn">رفض — تجاوز حصة</span>
+            {% else %}
+              <span class="d-badge d-badge--neutral">{{ ev }}</span>
+            {% endif %}
+          </td>
+          <td>{{ e.beneficiary_id or '—' }}</td>
+          <td>{{ e.card_category_code or '—' }}</td>
+          <td>{{ e.actor_username or '—' }}</td>
+          <td>
+            {% if e.actor_kind == 'admin' %}
+              <span class="d-badge d-badge--dark">إدارة</span>
+            {% elif e.actor_kind == 'beneficiary' %}
+              <span class="d-badge">مشترك</span>
+            {% else %}
+              <span class="d-badge d-badge--neutral">نظام</span>
+            {% endif %}
+          </td>
+          <td>{{ e.created_at }}</td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="7" style="text-align:center;color:var(--d-text-muted);padding:32px">لا أحداث بعد.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}
+
+

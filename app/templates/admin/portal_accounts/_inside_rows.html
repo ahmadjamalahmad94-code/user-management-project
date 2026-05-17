@@ -1,0 +1,57 @@
+{# Partial: rows for مشتركي البوابة (داخل) #}
+{% for r in inside %}
+<tr class="pa-row" data-pa-id="{{ r.id }}" data-bid="{{ r.beneficiary_id }}" data-username="{{ r.username }}" data-active="{{ '1' if r.is_active else '0' }}" data-name="{{ r.full_name or '' }}" data-phone="{{ r.phone or '' }}">
+  <td style="font-family:monospace;color:var(--d-text-muted)">#{{ r.id }}</td>
+  <td class="row-name">{{ r.full_name or '—' }}</td>
+  <td class="row-username">{{ r.username }}</td>
+  <td style="font-family:monospace;font-size:12.5px;color:var(--d-text-soft)">{{ r.phone or '—' }}</td>
+  <td>
+    {% if r.user_type == 'tawjihi' %}<span class="utype-badge utype-tawjihi"><i class="fa-solid fa-user-graduate"></i>توجيهي</span>
+    {% elif r.user_type == 'university' %}<span class="utype-badge utype-university"><i class="fa-solid fa-building-columns"></i>جامعي</span>
+    {% elif r.user_type == 'freelancer' %}<span class="utype-badge utype-freelancer"><i class="fa-solid fa-laptop-code"></i>عمل حر</span>
+    {% else %}—{% endif %}
+  </td>
+  <td>
+    {% if r.access_mode == 'username' %}
+      <span class="access-badge access-username"><i class="fa-solid fa-user-check"></i>مشترك حساب إنترنت</span>
+    {% elif r.access_mode == 'cards' %}
+      <span class="access-badge access-cards"><i class="fa-solid fa-ticket"></i>نظام بطاقات</span>
+    {% else %}
+      <span class="access-badge access-unknown"><i class="fa-solid fa-circle-question"></i>غير محدد</span>
+    {% endif %}
+  </td>
+  <td>
+    {% if r.must_set_password %}<span class="status-pill st-warn"><i class="fa-solid fa-circle-exclamation"></i>مصفّر</span>
+    {% elif r.is_active %}<span class="status-pill st-on"><i class="fa-solid fa-check"></i>نشط</span>
+    {% else %}<span class="status-pill st-off"><i class="fa-solid fa-pause"></i>معطّل</span>{% endif %}
+  </td>
+  <td style="font-family:monospace;font-size:11.5px;color:var(--d-text-muted)">{{ format_dt_short(r.last_login_at) or '—' }}</td>
+  <td>
+    <div style="display:flex;gap:4px;flex-wrap:wrap">
+      <button type="button" class="act-icon act-creds show-creds-btn" data-pa-id="{{ r.id }}" title="عرض كلمة المرور">
+        <i class="fa-solid fa-key"></i>
+      </button>
+      <button type="button" class="act-icon act-issue-code issue-code-btn" data-pa-id="{{ r.id }}" data-name="{{ r.full_name or '' }}" data-phone="{{ r.phone or '' }}" title="إنشاء رمز تفعيل">
+        <i class="fa-solid fa-shield-halved"></i>
+      </button>
+      <button type="button" class="act-icon act-reset reset-pa-btn" data-pa-id="{{ r.id }}" data-name="{{ r.full_name or '' }}" data-phone="{{ r.phone or '' }}" title="تصفير الحساب وإلغاء كلمة المرور">
+        <i class="fa-solid fa-rotate-left"></i>
+      </button>
+      <button type="button" class="act-icon edit-pa-btn" data-pa-id="{{ r.id }}" data-bid="{{ r.beneficiary_id }}" data-username="{{ r.username }}" data-active="{{ '1' if r.is_active else '0' }}" title="تعديل البيانات">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+      <a class="act-icon act-profile" href="/admin/users/{{ r.beneficiary_id }}/profile" title="الصفحة الشخصية">
+        <i class="fa-solid fa-id-card-clip"></i>
+      </a>
+      <button type="button" class="act-icon act-delete delete-pa-btn" data-pa-id="{{ r.id }}" data-name="{{ r.full_name or '' }}" title="حذف الحساب">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+  </td>
+</tr>
+{% else %}
+<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--d-text-muted)">
+  <i class="fa-regular fa-folder-open" style="font-size:32px;display:block;margin-bottom:8px;color:var(--d-border-strong)"></i>
+  لا يوجد مشتركون داخل البوابة بهذا البحث.
+</td></tr>
+{% endfor %}

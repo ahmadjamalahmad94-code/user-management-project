@@ -1,0 +1,328 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}عداد تحويل الكهرباء{% endblock %}
+{% block page_title %}عداد تحويل الكهرباء{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span><i class="fa-solid fa-chevron-left"></i>
+  <span>النظام</span><i class="fa-solid fa-chevron-left"></i>
+  <span>المؤقت</span>
+{% endblock %}
+
+{% block head_extra %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+:root{ --timer-ring-size:280px; --t-gold:#F4BA2A; --t-black:#1E1E1E; --t-cream:#FAFAF8; }
+
+.timer-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+@media (max-width:960px){.timer-grid{grid-template-columns:1fr}}
+
+/* الكارد البصري (يسار) */
+.timer-visual{
+  padding:24px 26px;border-radius:18px;
+  background:#fff;border:1px solid var(--d-border);
+  display:flex;flex-direction:column;gap:18px;
+}
+.tv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.tv-head h3{margin:0 0 6px;font-size:16px;font-weight:800;color:var(--t-black)}
+.status-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 14px;border-radius:999px;
+  font-size:13px;font-weight:800;
+}
+.status-running{background:#e8f6ee;color:#1f8f51}
+.status-paused{background:#FDF1CF;color:#7c2d12}
+.status-stopped{background:#fde2e2;color:#b91c1c}
+.status-badge::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:currentColor}
+.status-running::before{animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.live-clock{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 14px;border-radius:12px;background:var(--t-cream);
+  border:1px solid var(--d-border);
+}
+.live-clock i{color:var(--t-gold);font-size:18px}
+.live-clock .time{font-size:18px;font-weight:800;color:var(--t-black);font-family:monospace;letter-spacing:1px;line-height:1}
+.live-clock .date{font-size:11px;color:var(--d-text-muted);margin-top:2px;font-family:monospace}
+
+/* الحلقة الدائرية */
+.timer-ring-wrap{display:flex;justify-content:center;padding:8px 0}
+.timer-ring{position:relative;width:var(--timer-ring-size);height:var(--timer-ring-size)}
+.timer-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.timer-ring .bg-circle{fill:none;stroke:#f0eee4;stroke-width:12}
+.timer-ring .progress-circle{
+  fill:none;
+  stroke:url(#ringGradient);
+  stroke-width:14;
+  stroke-linecap:round;
+  transition:stroke-dashoffset .4s ease;
+}
+.timer-ring-center{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;
+}
+.tr-label{font-size:13px;color:var(--d-text-muted);font-weight:700;margin-bottom:6px;letter-spacing:.4px}
+.tr-time{font-size:54px;font-weight:800;color:var(--t-black);font-family:monospace;line-height:1;letter-spacing:-1px}
+.tr-phase{font-size:13px;color:var(--d-text-muted);margin-top:8px;font-weight:600}
+
+/* شريط التقدم */
+.timer-progress{height:8px;border-radius:999px;background:#f0eee4;overflow:hidden}
+.timer-progress .fill{
+  height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,var(--t-gold) 0%,#FFD96A 100%);
+  transition:width .4s ease;
+}
+
+/* 3 كروت سفلية */
+.timer-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:540px){.timer-meta{grid-template-columns:1fr}}
+.meta-card{
+  padding:14px;border-radius:12px;
+  background:var(--t-cream);border:1px solid var(--d-border);
+  text-align:center;
+}
+.meta-card h4{margin:0 0 6px;font-size:12px;font-weight:700;color:var(--d-text-muted);letter-spacing:.3px;text-transform:uppercase}
+.meta-card .v{font-size:24px;font-weight:800;color:var(--t-black);font-family:monospace}
+.meta-card .v small{font-size:13px;color:var(--d-text-muted);margin-inline-start:4px;font-weight:600}
+
+/* كارد التحكم (يمين) */
+.timer-control{
+  padding:24px 26px;border-radius:18px;
+  background:#fff;border:1px solid var(--d-border);
+}
+.timer-control h3{margin:0 0 6px;font-size:16px;font-weight:800;color:var(--t-black)}
+.timer-control .lead{margin:0 0 18px;font-size:13px;color:var(--d-text-soft);line-height:1.55}
+
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media (max-width:480px){.f-row{grid-template-columns:1fr}}
+.f-field{display:flex;flex-direction:column;gap:5px}
+.f-field label{font-size:12.5px;font-weight:700;color:var(--t-black)}
+.f-field input{
+  padding:10px 13px;border-radius:11px;
+  border:1.5px solid var(--d-border-strong);
+  font-size:14px;font-family:inherit;background:var(--t-cream);
+  transition:.18s ease;
+}
+.f-field input:focus{outline:0;border-color:var(--t-gold);background:#fff;box-shadow:0 0 0 3px rgba(244,186,42,.18)}
+.f-field input[disabled]{color:var(--d-text-muted);cursor:not-allowed}
+
+.btn-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.tbtn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:11px 18px;border-radius:11px;
+  font-size:13.5px;font-weight:800;cursor:pointer;
+  border:0;font-family:inherit;transition:.18s ease;
+}
+.tbtn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.10)}
+.tbtn-start{background:linear-gradient(135deg,var(--t-gold) 0%,#FFD96A 100%);color:var(--t-black)}
+.tbtn-pause{background:#FDF1CF;color:#7c2d12}
+.tbtn-resume{background:#e7f0fd;color:#1c52a8}
+.tbtn-stop{background:#b91c1c;color:#fff}
+
+.info-note{
+  margin-top:18px;padding:12px 16px;border-radius:12px;
+  background:rgba(244,186,42,.08);border:1px dashed rgba(244,186,42,.45);
+}
+.info-note strong{display:block;font-size:13px;color:#7c2d12;margin-bottom:4px}
+.info-note .text{font-size:12.5px;color:var(--d-text-soft);line-height:1.7}
+</style>{% endblock %}
+
+{% block content %}
+<section class="d-hero">
+  <div>
+    <h2><i class="fa-solid fa-bolt" style="color:var(--t-gold)"></i> عداد تحويل الكهرباء</h2>
+    <p>مؤقت احترافي للدورة الكهربائية. عند انتهاء الوقت يظهر تنبيه ثم يعيد التشغيل تلقائيًا بعد 10 ثوانٍ لنفس المدة.</p>
+  </div>
+</section>
+
+<div class="timer-grid" style="margin-top:16px">
+
+  <!-- ── الكارد البصري ── -->
+  <section class="timer-visual">
+    <div class="tv-head">
+      <div>
+        <h3>الحالة الحالية</h3>
+        <div id="timer-state" class="status-badge status-stopped">متوقف</div>
+      </div>
+      <div class="live-clock">
+        <i class="fa-regular fa-clock"></i>
+        <div>
+          <div class="time" id="live-time">--:--:--</div>
+          <small class="date" id="live-date">--/--/----</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="timer-ring-wrap">
+      <div class="timer-ring">
+        <svg viewBox="0 0 300 300" aria-hidden="true">
+          <defs>
+            <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#F4BA2A"></stop>
+              <stop offset="100%" stop-color="#FFD96A"></stop>
+            </linearGradient>
+          </defs>
+          <circle class="bg-circle" cx="150" cy="150" r="130"></circle>
+          <circle id="ring-progress" class="progress-circle" cx="150" cy="150" r="130"
+                  stroke-dasharray="817" stroke-dashoffset="817"></circle>
+        </svg>
+        <div class="timer-ring-center">
+          <div class="tr-label">الوقت المتبقي</div>
+          <div class="tr-time" id="remaining">--:--</div>
+          <div class="tr-phase" id="phase">في وضع الاستعداد</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="timer-progress"><div class="fill" id="progress-fill"></div></div>
+
+    <div class="timer-meta">
+      <div class="meta-card">
+        <h4>الدورة الحالية</h4>
+        <div class="v"><span id="cycle-minutes">30</span></div>
+      </div>
+      <div class="meta-card">
+        <h4>إعادة التشغيل</h4>
+        <div class="v"><span id="restart-seconds">10</span><small>ث</small></div>
+      </div>
+      <div class="meta-card">
+        <h4>النمط</h4>
+        <div class="v" style="font-size:18px">تلقائي</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── كارد التحكم ── -->
+  <section class="timer-control">
+    <h3>التحكم بالمؤقت</h3>
+    <p class="lead">اضبط مدة الدورة بالدقائق، ثم ابدأ. سيعيد المؤقت التشغيل تلقائيًا بعد كل دورة.</p>
+
+    <div class="f-row">
+      <div class="f-field">
+        <label>مدة الدورة بالدقائق</label>
+        <input type="number" id="minutes-input" min="1" max="1440" step="1" value="30">
+      </div>
+      <div class="f-field">
+        <label>إعادة التشغيل التلقائي</label>
+        <input value="10 ثوانٍ بعد انتهاء الوقت" disabled>
+      </div>
+    </div>
+
+    <div class="btn-bar">
+      <button class="tbtn tbtn-start" id="btn-start" type="button">
+        <i class="fa-solid fa-play"></i> بدء / إعادة ضبط
+      </button>
+      <button class="tbtn tbtn-pause" id="btn-pause" type="button" style="display:none">
+        <i class="fa-solid fa-pause"></i> إيقاف مؤقت
+      </button>
+      <button class="tbtn tbtn-resume" id="btn-resume" type="button" style="display:none">
+        <i class="fa-solid fa-play"></i> استئناف
+      </button>
+      <button class="tbtn tbtn-stop" id="btn-stop" type="button" style="display:none">
+        <i class="fa-solid fa-stop"></i> إيقاف نهائي
+      </button>
+    </div>
+
+    <div class="info-note">
+      <strong>آلية العمل</strong>
+      <div class="text">عند انتهاء الوقت يظهر تنبيه مرئي وصوتي داخل الموقع، ثم يبدأ العد تلقائيًا من جديد بعد 10 ثوانٍ على نفس المدة المختارة.</div>
+    </div>
+  </section>
+</div>
+
+<audio id="timer-alarm" preload="auto">
+  <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQwAA=" type="audio/mpeg">
+</audio>
+
+<script>
+(function(){
+  var CIRCUMFERENCE = 2 * Math.PI * 130;  // ≈ 816.8
+  var ringEl = document.getElementById('ring-progress');
+  ringEl.setAttribute('stroke-dasharray', CIRCUMFERENCE);
+  ringEl.setAttribute('stroke-dashoffset', CIRCUMFERENCE);
+
+  var remainingEl = document.getElementById('remaining');
+  var phaseEl = document.getElementById('phase');
+  var stateEl = document.getElementById('timer-state');
+  var progressFill = document.getElementById('progress-fill');
+  var cycleEl = document.getElementById('cycle-minutes');
+  var restartEl = document.getElementById('restart-seconds');
+  var liveTimeEl = document.getElementById('live-time');
+  var liveDateEl = document.getElementById('live-date');
+
+  var btnStart = document.getElementById('btn-start');
+  var btnPause = document.getElementById('btn-pause');
+  var btnResume = document.getElementById('btn-resume');
+  var btnStop = document.getElementById('btn-stop');
+  var minutesInput = document.getElementById('minutes-input');
+  var alarmEl = document.getElementById('timer-alarm');
+
+  function fmtSec(s){
+    s = Math.max(0, parseInt(s || 0, 10));
+    var m = Math.floor(s / 60);
+    var x = s % 60;
+    return (m<10?'0':'') + m + ':' + (x<10?'0':'') + x;
+  }
+  function setStatus(state){
+    var labelMap = {running:'يعمل الآن', paused:'متوقف مؤقتًا', stopped:'متوقف'};
+    stateEl.className = 'status-badge status-' + state;
+    stateEl.textContent = labelMap[state] || state;
+    btnStart.style.display = '';
+    btnPause.style.display = (state === 'running') ? '' : 'none';
+    btnResume.style.display = (state === 'paused') ? '' : 'none';
+    btnStop.style.display = (state !== 'stopped') ? '' : 'none';
+  }
+  function updateClock(){
+    var d = new Date();
+    var pad = function(n){ return (n<10?'0':'')+n; };
+    liveTimeEl.textContent = pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+    liveDateEl.textContent = pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+  }
+
+  var lastFiredAlarm = 0;
+  function refreshTimer(){
+    fetch('/api/power-timer/status').then(function(r){return r.json();}).then(function(d){
+      if(!d) return;
+      var dur = parseInt(d.duration_seconds || 1800, 10);
+      var rem = parseInt(d.display_remaining_seconds || 0, 10);
+      var state = d.state || 'stopped';
+      remainingEl.textContent = fmtSec(rem);
+      phaseEl.textContent = d.phase_label || ({running:'العد التنازلي يعمل', paused:'متوقف مؤقتًا', stopped:'في وضع الاستعداد'}[state] || '-');
+      setStatus(state);
+      cycleEl.textContent = parseInt(d.duration_minutes || 30, 10);
+      restartEl.textContent = parseInt(d.auto_restart_delay_seconds || 10, 10);
+
+      var elapsed = Math.max(0, dur - rem);
+      var pct = dur > 0 ? (elapsed / dur) : 0;
+      ringEl.setAttribute('stroke-dashoffset', CIRCUMFERENCE * (1 - pct));
+      progressFill.style.width = (pct * 100) + '%';
+
+      // alarm حال انتهاء الوقت
+      if(state === 'running' && rem === 0 && Date.now() - lastFiredAlarm > 15000){
+        lastFiredAlarm = Date.now();
+        try { alarmEl.play(); } catch(e){}
+      }
+    }).catch(function(){});
+  }
+
+  function callApi(action, formData){
+    var opts = {method: 'POST'};
+    if(formData){
+      opts.body = formData;
+    }
+    return fetch('/api/power-timer/' + action, opts).then(function(r){return r.json();}).then(function(){ refreshTimer(); });
+  }
+  btnStart.addEventListener('click', function(){
+    var fd = new FormData();
+    fd.append('minutes', minutesInput.value || '30');
+    callApi('start', fd);
+  });
+  btnPause.addEventListener('click', function(){ callApi('pause'); });
+  btnResume.addEventListener('click', function(){ callApi('resume'); });
+  btnStop.addEventListener('click', function(){ callApi('stop'); });
+
+  updateClock(); refreshTimer();
+  setInterval(updateClock, 1000);
+  setInterval(refreshTimer, 1000);
+})();
+</script>
+{% endblock %}

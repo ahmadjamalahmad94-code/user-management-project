@@ -1,0 +1,336 @@
+# 48ai_unified_login.py
+# تسجيل دخول موحّد ذكي — صفحة واحدة لكل المستخدمين (مشتركين + بطاقات + إدمن)
+# المسارات النشطة:
+#   /login                    → الصفحة الموحّدة الذكية (الافتراضية لكل المستخدمين)
+#   /login/check              → JSON يتحقق من حالة الرقم/اليوزر
+#   /login/submit             → JSON يتحقق من كلمة المرور
+#   /login/activate           → JSON تفعيل (كود + كلمة مرور جديدة)
+#   /x9k2p7-mgmt/sign-in      → دخول الإدارة بمسار خفي (الصفحة القديمة)
+# لا توجد صفحات دخول أخرى مرئية — كلها تحوّل لـ /login
+
+import hashlib
+import logging
+from flask import jsonify, render_template, request, redirect, session, url_for
+
+_log = logging.getLogger("hobehub.unified_login")
+
+# مسار الإدارة الخفي — لا تنشره في أي صفحة عامة
+_ADMIN_SECRET_PATH = "/x9k2p7-mgmt/sign-in"
+
+
+def _sha256(s):
+    return hashlib.sha256((s or "").encode("utf-8")).hexdigest()
+
+
+def _normalize_identifier(raw):
+    s = (raw or "").strip()
+    if not s:
+        return s
+    digits_only = "".join(c for c in s if c.isdigit())
+    if len(digits_only) >= 8 and len(digits_only) == len(s.replace(" ", "").replace("-", "")):
+        return digits_only
+    return s
+
+
+# ────────────────────────────────────────────────────────────────
+# نحتفظ بالـ view القديم لدخول الإدارة قبل أي استبدال
+# ────────────────────────────────────────────────────────────────
+_old_admin_login = app.view_functions.get("login")
+
+
+def _unified_login_view():
+    if session.get("account_id"):
+        return redirect(url_for("dashboard"))
+    if session.get("portal_type") == "beneficiary" and session.get("beneficiary_id"):
+        return redirect(url_for("user_dashboard"))
+    return render_template("auth/unified_login.html")
+
+
+# سجّل مسار خفي إضافي يُظهر الفورم الموحّد للإدارة (الإدمن يكتب يوزره وباسوورده هنا)
+def _hidden_admin_login_view():
+    if session.get("account_id"):
+        return redirect(url_for("dashboard"))
+    return render_template("auth/unified_login.html")
+
+
+app.add_url_rule(
+    _ADMIN_SECRET_PATH,
+    endpoint="hidden_admin_login",
+    view_func=_hidden_admin_login_view,
+    methods=["GET"],
+)
+
+
+# ────────────────────────────────────────────────────────────────
+# Before-request handler يفرض الفورم الموحّد لكل صفحات الدخول/الخروج
+# هذا أقوى من تعديل view_functions لأنه يعترض الطلب قبل الـ dispatcher
+# ────────────────────────────────────────────────────────────────
+_LEGACY_LOGIN_PATHS = ("/user/login", "/card/login")
+_LEGACY_LOGOUT_PATHS = ("/user/logout", "/card/logout")
+
+
+@app.before_request
+def _funnel_all_login_paths_to_unified():
+    try:
+        p = request.path or ""
+        m = request.method or "GET"
+
+        # /login GET → الفورم الموحّد مباشرة (يتجاوز أي view function أخرى)
+        if p == "/login" and m == "GET":
+            if session.get("account_id"):
+                return redirect(url_for("dashboard"))
+            if session.get("portal_type") == "beneficiary" and session.get("beneficiary_id"):
+                return redirect(url_for("user_dashboard"))
+            return render_template("auth/unified_login.html")
+
+        # الدخول القديم → /login الموحّد
+        if p in _LEGACY_LOGIN_PATHS:
+            if session.get("portal_type") == "beneficiary" and session.get("beneficiary_id"):
+                return redirect(url_for("user_dashboard"))
+            return redirect("/login")
+
+        # الخروج القديم → امسح الجلسة وارجع للفورم الموحّد
+        if p in _LEGACY_LOGOUT_PATHS:
+            try:
+                if p == "/card/logout":
+                    log_action(
+                        "beneficiary_logout",
+                        "beneficiary_portal_account",
+                        session.get("beneficiary_portal_account_id"),
+                        f"Card portal logout (unified) for beneficiary {session.get('beneficiary_id')}",
+                    )
+            except Exception:
+                pass
+            try:
+                session.clear()
+            except Exception:
+                pass
+            return redirect("/login")
+    except Exception:
+        pass
+    return None
+
+
+# ────────────────────────────────────────────────────────────────
+# POST /login/check — يستقبل username/phone ويرجع حالة المستخدم
+# ────────────────────────────────────────────────────────────────
+@app.route("/login/check", methods=["POST"])
+def login_check():
+    raw = request.form.get("identifier") or request.form.get("username") or ""
+    ident = _normalize_identifier(raw)
+    if not ident:
+        return jsonify({"ok": False, "message": "أدخل رقم الجوال أو اسم المستخدم."}), 400
+
+    try:
+        admin = query_one(
+            "SELECT id, username, full_name, is_active FROM app_accounts WHERE username=%s LIMIT 1",
+            [ident],
+        )
+    except Exception:
+        admin = None
+    if admin:
+        if not admin.get("is_active"):
+            return jsonify({"ok": False, "message": "هذا الحساب معطّل. تواصل مع المدير."}), 403
+        return jsonify({
+            "ok": True,
+            "type": "admin",
+            "state": "active",
+            "label": admin.get("full_name") or admin.get("username"),
+            "next": "password",
+        })
+
+    try:
+        from app.legacy import normalize_portal_username
+        norm_user = normalize_portal_username(ident)
+    except Exception:
+        norm_user = ident
+    portal = query_one(
+        """
+        SELECT pa.*, b.full_name, b.phone, b.user_type
+        FROM beneficiary_portal_accounts pa
+        JOIN beneficiaries b ON b.id = pa.beneficiary_id
+        WHERE pa.username=%s OR b.phone=%s
+        LIMIT 1
+        """,
+        [norm_user, ident],
+    )
+    if portal:
+        if portal.get("must_set_password"):
+            return jsonify({
+                "ok": True,
+                "type": "beneficiary",
+                "state": "reset",
+                "label": portal.get("full_name") or portal.get("username"),
+                "username": portal.get("username"),
+                "next": "activation_code",
+            })
+        if not portal.get("is_active"):
+            return jsonify({"ok": False, "message": "حساب البوابة معطّل. تواصل مع الإدارة."}), 403
+        return jsonify({
+            "ok": True,
+            "type": "beneficiary",
+            "state": "active",
+            "label": portal.get("full_name") or portal.get("username"),
+            "username": portal.get("username"),
+            "next": "password",
+        })
+
+    try:
+        ben = query_one(
+            "SELECT id, full_name, phone, user_type FROM beneficiaries WHERE phone=%s LIMIT 1",
+            [ident],
+        )
+    except Exception:
+        ben = None
+    if ben:
+        return jsonify({
+            "ok": True,
+            "type": "beneficiary",
+            "state": "no_account",
+            "label": ben.get("full_name") or ben.get("phone"),
+            "next": "request_activation",
+            "message": "أنت مسجّل لدينا لكن حسابك لم يُفعَّل بعد. اطلب من الإدارة كود التفعيل.",
+        })
+
+    return jsonify({
+        "ok": True,
+        "state": "unknown",
+        "next": "not_found",
+        "message": "لم نجد هذا الرقم. تحقّق من الإدخال أو سجّل اشتراك جديد.",
+    })
+
+
+# ────────────────────────────────────────────────────────────────
+# POST /login/submit — كلمة المرور
+# ────────────────────────────────────────────────────────────────
+@app.route("/login/submit", methods=["POST"])
+def login_submit():
+    raw = request.form.get("identifier") or request.form.get("username") or ""
+    ident = _normalize_identifier(raw)
+    password = (request.form.get("password") or "").strip()
+    if not ident or not password:
+        return jsonify({"ok": False, "message": "أدخل بياناتك كاملة."}), 400
+
+    admin = query_one(
+        "SELECT * FROM app_accounts WHERE username=%s AND is_active=TRUE LIMIT 1",
+        [ident],
+    )
+    if admin:
+        failure_key = auth_failure_key("admin", ident)
+        if is_auth_limited(failure_key):
+            return jsonify({"ok": False, "message": "تم إيقاف المحاولات مؤقتًا. حاول لاحقًا."}), 429
+        if verify_admin_password(admin.get("password_hash"), password):
+            maybe_upgrade_admin_password(admin["id"], password, admin.get("password_hash"))
+            clear_auth_failures(failure_key)
+            session.clear()
+            session["portal_type"] = "admin"
+            session["account_id"] = admin["id"]
+            session["username"] = admin["username"]
+            session["full_name"] = admin["full_name"]
+            refresh_session_permissions(admin["id"])
+            log_action("login", "account", admin["id"], "تسجيل دخول إدمن (موحد)")
+            return jsonify({"ok": True, "redirect": url_for("dashboard"), "label": admin.get("full_name") or admin.get("username")})
+        register_auth_failure(failure_key)
+        return jsonify({"ok": False, "message": "كلمة المرور غير صحيحة."}), 401
+
+    try:
+        from app.legacy import normalize_portal_username
+        norm_user = normalize_portal_username(ident)
+    except Exception:
+        norm_user = ident
+    portal = query_one(
+        """
+        SELECT pa.*, b.full_name, b.phone
+        FROM beneficiary_portal_accounts pa
+        JOIN beneficiaries b ON b.id = pa.beneficiary_id
+        WHERE pa.username=%s OR b.phone=%s
+        LIMIT 1
+        """,
+        [norm_user, ident],
+    )
+    if not portal:
+        return jsonify({"ok": False, "message": "بيانات الدخول غير صحيحة."}), 401
+    if portal_account_is_locked(portal):
+        return jsonify({"ok": False, "message": "تم إيقاف المحاولة مؤقتًا. حاول لاحقًا."}), 429
+    if portal.get("must_set_password"):
+        return jsonify({
+            "ok": False,
+            "state": "reset",
+            "message": "حسابك مصفّر — أدخل كود التفعيل أولاً.",
+        }), 403
+    if verify_portal_password(portal.get("password_hash"), password):
+        finalize_beneficiary_portal_login(portal)
+        log_action("beneficiary_login", "beneficiary_portal_account", portal["id"], "تسجيل دخول مشترك (موحد)")
+        return jsonify({"ok": True, "redirect": url_for("user_dashboard"), "label": portal.get("full_name") or portal.get("username")})
+    register_portal_failed_attempt(portal["id"])
+    return jsonify({"ok": False, "message": "كلمة المرور غير صحيحة."}), 401
+
+
+# ────────────────────────────────────────────────────────────────
+# POST /login/activate — كود التفعيل + كلمة مرور جديدة + تسجيل دخول تلقائي
+# ────────────────────────────────────────────────────────────────
+@app.route("/login/activate", methods=["POST"])
+def login_activate():
+    raw = request.form.get("identifier") or request.form.get("username") or ""
+    ident = _normalize_identifier(raw)
+    code = (request.form.get("activation_code") or "").strip()
+    new_password = (request.form.get("new_password") or "").strip()
+    if not ident or not code or not new_password:
+        return jsonify({"ok": False, "message": "أدخل البيانات كاملة."}), 400
+    if len(new_password) < 6:
+        return jsonify({"ok": False, "message": "كلمة المرور قصيرة جداً (6 أحرف على الأقل)."}), 400
+
+    try:
+        from app.legacy import normalize_portal_username
+        norm_user = normalize_portal_username(ident)
+    except Exception:
+        norm_user = ident
+    portal = query_one(
+        """
+        SELECT pa.*, b.full_name
+        FROM beneficiary_portal_accounts pa
+        JOIN beneficiaries b ON b.id = pa.beneficiary_id
+        WHERE pa.username=%s OR b.phone=%s
+        LIMIT 1
+        """,
+        [norm_user, ident],
+    )
+    if not portal:
+        return jsonify({"ok": False, "message": "الحساب غير موجود."}), 404
+    if not portal.get("must_set_password"):
+        return jsonify({"ok": False, "message": "هذا الحساب غير مصفّر — استخدم كلمة المرور المعتادة."}), 400
+
+    expected = portal.get("activation_code_hash")
+    if not expected or _sha256(code) != expected:
+        log_action("portal_activation_bad_code", "beneficiary_portal_account", portal["id"], "")
+        return jsonify({"ok": False, "message": "رمز التفعيل غير صحيح."}), 401
+
+    from datetime import datetime
+    try:
+        exp = portal.get("activation_code_expires_at")
+        if exp:
+            try:
+                expiry = exp if hasattr(exp, "year") else datetime.fromisoformat(str(exp).replace(" ", "T"))
+                if expiry < datetime.now():
+                    return jsonify({"ok": False, "message": "انتهت صلاحية رمز التفعيل. اطلب رمزاً جديداً."}), 410
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    execute_sql(
+        """
+        UPDATE beneficiary_portal_accounts SET
+            password_hash=%s, password_plain=%s,
+            must_set_password=0,
+            activation_code_hash=NULL, activation_code_expires_at=NULL,
+            activated_at=CURRENT_TIMESTAMP, failed_login_attempts=0, locked_until=NULL,
+            updated_at=CURRENT_TIMESTAMP
+        WHERE id=%s
+        """,
+        [_sha256(new_password), new_password, portal["id"]],
+    )
+    log_action("portal_activation_success", "beneficiary_portal_account", portal["id"], "تفعيل + اختيار كلمة مرور جديدة")
+
+    finalize_beneficiary_portal_login(portal)
+    return jsonify({"ok": True, "redirect": url_for("user_dashboard"), "message": "تم تفعيل حسابك وتسجيل الدخول."})

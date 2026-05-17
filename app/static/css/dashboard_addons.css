@@ -1,0 +1,93 @@
+/* إضافات صغيرة لـ dashboard.css — لا تعدّل الأصلي */
+
+.d-nav-item--disabled{
+  opacity:.55;
+  cursor:not-allowed;
+  pointer-events:auto;
+}
+.d-nav-item--disabled:hover{
+  background:transparent;
+}
+
+.d-action-disabled{
+  opacity:.55;
+  pointer-events:none;
+  position:relative;
+}
+.d-action-disabled::after{
+  content:"🚧";
+  position:absolute;
+  top:8px;
+  inset-inline-end:8px;
+  font-size:14px;
+}
+
+/* بطاقة معاينة لفئة بطاقات */
+.d-category-card{
+  background:#fff;
+  border:1px solid var(--d-border);
+  border-radius:var(--d-radius-lg);
+  padding:22px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  transition:var(--d-transition);
+}
+.d-category-card:hover{
+  border-color:var(--d-gold);
+  box-shadow:var(--d-shadow-md);
+}
+.d-category-card .icon{
+  width:54px;height:54px;
+  border-radius:14px;
+  background:var(--d-gold-faint);
+  color:var(--d-black);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:22px;
+}
+.d-category-card .body{flex:1;min-width:0}
+.d-category-card .body strong{display:block;font-size:16px;font-weight:800;color:var(--d-text)}
+.d-category-card .body small{display:block;font-size:12px;color:var(--d-text-soft)}
+.d-category-card .count{
+  font-size:28px;font-weight:800;color:var(--d-text);
+  font-feature-settings:"tnum" 1;
+  line-height:1;
+}
+.d-category-card .count small{display:block;font-size:11px;font-weight:600;color:var(--d-text-muted);margin-top:4px}
+
+/* جدول بطاقات pending */
+.d-pending-row td{vertical-align:middle}
+
+/* form fields داخل الداشبورد */
+.d-form-row{display:grid;gap:12px}
+.d-form-row.cols-2{grid-template-columns:1fr 1fr}
+.d-form-row.cols-3{grid-template-columns:1fr 1fr 1fr}
+@media (max-width:720px){
+  .d-form-row.cols-2,.d-form-row.cols-3{grid-template-columns:1fr}
+}
+.d-label{display:block;font-size:12.5px;font-weight:700;color:var(--d-text);margin-bottom:6px}
+.d-label small{font-weight:500;color:var(--d-text-muted);margin-inline-start:6px}
+.d-field{
+  width:100%;padding:11px 12px;
+  border:1.3px solid var(--d-border-strong);border-radius:10px;
+  font-family:inherit;font-size:13.5px;color:var(--d-text);
+  background:#fff;outline:none;
+  transition:var(--d-transition);
+}
+.d-field:hover{border-color:#bfb8a8}
+.d-field:focus{border-color:var(--d-gold);box-shadow:var(--d-focus-ring)}
+.d-field[disabled]{opacity:.6;background:#FAFAF8;cursor:not-allowed}
+
+/* alert/notice */
+.d-notice{
+  display:flex;gap:12px;
+  padding:14px 18px;border-radius:12px;
+  background:var(--d-gold-faint);border:1px solid rgba(244,186,42,.3);
+  color:var(--d-black);
+  font-size:13.5px;line-height:1.8;
+}
+.d-notice i{font-size:18px;color:var(--d-gold-deep);flex-shrink:0;margin-top:2px}
+.d-notice strong{font-weight:800;display:block;margin-bottom:2px}
+
+.d-notice--info{background:#F4F3EF;border-color:var(--d-border)}
+.d-notice--info i{color:var(--d-text-soft)}

@@ -1,0 +1,486 @@
+{% extends "admin/_admin_layout.html" %}
+
+{% block title %}تنظيف وصيانة النظام{% endblock %}
+{% block page_title %}تنظيف وصيانة النظام{% endblock %}
+
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>النظام</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>تنظيف النظام</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+/* ── Hero ── */
+.sc-hero{
+  background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 100%);
+  color:#fff;border-radius:18px;padding:22px 26px;margin-bottom:16px;
+  display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;
+  box-shadow:0 12px 32px rgba(30,30,30,.18);
+}
+.sc-hero::after{
+  content:"";position:absolute;inset:auto -80px -120px auto;width:200px;height:200px;
+  border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.25),transparent 70%);
+}
+.sc-hero-ico{
+  width:54px;height:54px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--d-gold),#FFD96A);color:#1E1E1E;font-size:22px;flex-shrink:0;
+}
+.sc-hero h2{margin:0 0 4px;font-size:20px;font-weight:900}
+.sc-hero p{margin:0;font-size:13px;color:rgba(255,255,255,.72);line-height:1.7;max-width:700px}
+
+/* ── KPI stats grid ── */
+.sc-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.sc-stat{
+  background:#fff;border:1px solid var(--d-border);border-radius:12px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.sc-stat-ico{
+  width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:14px;flex-shrink:0;
+}
+.sc-stat-ico.b{background:#eef4ff;color:#1d4ed8}
+.sc-stat-ico.t{background:#e8f6ee;color:#166534}
+.sc-stat-ico.u{background:#fef3c7;color:#92400e}
+.sc-stat-ico.f{background:#fde2e2;color:#b91c1c}
+.sc-stat-ico.l{background:#fff7df;color:#7c2d12}
+.sc-stat-ico.a{background:#fafaf8;color:#5b5849}
+.sc-stat .lbl{font-size:11px;color:var(--d-text-soft);font-weight:800;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:2px}
+.sc-stat .val{font-size:20px;font-weight:900;color:var(--d-black);line-height:1.1;font-feature-settings:"tnum" 1}
+
+/* ── Section tabs (user types) ── */
+.sc-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.sc-tab{
+  padding:9px 18px;border-radius:999px;background:#fff;border:1.5px solid var(--d-border-strong);
+  color:var(--d-text-soft);font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;transition:.15s;
+}
+.sc-tab:hover{border-color:var(--d-gold);color:var(--d-black)}
+.sc-tab.is-on{background:#1E1E1E;color:#fff;border-color:#1E1E1E}
+.sc-tab.is-on i{color:var(--d-gold)}
+.sc-pane{display:none}
+.sc-pane.is-on{display:block;animation:scIn .22s ease}
+@keyframes scIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Card boxes ── */
+.sc-card{
+  background:#fff;border:1px solid var(--d-border);border-radius:14px;
+  margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(30,30,30,.04);
+}
+.sc-card-head{
+  padding:14px 18px;border-bottom:1px solid var(--d-border);
+  display:flex;align-items:center;gap:10px;background:#fbfaf7;
+}
+.sc-card-head i{
+  width:32px;height:32px;border-radius:9px;background:var(--d-gold-faint,#FDF1CF);
+  color:var(--d-gold-deep,#D8A11C);display:grid;place-items:center;font-size:13px;
+}
+.sc-card-head h3{margin:0;font-size:14.5px;font-weight:900;color:var(--d-black)}
+.sc-card-head small{margin-inline-start:auto;font-size:12px;color:var(--d-text-soft);font-weight:700}
+.sc-card-body{padding:16px 18px}
+
+/* ── Form grid ── */
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.sc-field{display:flex;flex-direction:column;gap:5px}
+.sc-field.full{grid-column:1/-1}
+.sc-field label{font-size:11.5px;font-weight:800;color:var(--d-text-soft)}
+.sc-field input,.sc-field select{
+  padding:9px 12px;border-radius:10px;border:1.5px solid var(--d-border-strong);
+  font-size:12.5px;font-family:inherit;background:#FAFAF8;transition:.15s;
+}
+.sc-field input:focus,.sc-field select:focus{
+  outline:0;border-color:var(--d-gold);background:#fff;box-shadow:0 0 0 3px rgba(244,186,42,.2);
+}
+
+/* ── Buttons ── */
+.sc-btn{
+  display:inline-flex;align-items:center;gap:7px;padding:9px 16px;
+  border-radius:10px;font-size:12.5px;font-weight:900;font-family:inherit;cursor:pointer;
+  border:1.5px solid transparent;transition:.15s;
+}
+.sc-btn--primary{background:#1E1E1E;color:#fff}
+.sc-btn--primary:hover{background:#000}
+.sc-btn--ghost{background:#fff;color:var(--d-text);border-color:var(--d-border-strong)}
+.sc-btn--ghost:hover{background:#fbfaf7}
+.sc-btn--gold{background:linear-gradient(135deg,var(--d-gold),#FFD96A);color:#1E1E1E}
+.sc-btn--warn{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.sc-btn--warn:hover{background:#92400e;color:#fff;border-color:#92400e}
+.sc-btn--danger{background:#fde2e2;color:#b91c1c;border-color:#fbc2c2}
+.sc-btn--danger:hover{background:#b91c1c;color:#fff;border-color:#b91c1c}
+.sc-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
+
+/* ── Maintenance grid ── */
+.sc-maint-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.sc-maint-card{
+  background:#fff;border:1.5px solid var(--d-border-strong);border-radius:12px;
+  padding:14px 16px;display:flex;flex-direction:column;gap:10px;transition:.15s;
+}
+.sc-maint-card.warn{border-color:#fde68a;background:linear-gradient(180deg,#fffbeb,#fff)}
+.sc-maint-card.danger{border-color:#fbc2c2;background:linear-gradient(180deg,#fff5f5,#fff)}
+.sc-maint-card:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(30,30,30,.06)}
+.sc-maint-head{display:flex;align-items:center;gap:10px}
+.sc-maint-ico{
+  width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:15px;
+  background:var(--d-gold-faint,#FDF1CF);color:var(--d-gold-deep,#D8A11C);flex-shrink:0;
+}
+.sc-maint-card.warn .sc-maint-ico{background:#fef3c7;color:#92400e}
+.sc-maint-card.danger .sc-maint-ico{background:#fde2e2;color:#b91c1c}
+.sc-maint-card h4{margin:0;font-size:13.5px;font-weight:900;color:var(--d-black)}
+.sc-maint-card p{margin:0;font-size:12px;color:var(--d-text-soft);line-height:1.7}
+.sc-maint-foot{margin-top:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sc-maint-foot input[type=number]{
+  width:80px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--d-border-strong);
+  font-size:12px;font-family:inherit;text-align:center;
+}
+.sc-flash{padding:11px 14px;border-radius:11px;margin-bottom:12px;font-weight:700;font-size:13px}
+.sc-flash.s{background:#e8f6ee;color:#1f8f51}
+.sc-flash.e{background:#fde2e2;color:#b91c1c}
+
+/* danger zone wrapper */
+.sc-danger-zone{
+  background:linear-gradient(180deg,#fff5f5,#fff);
+  border:1.5px dashed #fbc2c2;border-radius:14px;padding:16px;margin-top:14px;
+}
+.sc-danger-zone h3{
+  display:flex;align-items:center;gap:8px;
+  margin:0 0 12px;font-size:14px;font-weight:900;color:#b91c1c;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in msgs %}
+    <div class="sc-flash {{ 's' if cat == 'success' else 'e' }}">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+<section class="sc-hero">
+  <span class="sc-hero-ico"><i class="fa-solid fa-screwdriver-wrench"></i></span>
+  <div>
+    <h2>تنظيف وصيانة النظام</h2>
+    <p>مركز موحّد لتعديلات وتنظيفات جماعية حسب نوع المشترك، صيانة دورية للبيانات القديمة، وعمليات تصفير شاملة عند الحاجة.</p>
+  </div>
+</section>
+
+{# ── KPIs: System stats ── #}
+<section class="sc-stats">
+  <div class="sc-stat"><span class="sc-stat-ico b"><i class="fa-solid fa-users"></i></span><div><span class="lbl">المستفيدون</span><span class="val">{{ stats.beneficiaries_total }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico t"><i class="fa-solid fa-user-graduate"></i></span><div><span class="lbl">توجيهي</span><span class="val">{{ stats.tawjihi }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico u"><i class="fa-solid fa-school"></i></span><div><span class="lbl">جامعي</span><span class="val">{{ stats.university }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico f"><i class="fa-solid fa-briefcase"></i></span><div><span class="lbl">عمل حر</span><span class="val">{{ stats.freelancer }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico l"><i class="fa-solid fa-id-card-clip"></i></span><div><span class="lbl">حسابات البوابة</span><span class="val">{{ stats.portal_accounts }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico a"><i class="fa-solid fa-user-shield"></i></span><div><span class="lbl">حسابات الإدارة</span><span class="val">{{ stats.admin_accounts }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico b"><i class="fa-solid fa-ticket"></i></span><div><span class="lbl">بطاقات صادرة</span><span class="val">{{ stats.issued_cards }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico t"><i class="fa-solid fa-boxes-stacked"></i></span><div><span class="lbl">مخزون بطاقات</span><span class="val">{{ stats.manual_cards }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico u"><i class="fa-solid fa-hourglass-half"></i></span><div><span class="lbl">طلبات معلّقة</span><span class="val">{{ stats.pending_actions }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico a"><i class="fa-solid fa-circle-check"></i></span><div><span class="lbl">طلبات منجزة</span><span class="val">{{ stats.executed_actions }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico l"><i class="fa-solid fa-table-list"></i></span><div><span class="lbl">سجل الاستخدام</span><span class="val">{{ stats.usage_logs }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico a"><i class="fa-solid fa-box-archive"></i></span><div><span class="lbl">الأرشيف</span><span class="val">{{ stats.usage_archive }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico f"><i class="fa-solid fa-clock-rotate-left"></i></span><div><span class="lbl">سجل التدقيق</span><span class="val">{{ stats.audit_logs }}</span></div></div>
+  <div class="sc-stat"><span class="sc-stat-ico u"><i class="fa-solid fa-bell"></i></span><div><span class="lbl">الإشعارات</span><span class="val">{{ stats.notifications }}</span></div></div>
+</section>
+
+{# ── Section 1: Bulk edit/clean by user_type ── #}
+<section class="sc-card">
+  <div class="sc-card-head">
+    <i class="fa-solid fa-pen-to-square"></i>
+    <h3>تعديل وتنظيف جماعي حسب نوع المشترك</h3>
+    <small>اختر النوع ثم نوع العملية</small>
+  </div>
+  <div class="sc-card-body">
+
+    <div class="sc-tabs" role="tablist">
+      <button type="button" class="sc-tab is-on" data-sc-tab="taw"><i class="fa-solid fa-user-graduate"></i> توجيهي</button>
+      <button type="button" class="sc-tab" data-sc-tab="uni"><i class="fa-solid fa-school"></i> جامعي</button>
+      <button type="button" class="sc-tab" data-sc-tab="free"><i class="fa-solid fa-briefcase"></i> عمل حر</button>
+    </div>
+
+    {# ─── توجيهي ─── #}
+    <div class="sc-pane is-on" data-sc-pane="taw">
+      <form method="POST" action="{{ url_for('admin_control_apply_update') }}">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="user_type" value="tawjihi">
+        <div class="sc-grid">
+          <div class="sc-field"><label>سنة التوجيهي</label><select name="tawjihi_year"><option value="">كل السنوات</option>{% for x in TAWJIHI_YEARS %}<option value="{{ x }}">{{ x }}</option>{% endfor %}</select></div>
+          <div class="sc-field"><label>IDs محددة</label><input name="ids" placeholder="مثال: 1,2,3"></div>
+          <div class="sc-field"><label>التعديل</label><select name="operation"><option value="set_notes">وضع ملاحظة موحدة</option></select></div>
+          <div class="sc-field"><label>القيمة الجديدة</label><input name="new_value" placeholder="مثلاً: تم تحديث البيانات" required></div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn sc-btn--primary" type="submit"><i class="fa-solid fa-check"></i> تنفيذ التعديل</button>
+        </div>
+      </form>
+      <form method="POST" action="{{ url_for('admin_control_apply_clean') }}" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--d-border)">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="user_type" value="tawjihi">
+        <div class="sc-grid">
+          <div class="sc-field"><label>IDs محددة (اختياري)</label><input name="ids" placeholder="فارغ = الكل"></div>
+          <div class="sc-field"><label>التنظيف</label><select name="operation"><option value="clear_notes">مسح الملاحظات</option><option value="clear_phones">مسح أرقام الجوال</option><option value="reset_weekly_usage">تصفير عداد الأسبوع</option></select></div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn sc-btn--ghost" type="submit" onclick="return confirm('تأكيد تنظيف الحقول المختارة؟')"><i class="fa-solid fa-broom"></i> تنفيذ التنظيف</button>
+        </div>
+      </form>
+    </div>
+
+    {# ─── جامعي ─── #}
+    <div class="sc-pane" data-sc-pane="uni">
+      <form method="POST" action="{{ url_for('admin_control_apply_update') }}">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="user_type" value="university">
+        <div class="sc-grid">
+          <div class="sc-field"><label>الجامعة</label><select name="university_name"><option value="">كل الجامعات</option>{% for x in UNIVERSITIES_GAZA %}<option value="{{ x }}">{{ x }}</option>{% endfor %}</select></div>
+          <div class="sc-field"><label>IDs محددة</label><input name="ids" placeholder="مثال: 4,8,9"></div>
+          <div class="sc-field"><label>التعديل</label>
+            <select name="operation">
+              <option value="set_university_internet_method">طريقة الإنترنت</option>
+              <option value="set_university_time_mode">وضع الوقت</option>
+              <option value="set_university_days">أيام الجامعة</option>
+              <option value="set_university_time_from">وقت من</option>
+              <option value="set_university_time_to">وقت إلى</option>
+              <option value="set_notes">ملاحظة موحدة</option>
+            </select>
+          </div>
+          <div class="sc-field"><label>القيمة الجديدة</label><input name="new_value" placeholder="اكتب القيمة" required></div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn sc-btn--primary" type="submit"><i class="fa-solid fa-check"></i> تنفيذ التعديل</button>
+        </div>
+      </form>
+      <form method="POST" action="{{ url_for('admin_control_apply_clean') }}" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--d-border)">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="user_type" value="university">
+        <div class="sc-grid">
+          <div class="sc-field"><label>IDs محددة (اختياري)</label><input name="ids" placeholder="فارغ = الكل"></div>
+          <div class="sc-field"><label>التنظيف</label>
+            <select name="operation">
+              <option value="clear_notes">مسح الملاحظات</option>
+              <option value="clear_phones">مسح أرقام الجوال</option>
+              <option value="clear_times">مسح أوقات الجامعة</option>
+              <option value="clear_internet_methods">مسح طريقة الإنترنت</option>
+              <option value="clear_days">مسح الأيام</option>
+              <option value="reset_weekly_usage">تصفير عداد الأسبوع</option>
+            </select>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn sc-btn--ghost" type="submit" onclick="return confirm('تأكيد تنظيف الحقول المختارة؟')"><i class="fa-solid fa-broom"></i> تنفيذ التنظيف</button>
+        </div>
+      </form>
+    </div>
+
+    {# ─── عمل حر ─── #}
+    <div class="sc-pane" data-sc-pane="free">
+      <form method="POST" action="{{ url_for('admin_control_apply_update') }}">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="user_type" value="freelancer">
+        <div class="sc-grid">
+          <div class="sc-field"><label>الشركة</label><input name="freelancer_company" placeholder="فلترة حسب الشركة"></div>
+          <div class="sc-field"><label>IDs محددة</label><input name="ids" placeholder="مثال: 10,11,12"></div>
+          <div class="sc-field"><label>التعديل</label>
+            <select name="operation">
+              <option value="set_freelancer_internet_method">طريقة الإنترنت</option>
+              <option value="set_freelancer_time_mode">وضع الوقت</option>
+              <option value="set_freelancer_schedule_type">نمط الدوام</option>
+              <option value="set_freelancer_time_from">وقت من</option>
+              <option value="set_freelancer_time_to">وقت إلى</option>
+              <option value="set_notes">ملاحظة موحدة</option>
+            </select>
+          </div>
+          <div class="sc-field"><label>القيمة الجديدة</label><input name="new_value" placeholder="اكتب القيمة" required></div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn sc-btn--primary" type="submit"><i class="fa-solid fa-check"></i> تنفيذ التعديل</button>
+        </div>
+      </form>
+      <form method="POST" action="{{ url_for('admin_control_apply_clean') }}" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--d-border)">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="user_type" value="freelancer">
+        <div class="sc-grid">
+          <div class="sc-field"><label>IDs محددة (اختياري)</label><input name="ids" placeholder="فارغ = الكل"></div>
+          <div class="sc-field"><label>التنظيف</label>
+            <select name="operation">
+              <option value="clear_notes">مسح الملاحظات</option>
+              <option value="clear_phones">مسح أرقام الجوال</option>
+              <option value="clear_times">مسح أوقات الدوام</option>
+              <option value="clear_internet_methods">مسح طريقة الإنترنت</option>
+              <option value="clear_schedule">مسح نمط الدوام</option>
+              <option value="reset_weekly_usage">تصفير عداد الأسبوع</option>
+            </select>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn sc-btn--ghost" type="submit" onclick="return confirm('تأكيد تنظيف الحقول المختارة؟')"><i class="fa-solid fa-broom"></i> تنفيذ التنظيف</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</section>
+
+{# ── Section 2: Maintenance ops (new!) ── #}
+<section class="sc-card">
+  <div class="sc-card-head">
+    <i class="fa-solid fa-broom"></i>
+    <h3>صيانة دورية للبيانات</h3>
+    <small>تنظيف ذكي للبيانات القديمة</small>
+  </div>
+  <div class="sc-card-body">
+    <div class="sc-maint-grid">
+
+      {# تصفير عداد الأسبوع #}
+      <form method="POST" action="{{ url_for('admin_control_maintenance') }}" class="sc-maint-card" onsubmit="return confirm('تصفير عدّاد الاستخدام الأسبوعي لكل المستفيدين؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="operation" value="reset_all_weekly_usage">
+        <div class="sc-maint-head">
+          <span class="sc-maint-ico"><i class="fa-solid fa-arrows-rotate"></i></span>
+          <h4>تصفير العدّاد الأسبوعي</h4>
+        </div>
+        <p>يصفّر weekly_usage_count لكل المستفيدين ويعيّن بداية أسبوع جديد.</p>
+        <div class="sc-maint-foot">
+          <button class="sc-btn sc-btn--gold" type="submit"><i class="fa-solid fa-bolt"></i> تنفيذ</button>
+        </div>
+      </form>
+
+      {# حذف الإشعارات القديمة #}
+      <form method="POST" action="{{ url_for('admin_control_maintenance') }}" class="sc-maint-card warn" onsubmit="return confirm('حذف الإشعارات القديمة؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="operation" value="clear_old_notifications">
+        <div class="sc-maint-head">
+          <span class="sc-maint-ico"><i class="fa-solid fa-bell-slash"></i></span>
+          <h4>حذف الإشعارات القديمة</h4>
+        </div>
+        <p>حذف الإشعارات الأقدم من المدة المحددة. الجديد محفوظ.</p>
+        <div class="sc-maint-foot">
+          <input type="number" name="days" value="30" min="1" max="365"> يوم
+          <button class="sc-btn sc-btn--warn" type="submit"><i class="fa-solid fa-broom"></i> حذف</button>
+        </div>
+      </form>
+
+      {# حذف الطلبات المنجزة القديمة #}
+      <form method="POST" action="{{ url_for('admin_control_maintenance') }}" class="sc-maint-card warn" onsubmit="return confirm('حذف الطلبات المنجزة القديمة؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="operation" value="clear_old_executed_actions">
+        <div class="sc-maint-head">
+          <span class="sc-maint-ico"><i class="fa-solid fa-circle-check"></i></span>
+          <h4>تنظيف الطلبات المنجزة</h4>
+        </div>
+        <p>حذف الطلبات (المنفّذة/الملغاة/المرفوضة/الفاشلة) الأقدم من المدة المحددة.</p>
+        <div class="sc-maint-foot">
+          <input type="number" name="days" value="60" min="1" max="365"> يوم
+          <button class="sc-btn sc-btn--warn" type="submit"><i class="fa-solid fa-broom"></i> حذف</button>
+        </div>
+      </form>
+
+      {# حذف البطاقات الصادرة القديمة #}
+      <form method="POST" action="{{ url_for('admin_control_maintenance') }}" class="sc-maint-card warn" onsubmit="return confirm('حذف البطاقات الصادرة القديمة؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="operation" value="clear_old_issued_cards">
+        <div class="sc-maint-head">
+          <span class="sc-maint-ico"><i class="fa-solid fa-ticket-simple"></i></span>
+          <h4>تنظيف البطاقات الصادرة القديمة</h4>
+        </div>
+        <p>حذف سجلات البطاقات المُصدَرة الأقدم من المدة المحددة.</p>
+        <div class="sc-maint-foot">
+          <input type="number" name="days" value="90" min="1" max="730"> يوم
+          <button class="sc-btn sc-btn--warn" type="submit"><i class="fa-solid fa-broom"></i> حذف</button>
+        </div>
+      </form>
+
+      {# حذف سجلات التدقيق القديمة #}
+      <form method="POST" action="{{ url_for('admin_control_maintenance') }}" class="sc-maint-card warn" onsubmit="return confirm('حذف سجلات التدقيق القديمة؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="operation" value="clear_old_audit">
+        <div class="sc-maint-head">
+          <span class="sc-maint-ico"><i class="fa-solid fa-clock-rotate-left"></i></span>
+          <h4>تنظيف سجل التدقيق</h4>
+        </div>
+        <p>حذف عمليات التدقيق (audit_logs) الأقدم من المدة المحددة.</p>
+        <div class="sc-maint-foot">
+          <input type="number" name="days" value="180" min="1" max="730"> يوم
+          <button class="sc-btn sc-btn--warn" type="submit"><i class="fa-solid fa-broom"></i> حذف</button>
+        </div>
+      </form>
+
+      {# تفريغ مخزون البطاقات المتاحة #}
+      <form method="POST" action="{{ url_for('admin_control_maintenance') }}" class="sc-maint-card danger" onsubmit="return confirm('سيتم حذف كل البطاقات المتاحة في المخزون (الصادرة محفوظة). متابعة؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="operation" value="clear_manual_inventory">
+        <div class="sc-maint-head">
+          <span class="sc-maint-ico"><i class="fa-solid fa-boxes-stacked"></i></span>
+          <h4>إفراغ مخزون البطاقات</h4>
+        </div>
+        <p>حذف كل البطاقات المتاحة (غير المصروفة) من manual_access_cards.</p>
+        <div class="sc-maint-foot">
+          <button class="sc-btn sc-btn--danger" type="submit"><i class="fa-solid fa-trash"></i> تفريغ</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</section>
+
+{# ── Section 3: Danger zone (system resets) ── #}
+<div class="sc-danger-zone">
+  <h3><i class="fa-solid fa-triangle-exclamation"></i>منطقة خطرة — لا تراجع</h3>
+
+  <div class="sc-maint-grid">
+    <form method="POST" action="{{ url_for('admin_control_system_reset') }}" class="sc-maint-card warn" onsubmit="return confirm('سيتم حذف كل السجلات التشغيلية (استخدام + أرشيف + تدقيق). متابعة؟')">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" name="operation" value="truncate_operational">
+      <div class="sc-maint-head">
+        <span class="sc-maint-ico"><i class="fa-solid fa-file-lines"></i></span>
+        <h4>تنظيف السجلات التشغيلية</h4>
+      </div>
+      <p>حذف سجل البطاقات + الأرشيف + سجل التدقيق. المستفيدون يبقون.</p>
+      <div class="sc-maint-foot">
+        <button class="sc-btn sc-btn--warn" type="submit"><i class="fa-solid fa-broom"></i> تنفيذ</button>
+      </div>
+    </form>
+
+    <form method="POST" action="{{ url_for('admin_control_system_reset') }}" class="sc-maint-card danger" onsubmit="return confirm('سيتم حذف كل المستفيدين والسجلات المرتبطة بهم. هذا الإجراء نهائي!')">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" name="operation" value="truncate_beneficiaries_only">
+      <div class="sc-maint-head">
+        <span class="sc-maint-ico"><i class="fa-solid fa-users-slash"></i></span>
+        <h4>حذف كل المستفيدين</h4>
+      </div>
+      <p>يحذف المستفيدين وكل سجلات استخدامهم. لا يمس الحسابات الإدارية.</p>
+      <div class="sc-maint-foot">
+        <button class="sc-btn sc-btn--danger" type="submit"><i class="fa-solid fa-skull"></i> حذف المستفيدين</button>
+      </div>
+    </form>
+
+    <form method="POST" action="{{ url_for('admin_control_system_reset') }}" class="sc-maint-card danger" onsubmit="return confirm('سيتم تصفير النظام بالكامل (تبقى الحسابات والصلاحيات فقط). هذا الإجراء نهائي!')">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" name="operation" value="truncate_everything_except_accounts">
+      <div class="sc-maint-head">
+        <span class="sc-maint-ico"><i class="fa-solid fa-biohazard"></i></span>
+        <h4>تصفير النظام بالكامل</h4>
+      </div>
+      <p>يحذف كل بيانات التشغيل (مستفيدين، سجلات، طلبات، أرشيف). الحسابات والصلاحيات تبقى.</p>
+      <div class="sc-maint-foot">
+        <button class="sc-btn sc-btn--danger" type="submit"><i class="fa-solid fa-radiation"></i> تصفير شامل</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll('.sc-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var key = btn.getAttribute('data-sc-tab');
+      btn.parentElement.querySelectorAll('.sc-tab').forEach(function(t){ t.classList.remove('is-on'); });
+      btn.classList.add('is-on');
+      document.querySelectorAll('.sc-pane').forEach(function(p){
+        p.classList.toggle('is-on', p.getAttribute('data-sc-pane') === key);
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

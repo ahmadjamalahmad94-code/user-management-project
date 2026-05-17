@@ -1,0 +1,104 @@
+{% extends "admin/cards/_cards_layout.html" %}
+{% block title %}مزامنة باقات RADIUS{% endblock %}
+{% block page_title %}مزامنة باقات RADIUS{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+{% endblock %}
+
+{% block cards_content %}
+
+<div class="d-notice">
+  <i class="fa-solid fa-satellite-dish"></i>
+  <div>
+    <strong>اربط كل فئة بـ profile_id الموافق في RADIUS API.</strong>
+    عند تفعيل عمليات الكتابة لاحقًا، سيستخدم الموقع هذه المعرّفات لتوليد البطاقات تلقائيًا.
+  </div>
+</div>
+
+{% if not profiles_result.available %}
+<section class="d-card">
+  <div class="d-card-body">
+    <div class="d-notice d-notice--info" style="margin:0">
+      <i class="fa-solid fa-circle-info"></i>
+      <div>
+        <strong>RADIUS API غير متاح أو لا يحتوي على باقات.</strong>
+        {% if profiles_result.error %}<br><small>{{ profiles_result.error }}</small>{% endif %}
+        يمكنك الإدخال اليدوي للـ profile_id إن كنت تعرفه.
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title">
+      <i class="fa-solid fa-link"></i>ربط الفئات بالباقات
+      {% if profiles_result.available %}
+        <span class="d-badge d-badge--success" style="font-size:10.5px">
+          {{ profiles_result.data | length }} باقة من RADIUS
+        </span>
+      {% endif %}
+    </h3>
+  </div>
+  <div class="d-card-body">
+    <form method="POST">
+      {{ csrf_token_input() | safe }}
+      <div style="display:grid;gap:14px">
+        {% for cat in categories %}
+        <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:14px;align-items:center;padding:14px;background:#FAFAF8;border:1px solid var(--d-border);border-radius:12px">
+          <div>
+            <strong>{{ cat.label_ar }}</strong>
+            <div style="font-size:11.5px;color:var(--d-text-muted)">
+              <span class="d-badge">{{ cat.duration_minutes }} دقيقة</span>
+              <span style="font-family:monospace;margin-inline-start:6px">{{ cat.code }}</span>
+            </div>
+          </div>
+          <div>
+            {% if profiles_result.available and profiles_result.data %}
+            <select class="d-field" name="category_{{ cat.id }}">
+              <option value="">— لا ربط —</option>
+              {% for p in profiles_result.data %}
+              <option value="{{ p.id or p.profile_id or p.name }}"
+                      {% if cat.radius_profile_id == (p.id|string) or cat.radius_profile_id == (p.profile_id|string) or cat.radius_profile_id == p.name %}selected{% endif %}>
+                {{ p.name or p.profile_name or p.id }}
+                {% if p.duration_minutes %} ({{ p.duration_minutes }} دقيقة){% endif %}
+              </option>
+              {% endfor %}
+            </select>
+            {% else %}
+            <input class="d-field" name="category_{{ cat.id }}" value="{{ cat.radius_profile_id or '' }}" placeholder="profile_id يدوي (اختياري)">
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="d-pill-btn d-pill-btn--gold" type="submit">
+          <i class="fa-solid fa-save"></i>حفظ الربط
+        </button>
+        <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_cards_categories') }}">
+          <i class="fa-solid fa-arrow-right"></i>عودة
+        </a>
+      </div>
+    </form>
+  </div>
+</section>
+
+{% if profiles_result.available and profiles_result.data %}
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list"></i>الباقات الخام من RADIUS</h3>
+    <span style="font-size:11px;color:var(--d-text-muted)">للمرجعية</span>
+  </div>
+  <div class="d-card-body--flush" style="padding:14px;font-family:monospace;font-size:12px;color:var(--d-text-soft);background:#FAFAF8;overflow:auto;max-height:280px">
+    <pre style="margin:0;white-space:pre-wrap">{{ profiles_result.data | tojson(indent=2) }}</pre>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}
+
+

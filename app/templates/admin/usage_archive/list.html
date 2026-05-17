@@ -1,0 +1,120 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}أرشيف سجل البطاقات{% endblock %}
+{% block page_title %}أرشيف سجل البطاقات{% endblock %}
+{% block crumbs %}<span>الإدارة</span><i class="fa-solid fa-chevron-left"></i><span>السجلات</span><i class="fa-solid fa-chevron-left"></i><span>الأرشيف</span>{% endblock %}
+
+{% block head_extra %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_hub.css') }}">
+<style>
+.usage-row td{vertical-align:middle;font-size:13px}
+.usage-row td.col-id{font-family:monospace;color:var(--d-text-muted);font-size:11.5px}
+.usage-row td.col-name{font-weight:700;color:var(--d-black)}
+.usage-row td.col-phone{font-family:monospace;font-size:12.5px;color:var(--d-text-soft)}
+.usage-row td.col-when{font-size:11.5px;color:var(--d-text-muted);font-family:monospace;white-space:nowrap}
+.utype-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
+.utype-tawjihi{background:#e8f6ee;color:#1f8f51}
+.utype-university{background:#FDF1CF;color:#7c2d12}
+.utype-freelancer{background:#F4F3EF;color:var(--d-text-soft)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;background:rgba(244,186,42,.14);color:#7c2d12}
+.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+</style>{% endblock %}
+
+{% block content %}
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for cat,msg in msgs %}<div class="flash-toast" style="padding:11px 14px;border-radius:11px;margin-bottom:12px;font-weight:700;{% if cat=='success' %}background:#e8f6ee;color:#1f8f51{% else %}background:#fde2e2;color:#b91c1c{% endif %}">{{ msg }}</div>{% endfor %}{% endwith %}
+
+<!-- ─── Unified Control Hub ─── -->
+<section class="hub">
+  <div class="hub-stats">
+    <div class="hub-stat">
+      <span class="hub-stat-ico"><i class="fa-solid fa-box-archive"></i></span>
+      <div><span class="lbl">إجمالي الأرشيف</span><span class="val">{{ total }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico ok"><i class="fa-solid fa-eye"></i></span>
+      <div><span class="lbl">المعروض</span><span class="val">{{ rows|length }}</span></div>
+    </div>
+    {% if oldest %}
+    <div class="hub-stat">
+      <span class="hub-stat-ico cyan"><i class="fa-solid fa-clock-rotate-left"></i></span>
+      <div><span class="lbl">أقدم سجل</span><span class="val" style="font-size:14px">{{ oldest }}</span></div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="hub-pills">
+    {% if can_export %}
+    <a class="hub-pill" href="{{ url_for('export_archive_excel') }}{% if filters.date_to %}?date_to={{ filters.date_to }}{% endif %}"><i class="fa-solid fa-file-excel"></i>تصدير Excel</a>
+    {% endif %}
+    <a class="hub-pill is-zero" href="/admin/usage-logs"><i class="fa-solid fa-arrow-right"></i>العودة للسجل الحالي</a>
+  </div>
+
+  <form class="hub-search" method="GET" autocomplete="off">
+    <div class="hub-search-input" style="flex:0 0 auto;min-width:200px">
+      <i class="fa-solid fa-calendar"></i>
+      <input type="date" name="date_to" value="{{ filters.date_to or '' }}" title="حتى تاريخ">
+    </div>
+    <button type="submit" class="hub-search-clear" style="width:auto;padding:0 14px;font-weight:800" title="تطبيق"><i class="fa-solid fa-magnifying-glass"></i></button>
+    <a class="hub-search-clear" href="{{ url_for('usage_archive_page') }}" title="مسح"><i class="fa-solid fa-xmark"></i></a>
+  </form>
+</section>
+
+{% if can_clear %}
+<section class="d-card" style="margin-top:14px">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-triangle-exclamation"></i>عمليات الأرشيف الخطرة</h3></div>
+  <div class="d-card-body">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+      {% if can_restore %}
+      <div style="padding:14px;border-radius:12px;background:#e7f0fd;border:1px solid rgba(28,82,168,.3)">
+        <h4 style="margin:0 0 6px;font-size:14px;color:#1c52a8"><i class="fa-solid fa-rotate-left"></i> استرجاع للسجل الحالي</h4>
+        <p style="margin:0 0 10px;font-size:12px;color:var(--d-text-soft)">يعيد كل سجلات الأرشيف للسجل الحالي.</p>
+        <form method="POST" action="{{ url_for('restore_archive_logs') }}" onsubmit="return confirm('سيتم استرجاع كل الأرشيف للسجل الحالي. متابعة؟')">
+          {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+          <button type="submit" style="padding:8px 14px;border-radius:9px;background:#1c52a8;color:#fff;border:0;font-weight:700;cursor:pointer">استرجاع الكل</button>
+        </form>
+      </div>
+      {% endif %}
+      {% if can_delete %}
+      <div style="padding:14px;border-radius:12px;background:#fde2e2;border:1px solid rgba(185,28,28,.3)">
+        <h4 style="margin:0 0 6px;font-size:14px;color:#b91c1c"><i class="fa-solid fa-trash-can"></i> حذف الأرشيف</h4>
+        <p style="margin:0 0 10px;font-size:12px;color:var(--d-text-soft)">حذف نهائي لا يمكن التراجع عنه!</p>
+        <form method="POST" action="/usage-archive/clear" onsubmit="return confirm('حذف الأرشيف نهائيًا. هل أنت متأكد تمامًا؟')">
+          {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+          <button type="submit" style="padding:8px 14px;border-radius:9px;background:#b91c1c;color:#fff;border:0;font-weight:700;cursor:pointer">حذف الأرشيف نهائيًا</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="d-card" style="margin-top:14px">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-list"></i>السجلات المؤرشفة</h3><span style="font-size:11.5px;color:var(--d-text-muted)">{{ rows|length }} سجل</span></div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="usage-archive">
+      <thead><tr><th>#</th><th>الاسم</th><th>الجوال</th><th>النوع</th><th>سبب البطاقة</th><th>نوع البطاقة</th><th>التاريخ والوقت</th><th>ملاحظات</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr class="usage-row">
+          <td class="col-id">{{ loop.index }}</td>
+          <td class="col-name">{{ r.full_name or '—' }}</td>
+          <td class="col-phone">{{ r.phone or '—' }}</td>
+          <td>
+            {% if r.user_type == 'tawjihi' %}<span class="utype-badge utype-tawjihi">توجيهي</span>
+            {% elif r.user_type == 'university' %}<span class="utype-badge utype-university">جامعي</span>
+            {% elif r.user_type == 'freelancer' %}<span class="utype-badge utype-freelancer">عمل حر</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>{% if r.usage_reason %}<span class="tag">{{ r.usage_reason }}</span>{% else %}—{% endif %}</td>
+          <td>{% if r.card_type %}<span class="tag">{{ r.card_type }}</span>{% else %}—{% endif %}</td>
+          <td class="col-when">{{ format_dt_short(r.usage_time) }}</td>
+          <td style="font-size:12px;color:var(--d-text-soft);max-width:240px;white-space:normal">{{ r.notes or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="8" style="text-align:center;padding:28px;color:var(--d-text-muted)">لا توجد سجلات في الأرشيف.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

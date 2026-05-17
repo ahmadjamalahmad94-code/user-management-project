@@ -1,0 +1,420 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}مركز الاستيراد{% endblock %}
+{% block page_title %}مركز الاستيراد الشامل{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>السجلات</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>الاستيراد</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.imp-hero{position:relative;background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 60%,#3a3633 100%);color:#fff;border-radius:20px;padding:28px 30px;margin-bottom:18px;overflow:hidden;box-shadow:0 16px 40px rgba(30,30,30,.22)}
+.imp-hero::before{content:"";position:absolute;top:-60px;inset-inline-end:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.30),transparent 70%);pointer-events:none}
+.imp-hero h2{margin:0 0 8px;font-size:24px;font-weight:900;letter-spacing:-.3px}
+.imp-hero h2 i{color:var(--d-gold);margin-inline-end:8px}
+.imp-hero p{margin:0;font-size:13.5px;color:rgba(255,255,255,.72);line-height:1.8;max-width:680px}
+
+/* Tabs */
+.imp-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.imp-tab{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;background:#fff;border:1.5px solid var(--d-border-strong);color:var(--d-text-soft);font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;transition:.18s ease}
+.imp-tab:hover{border-color:var(--d-gold);color:var(--d-black)}
+.imp-tab.is-on{background:#1E1E1E;color:#fff;border-color:#1E1E1E}
+.imp-tab.is-on i{color:var(--d-gold)}
+.imp-tab i{font-size:13px}
+.imp-pane{display:none}
+.imp-pane.is-on{display:block;animation:paneIn .25s ease}
+@keyframes paneIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Card */
+.imp-card{background:#fff;border:1px solid var(--d-border);border-radius:16px;padding:22px 24px;box-shadow:0 1px 3px rgba(30,30,30,.04);margin-bottom:14px}
+.imp-card-title{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:14.5px;font-weight:900;color:var(--d-black);padding-bottom:10px;border-bottom:1px dashed var(--d-border)}
+.imp-card-title i{width:30px;height:30px;border-radius:9px;background:var(--d-gold-faint,#FDF1CF);color:var(--d-gold-deep,#D8A11C);display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+
+/* Dropzone */
+.dropzone{border:2.5px dashed var(--d-border-strong);background:linear-gradient(180deg,#FAFAF8,#fff);border-radius:18px;padding:32px 22px;text-align:center;cursor:pointer;transition:.22s ease}
+.dropzone:hover{border-color:var(--d-gold);background:linear-gradient(180deg,#FDF1CF,#FFFCEF)}
+.dropzone.is-dragover{border-color:var(--d-gold);border-style:solid;background:linear-gradient(135deg,#FDF1CF,#FFD96A22);transform:scale(1.01)}
+.dropzone.has-file{border-color:#1f8f51;border-style:solid;background:linear-gradient(135deg,#e8f6ee,#fff)}
+.dropzone-ico{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--d-gold),#FFD96A);color:#1E1E1E;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:10px;box-shadow:0 10px 24px rgba(244,186,42,.30)}
+.dropzone.has-file .dropzone-ico{background:linear-gradient(135deg,#1f8f51,#22c55e);color:#fff}
+.dropzone h4{margin:0;font-size:15px;font-weight:800;color:var(--d-black)}
+.dropzone p{margin:6px 0 0;font-size:12.5px;color:var(--d-text-muted)}
+.dropzone .pick-btn{display:inline-block;margin-top:14px;padding:9px 18px;border-radius:11px;background:#1E1E1E;color:#fff;font-size:13px;font-weight:800;pointer-events:none}
+.dropzone:hover .pick-btn{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E}
+.dropzone .picked-name{display:none;margin-top:12px;padding:8px 14px;background:rgba(255,255,255,.7);border-radius:10px;font-family:monospace;font-size:12.5px;color:#1f8f51;font-weight:800}
+.dropzone.has-file .picked-name{display:inline-block}
+.csv-input{display:none !important}
+
+/* Format guide */
+.fmt-guide{background:#FDF6E3;border:1px dashed rgba(217,119,6,.4);border-radius:12px;padding:14px 16px;color:#7c2d12;font-size:12.5px;line-height:1.8;margin-top:12px}
+.fmt-guide strong{color:var(--d-black);display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px}
+.fmt-guide strong i{color:#d97706}
+.fmt-example{display:grid;gap:5px;margin-top:8px;padding:10px;background:rgba(255,255,255,.7);border-radius:10px;font-family:monospace;font-size:11.5px}
+.fmt-example .row{display:grid;gap:6px}
+.fmt-example .row.hdr{font-weight:800;color:var(--d-text-muted);padding-bottom:4px;border-bottom:1px solid var(--d-border)}
+.fmt-example .row > div{padding:3px 8px}
+
+/* Submit bar */
+.submit-bar{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px dashed var(--d-border)}
+.submit-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;font-size:14px;font-weight:900;border:0;cursor:pointer;font-family:inherit;box-shadow:0 6px 16px rgba(244,186,42,.30);transition:.18s ease}
+.submit-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 22px rgba(244,186,42,.42)}
+.submit-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.cancel-link{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:12px;background:#fff;border:1px solid var(--d-border-strong);color:var(--d-text);font-size:13.5px;font-weight:800;text-decoration:none}
+.cancel-link:hover{border-color:var(--d-gold);background:#FAFAF8}
+
+/* Cards-grid (for sections that link to dedicated pages) */
+.imp-go-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.imp-go-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit;transition:.2s ease}
+.imp-go-card:hover{border-color:var(--d-gold);transform:translateY(-2px);box-shadow:0 10px 24px rgba(30,30,30,.08)}
+.imp-go-card .ico{width:42px;height:42px;border-radius:12px;background:var(--d-gold-faint);color:var(--d-gold-deep);display:inline-flex;align-items:center;justify-content:center;font-size:18px}
+.imp-go-card h4{margin:0;font-size:14.5px;font-weight:900;color:var(--d-black)}
+.imp-go-card p{margin:0;font-size:12px;color:var(--d-text-soft);line-height:1.7;flex:1}
+.imp-go-card .arrow{font-size:12px;color:var(--d-gold-deep);font-weight:800;margin-top:auto}
+
+/* Result panel */
+.result-panel{margin-top:12px;padding:14px 16px;border-radius:12px;background:#FAFAF8;border:1px solid var(--d-border);display:none}
+.result-panel.is-show{display:block}
+.result-panel.success{background:#e8f6ee;border-color:rgba(31,143,81,.3)}
+.result-panel.error{background:#fde2e2;border-color:rgba(185,28,28,.3)}
+.result-panel h5{margin:0 0 6px;font-size:13.5px;font-weight:900;color:var(--d-black)}
+.result-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:12px;font-weight:700}
+.result-stats span{padding:3px 10px;border-radius:8px;background:#fff;border:1px solid var(--d-border)}
+.result-errors{margin-top:8px;font-size:11.5px;color:#b91c1c;max-height:160px;overflow-y:auto}
+.result-errors div{padding:3px 0}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="imp-hero">
+  <h2><i class="fa-solid fa-cloud-arrow-up"></i>مركز الاستيراد الشامل</h2>
+  <p>استيراد دفعات من البيانات بصيغ الملفات الجدولية. تدعم: المستفيدين، البطاقات، حسابات البوابة، والفئات.</p>
+</div>
+
+<!-- Tabs -->
+<div class="imp-tabs">
+  <button type="button" class="imp-tab is-on" data-pane="ben"><i class="fa-solid fa-users"></i>المستفيدون</button>
+  <button type="button" class="imp-tab" data-pane="cards"><i class="fa-solid fa-ticket"></i>البطاقات</button>
+  <button type="button" class="imp-tab" data-pane="portal"><i class="fa-solid fa-id-card-clip"></i>حسابات البوابة</button>
+  <button type="button" class="imp-tab" data-pane="internet"><i class="fa-solid fa-globe"></i>حسابات إنترنت</button>
+  <button type="button" class="imp-tab" data-pane="cardacc"><i class="fa-solid fa-credit-card"></i>حسابات بطاقات</button>
+  <button type="button" class="imp-tab" data-pane="cats"><i class="fa-solid fa-layer-group"></i>الفئات</button>
+</div>
+
+<!-- ──────────── PANE 1: BENEFICIARIES ──────────── -->
+<div class="imp-pane is-on" id="pane-ben">
+  <div class="imp-card">
+    <h3 class="imp-card-title"><i class="fa-solid fa-users"></i>استيراد المستفيدين من ملف جدولي</h3>
+    <form method="POST" action="{{ url_for('import_csv') }}" enctype="multipart/form-data" id="import-form-ben">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <div class="dropzone" id="ben-dropzone" role="button" tabindex="0">
+        <div class="dropzone-ico"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <h4>اسحب ملف المستفيدين هنا أو اضغط</h4>
+        <p>CSV أو Excel (xlsx/xls) — صف العنوان يُتجاهَل تلقائيًا</p>
+        <span class="pick-btn"><i class="fa-solid fa-folder-open"></i> اختيار ملف</span>
+        <div class="picked-name" id="ben-picked">— لم يُختر ملف —</div>
+      </div>
+      <input type="file" name="csv_file" accept=".csv,.xlsx,.xls" required id="ben-file" class="csv-input">
+
+      <div class="fmt-guide">
+        <strong><i class="fa-solid fa-circle-info"></i>الصيغة</strong>
+        ملف المستفيدين يجب أن يحتوي أعمدة القالب الرسمي: نوع المستفيد، الاسم الرباعي، رقم الجوال، والحقول الاختيارية.
+        <br>اضغط <a href="/admin/exports/template" style="color:#d97706;font-weight:800">«تنزيل القالب»</a> للحصول على ملف نموذجي.
+      </div>
+
+      <div class="submit-bar">
+        <a class="cancel-link" href="/admin/exports/template"><i class="fa-solid fa-download"></i>تنزيل القالب</a>
+        <button type="submit" class="submit-btn" id="ben-submit" disabled><i class="fa-solid fa-play"></i>بدء الاستيراد</button>
+      </div>
+    </form>
+  </div>
+
+  {% if last_task %}
+  <div class="imp-card">
+    <h3 class="imp-card-title"><i class="fa-solid fa-clock-rotate-left"></i>آخر مهمة استيراد</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+      <div><div style="font-size:11px;color:var(--d-text-muted);font-weight:700">الملف</div><div style="font-family:monospace;font-size:13px;color:var(--d-black);margin-top:3px">{{ last_task.filename or '—' }}</div></div>
+      <div><div style="font-size:11px;color:var(--d-text-muted);font-weight:700">الحالة</div><div style="font-size:13px;color:var(--d-black);margin-top:3px;font-weight:800">{{ last_task.status or '—' }}</div></div>
+      <div style="grid-column:1/-1"><div style="font-size:11px;color:var(--d-text-muted);font-weight:700">الرسالة</div><div style="font-size:12.5px;color:var(--d-text-soft);margin-top:3px;line-height:1.6">{{ last_task.message or '—' }}</div></div>
+    </div>
+    <div class="submit-bar">
+      <a class="submit-btn" href="{{ url_for('import_status_page', task_id=last_task.id) }}" style="text-decoration:none"><i class="fa-solid fa-chart-line"></i>فتح شاشة المتابعة</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ──────────── PANE 2: CARDS ──────────── -->
+<div class="imp-pane" id="pane-cards">
+  <div class="imp-card">
+    <h3 class="imp-card-title"><i class="fa-solid fa-ticket"></i>استيراد بطاقات الإنترنت</h3>
+    <p style="color:var(--d-text-soft);font-size:13px;line-height:1.7;margin:-6px 0 12px">
+      استيراد دفعة بطاقات يدوية من ملف جدولي أو ملف إكسل لفئة محددة (نصف ساعة / ساعة / ساعتين...).
+      الصفحة المخصصة تتيح اختيار الفئة + سحب وإفلات الملف + معاينة الحجم.
+    </p>
+    <div class="imp-go-grid">
+      <a class="imp-go-card" href="/admin/cards/import">
+        <span class="ico"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+        <h4>صفحة رفع البطاقات</h4>
+        <p>اختر الفئة من بطاقات ملونة ثم اسحب الملف. التحقق التلقائي يمنع التكرار.</p>
+        <span class="arrow">افتح الصفحة <i class="fa-solid fa-arrow-left"></i></span>
+      </a>
+      <a class="imp-go-card" href="/admin/cards/inventory">
+        <span class="ico"><i class="fa-solid fa-boxes-stacked"></i></span>
+        <h4>المخزون الحالي</h4>
+        <p>راجع كم بطاقة متاحة في كل فئة قبل الاستيراد.</p>
+        <span class="arrow">عرض المخزون <i class="fa-solid fa-arrow-left"></i></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ──────────── PANE 3: PORTAL ACCOUNTS ──────────── -->
+<div class="imp-pane" id="pane-portal">
+  <div class="imp-card">
+    <h3 class="imp-card-title"><i class="fa-solid fa-id-card-clip"></i>استيراد حسابات البوابة</h3>
+    <form id="import-form-portal" enctype="multipart/form-data">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <div class="dropzone" id="portal-dropzone" role="button" tabindex="0">
+        <div class="dropzone-ico"><i class="fa-solid fa-key"></i></div>
+        <h4>اسحب ملف حسابات البوابة</h4>
+        <p>CSV أو Excel (xlsx/xls) — صف العنوان يُتجاهل</p>
+        <span class="pick-btn"><i class="fa-solid fa-folder-open"></i> اختيار ملف</span>
+        <div class="picked-name" id="portal-picked">— لم يُختر ملف —</div>
+      </div>
+      <input type="file" name="csv_file" accept=".csv,.xlsx,.xls" required id="portal-file" class="csv-input">
+
+      <div class="fmt-guide">
+        <strong><i class="fa-solid fa-circle-info"></i>الصيغة (3 أعمدة)</strong>
+        المعرّف أو رقم الجوال + اسم المستخدم + كلمة المرور.
+        <div class="fmt-example">
+          <div class="row hdr" style="grid-template-columns:1fr 1fr 1fr"><div>المعرّف</div><div>اسم المستخدم</div><div>كلمة المرور</div></div>
+          <div class="row" style="grid-template-columns:1fr 1fr 1fr"><div>268</div><div>0599000000</div><div>123456</div></div>
+          <div class="row" style="grid-template-columns:1fr 1fr 1fr"><div>0598000000</div><div>0598000000</div><div>654321</div></div>
+        </div>
+        إذا كان يوجد حساب لنفس المعرف، يُحدَّث اسم المستخدم/كلمة المرور. وإذا لم يوجد، يُنشأ حساب جديد.
+      </div>
+
+      <div class="submit-bar">
+        <button type="submit" class="submit-btn" id="portal-submit" disabled><i class="fa-solid fa-play"></i>استيراد الحسابات</button>
+      </div>
+      <div class="result-panel" id="portal-result"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ──────────── PANE: INTERNET ACCOUNTS ──────────── -->
+<div class="imp-pane" id="pane-internet">
+  <div class="imp-card">
+    <h3 class="imp-card-title"><i class="fa-solid fa-globe"></i>استيراد حسابات إنترنت (يوزر RADIUS)</h3>
+    <p style="color:var(--d-text-soft);font-size:13px;margin:-6px 0 12px;line-height:1.7">
+      نفس آلية حسابات البوابة، لكن يضبط <b>طريقة الإنترنت</b> للمستفيدين على <b>«يوزر إنترنت»</b> تلقائيًا.
+      ينقلهم إلى قسم <a href="/admin/users-account" style="color:var(--d-gold-deep)">مشتركو حساب الإنترنت</a>.
+    </p>
+    <form id="import-form-internet" enctype="multipart/form-data">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" name="target_method" value="username">
+      <div class="dropzone" id="internet-dropzone" role="button" tabindex="0">
+        <div class="dropzone-ico"><i class="fa-solid fa-globe"></i></div>
+        <h4>اسحب ملف حسابات الإنترنت</h4>
+        <p>CSV أو Excel (xlsx/xls) — صف العنوان يُتجاهل</p>
+        <span class="pick-btn"><i class="fa-solid fa-folder-open"></i> اختيار ملف</span>
+        <div class="picked-name" id="internet-picked">— لم يُختر ملف —</div>
+      </div>
+      <input type="file" name="csv_file" accept=".csv,.xlsx,.xls" required id="internet-file" class="csv-input">
+
+      <div class="fmt-guide">
+        <strong><i class="fa-solid fa-circle-info"></i>الصيغة (3 أعمدة)</strong>
+        المعرّف أو رقم الجوال + اسم المستخدم + كلمة المرور (من ملف RADIUS).
+        <div class="fmt-example">
+          <div class="row hdr" style="grid-template-columns:1fr 1fr 1fr"><div>المعرّف</div><div>اسم المستخدم</div><div>كلمة المرور</div></div>
+          <div class="row" style="grid-template-columns:1fr 1fr 1fr"><div>0599000000</div><div>0599000000</div><div>123456</div></div>
+          <div class="row" style="grid-template-columns:1fr 1fr 1fr"><div>0598000000</div><div>0598000000</div><div>654321</div></div>
+        </div>
+        المستفيد يصير <b>access_mode = username</b> ويظهر في صفحة حسابات الإنترنت.
+      </div>
+
+      <div class="submit-bar">
+        <button type="submit" class="submit-btn" id="internet-submit" disabled><i class="fa-solid fa-play"></i>استيراد حسابات إنترنت</button>
+      </div>
+      <div class="result-panel" id="internet-result"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ──────────── PANE: CARDS ACCOUNTS ──────────── -->
+<div class="imp-pane" id="pane-cardacc">
+  <div class="imp-card">
+    <h3 class="imp-card-title"><i class="fa-solid fa-credit-card"></i>استيراد حسابات بطاقات</h3>
+    <p style="color:var(--d-text-soft);font-size:13px;margin:-6px 0 12px;line-height:1.7">
+      نفس آلية الاستيراد، لكن يضبط <b>طريقة الإنترنت</b> على <b>«نظام البطاقات»</b> تلقائيًا.
+      ينقلهم إلى قسم <a href="/admin/cards/subscribers" style="color:var(--d-gold-deep)">مشتركو البطاقات</a>.
+    </p>
+    <form id="import-form-cardacc" enctype="multipart/form-data">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" name="target_method" value="cards">
+      <div class="dropzone" id="cardacc-dropzone" role="button" tabindex="0">
+        <div class="dropzone-ico"><i class="fa-solid fa-credit-card"></i></div>
+        <h4>اسحب ملف حسابات البطاقات</h4>
+        <p>CSV أو Excel (xlsx/xls) — صف العنوان يُتجاهل</p>
+        <span class="pick-btn"><i class="fa-solid fa-folder-open"></i> اختيار ملف</span>
+        <div class="picked-name" id="cardacc-picked">— لم يُختر ملف —</div>
+      </div>
+      <input type="file" name="csv_file" accept=".csv,.xlsx,.xls" required id="cardacc-file" class="csv-input">
+
+      <div class="fmt-guide">
+        <strong><i class="fa-solid fa-circle-info"></i>الصيغة (3 أعمدة)</strong>
+        المعرّف أو رقم الجوال + اسم المستخدم + كلمة المرور.
+        <div class="fmt-example">
+          <div class="row hdr" style="grid-template-columns:1fr 1fr 1fr"><div>المعرّف</div><div>اسم المستخدم</div><div>كلمة المرور</div></div>
+          <div class="row" style="grid-template-columns:1fr 1fr 1fr"><div>0597000000</div><div>0597000000</div><div>222222</div></div>
+        </div>
+        المستفيد يصير <b>access_mode = cards</b> ويظهر في صفحة مشتركي البطاقات.
+      </div>
+
+      <div class="submit-bar">
+        <button type="submit" class="submit-btn" id="cardacc-submit" disabled><i class="fa-solid fa-play"></i>استيراد حسابات بطاقات</button>
+      </div>
+      <div class="result-panel" id="cardacc-result"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ──────────── PANE 4: CATEGORIES ──────────── -->
+<div class="imp-pane" id="pane-cats">
+  <div class="imp-card">
+    <h3 class="imp-card-title"><i class="fa-solid fa-layer-group"></i>إدارة الفئات</h3>
+    <p style="color:var(--d-text-soft);font-size:13px;line-height:1.7;margin:-6px 0 12px">
+      نظام الفئات صغير ومحدّد (5 فئات رسمية + فئات مخصصة). يُفضّل إضافتها يدوياً من الصفحة المخصصة
+      بدل الاستيراد لضمان الرموز الداخلية وعدم تكرارها.
+    </p>
+    <div class="imp-go-grid">
+      <a class="imp-go-card" href="/admin/cards/categories">
+        <span class="ico"><i class="fa-solid fa-layer-group"></i></span>
+        <h4>صفحة الفئات</h4>
+        <p>إضافة فئة جديدة (modal بسيط بـ 6 خيارات معدّة + خيار مخصص).</p>
+        <span class="arrow">افتح الصفحة <i class="fa-solid fa-arrow-left"></i></span>
+      </a>
+      <a class="imp-go-card" href="/admin/cards/policies">
+        <span class="ico"><i class="fa-solid fa-sliders"></i></span>
+        <h4>سياسات الحصص</h4>
+        <p>بعد إضافة الفئات، حدّد سياسات الحدود اليومية/الأسبوعية.</p>
+        <span class="arrow">افتح السياسات <i class="fa-solid fa-arrow-left"></i></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Tabs
+  document.querySelectorAll('.imp-tab').forEach(function(t){
+    t.addEventListener('click', function(){
+      var pane = t.dataset.pane;
+      document.querySelectorAll('.imp-tab').forEach(function(x){ x.classList.toggle('is-on', x === t); });
+      document.querySelectorAll('.imp-pane').forEach(function(p){ p.classList.toggle('is-on', p.id === 'pane-'+pane); });
+    });
+  });
+
+  // Generic dropzone wiring
+  function wireDropzone(dropzoneId, inputId, pickedId, submitId){
+    var dz = document.getElementById(dropzoneId);
+    var input = document.getElementById(inputId);
+    var picked = document.getElementById(pickedId);
+    var submit = submitId ? document.getElementById(submitId) : null;
+    if(!dz || !input) return;
+    function showFile(f){
+      if(!f){
+        dz.classList.remove('has-file');
+        if(picked) picked.style.display = 'none';
+        if(submit) submit.disabled = true;
+        return;
+      }
+      dz.classList.add('has-file');
+      if(picked){ picked.textContent = 'تم اختيار ملف بحجم ' + (f.size/1024).toFixed(1) + ' كيلوبايت'; }
+      if(submit) submit.disabled = false;
+    }
+    dz.addEventListener('click', function(){ input.click(); });
+    dz.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); input.click(); }
+    });
+    input.addEventListener('change', function(){
+      showFile(input.files && input.files[0]);
+    });
+    ['dragenter','dragover'].forEach(function(ev){
+      dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.add('is-dragover'); });
+    });
+    ['dragleave','drop'].forEach(function(ev){
+      dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.remove('is-dragover'); });
+    });
+    dz.addEventListener('drop', function(e){
+      if(e.dataTransfer.files && e.dataTransfer.files.length){
+        input.files = e.dataTransfer.files;
+        showFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  wireDropzone('ben-dropzone', 'ben-file', 'ben-picked', 'ben-submit');
+  wireDropzone('portal-dropzone', 'portal-file', 'portal-picked', 'portal-submit');
+  wireDropzone('internet-dropzone', 'internet-file', 'internet-picked', 'internet-submit');
+  wireDropzone('cardacc-dropzone', 'cardacc-file', 'cardacc-picked', 'cardacc-submit');
+
+  // Generic AJAX submit for portal/internet/cardacc → /admin/import/portal-accounts
+  function wireImportForm(formId, submitId, resultId){
+    var form = document.getElementById(formId);
+    var submitBtn = document.getElementById(submitId);
+    var result = document.getElementById(resultId);
+    if(!form || !submitBtn || !result) return;
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      submitBtn.disabled = true;
+      var orig = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ الاستيراد...';
+      var fd = new FormData(form);
+      fetch('/admin/import/portal-accounts', {
+        method:'POST', credentials:'same-origin', body:fd,
+        headers:{'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json'}
+      })
+      .then(function(r){ return r.text().then(function(t){ try{return JSON.parse(t);}catch(err){throw new Error('فشل الطلب، رمز الحالة '+r.status);} }); })
+      .then(function(d){
+        submitBtn.innerHTML = orig;
+        var html = '<h5>' + (d.ok ? '✓ ' : '✗ ') + (d.message || '') + '</h5>';
+        if(d.stats){
+          html += '<div class="result-stats">' +
+            '<span>أُنشئ: <strong>'+d.stats.created+'</strong></span>' +
+            '<span>حُدِّث: <strong>'+d.stats.updated+'</strong></span>' +
+            '<span>تخطّى: <strong>'+d.stats.skipped+'</strong></span>' +
+          '</div>';
+        }
+        if(d.errors && d.errors.length){
+          html += '<div class="result-errors">' +
+            '<strong>أخطاء (أول ' + d.errors.length + ' من ' + (d.errors_count || d.errors.length) + ')</strong>' +
+            d.errors.map(function(e){ return '<div>• '+e+'</div>'; }).join('') +
+          '</div>';
+        }
+        result.className = 'result-panel is-show ' + (d.ok ? 'success' : 'error');
+        result.innerHTML = html;
+        // Re-enable for additional imports
+        submitBtn.disabled = false;
+      })
+      .catch(function(err){
+        submitBtn.disabled = false; submitBtn.innerHTML = orig;
+        result.className = 'result-panel is-show error';
+        result.innerHTML = '<h5>✗ فشل الاتصال</h5><div style="font-size:12px">'+err.message+'</div>';
+      });
+    });
+  }
+
+  wireImportForm('import-form-portal',   'portal-submit',   'portal-result');
+  wireImportForm('import-form-internet', 'internet-submit', 'internet-result');
+  wireImportForm('import-form-cardacc',  'cardacc-submit',  'cardacc-result');
+})();
+</script>
+{% endblock %}

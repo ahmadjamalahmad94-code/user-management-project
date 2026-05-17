@@ -1,0 +1,63 @@
+{% extends "admin/sms/_layout.html" %}
+{% block title %}إعدادات SMS{% endblock %}
+{% block page_title %}إعدادات SMS API{% endblock %}
+{% block crumbs %}<a href="{{ url_for('admin_sms_dashboard') }}">الرسائل القصيرة</a><i class="fa-solid fa-chevron-left"></i><span>الإعدادات</span>{% endblock %}
+
+{% block sms_content %}
+<section class="sms-hero">
+  <span class="sms-hero-ico"><i class="fa-solid fa-gear"></i></span>
+  <div><h2>إعدادات الربط مع مزوّد SMS</h2>
+    <p>اضبط API URL ومفتاح المصادقة وقالب الجسم. القالب يدعم {{ '{{phone}}' }} و {{ '{{text}}' }} و {{ '{{api_key}}' }}.</p>
+  </div>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-plug"></i>إعدادات الربط</h3></div>
+  <div class="d-card-body">
+    <form method="POST" action="{{ url_for('admin_sms_settings_save') }}">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+
+      <label style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--d-border);border-radius:10px;background:#fbfaf7;margin-bottom:14px;cursor:pointer">
+        <input type="checkbox" name="enabled" value="1" {% if settings.enabled %}checked{% endif %} style="width:20px;height:20px;accent-color:#1f8f51">
+        <div>
+          <strong style="font-size:14px;display:block">تفعيل SMS العام</strong>
+          <small style="color:var(--d-text-soft)">عند الإيقاف، لن يتم إرسال أي رسائل (حتى لو الخدمات مفعّلة).</small>
+        </div>
+      </label>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px">
+        <div class="d-field-wrap">
+          <label class="d-label">API URL <small style="color:var(--d-text-muted)">(endpoint للإرسال)</small></label>
+          <input class="d-field" type="url" name="api_url" value="{{ settings.api_url or '' }}" placeholder="https://api.sms-provider.com/send">
+        </div>
+        <div class="d-field-wrap">
+          <label class="d-label">API Key / Token</label>
+          <input class="d-field" type="text" name="api_key" value="{{ settings.api_key or '' }}" placeholder="مفتاح المصادقة" autocomplete="off">
+        </div>
+        <div class="d-field-wrap">
+          <label class="d-label">Sender ID</label>
+          <input class="d-field" type="text" name="sender_id" value="{{ settings.sender_id or '' }}" placeholder="HobeHub">
+        </div>
+        <div class="d-field-wrap">
+          <label class="d-label">HTTP Method</label>
+          <select class="d-field" name="method">
+            <option value="POST" {% if settings.method == 'POST' or not settings.method %}selected{% endif %}>POST</option>
+            <option value="GET" {% if settings.method == 'GET' %}selected{% endif %}>GET</option>
+          </select>
+        </div>
+        <div class="d-field-wrap" style="grid-column:1/-1">
+          <label class="d-label">قالب الجسم (Body Template)
+            <small style="color:var(--d-text-muted)">— استخدم {{ '{{phone}}' }} و {{ '{{text}}' }} و {{ '{{api_key}}' }}</small>
+          </label>
+          <textarea class="d-field" name="body_template" rows="4" placeholder='{"to":"{{phone}}","text":"{{text}}"}' style="font-family:monospace;direction:ltr;text-align:left">{{ settings.body_template or '' }}</textarea>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+        <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_sms_dashboard') }}">إلغاء</a>
+        <button class="d-pill-btn d-pill-btn--gold" type="submit"><i class="fa-solid fa-floppy-disk"></i> حفظ الإعدادات</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

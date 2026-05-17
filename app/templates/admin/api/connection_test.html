@@ -1,0 +1,364 @@
+{% extends "admin/_admin_layout.html" %}
+
+{% block title %}اختبار ربط المصادقة{% endblock %}
+
+
+
+
+
+{% block page_title %}اختبار ربط المصادقة{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>واجهة المصادقة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>اختبار الاتصال</span>
+{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.api-status-banner{
+  padding:18px 22px;
+  border-radius:var(--d-radius-lg);
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:20px;
+}
+.api-status-banner.ok{background:var(--d-success-soft);border:1px solid rgba(31,143,81,.25);color:#0f5a30}
+.api-status-banner.fail{background:var(--d-danger-soft);border:1px solid rgba(192,57,43,.25);color:#7c241b}
+.api-status-banner.warn{background:rgba(244,186,42,.18);border:1px solid rgba(244,186,42,.35);color:#5b3f04}
+.api-status-banner i{font-size:24px}
+.api-status-banner strong{font-size:15px;font-weight:800}
+.api-status-banner small{font-size:12.5px;display:block;margin-top:2px}
+
+.test-result{
+  background:#FAFAF8;
+  border:1px solid var(--d-border);
+  border-radius:var(--d-radius-md);
+  padding:16px;
+  margin-top:10px;
+  font-family:'Courier New', monospace;
+  font-size:12px;
+  color:var(--d-text-soft);
+  white-space:pre-wrap;
+  overflow-x:auto;
+  max-height:360px;
+  line-height:1.6;
+}
+.test-result.ok{background:#f0f9f4;border-color:rgba(31,143,81,.25)}
+.test-result.fail{background:#fbeae8;border-color:rgba(192,57,43,.25);color:#7c241b}
+
+.env-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:10px 14px;
+  background:#FAFAF8;
+  border:1px solid var(--d-border);
+  border-radius:10px;
+}
+.env-row .env-label{font-size:12.5px;font-weight:800;color:var(--d-text)}
+.env-row .pill{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px}
+.env-row .pill.set{background:var(--d-success-soft);color:var(--d-success)}
+.env-row .pill.miss{background:var(--d-danger-soft);color:var(--d-danger)}
+</style>
+{% endblock %}
+
+
+
+{% block content %}
+
+{# ── Banner لحالة الـ API ─────────────────────── #}
+{% if api_ready %}
+  <div class="api-status-banner ok">
+    <i class="fa-solid fa-circle-check"></i>
+    <div>
+      <strong>واجهة المصادقة مفعّلة بوضع القراءة فقط</strong>
+      <small>الاختبارات الآمنة جاهزة للتشغيل. عمليات الكتابة لا تزال معطّلة.</small>
+    </div>
+  </div>
+{% else %}
+  <div class="api-status-banner warn">
+    <i class="fa-solid fa-screwdriver-wrench"></i>
+    <div>
+      <strong>واجهة المصادقة غير مفعّلة</strong>
+      <small>فعّل جاهزية الربط من إعدادات التشغيل ثم أعد تشغيل التطبيق.</small>
+    </div>
+  </div>
+{% endif %}
+
+{# ── متغيرات البيئة ──────────────────────────── #}
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-gears"></i>إعدادات الربط الحالية</h3>
+  </div>
+  <div class="d-card-body" style="display:grid;gap:8px">
+    {% for k, v in env_status.items() %}
+    <div class="env-row">
+      <div>
+        <span class="env-label">{{ v.label }}</span>
+        {% if v.value %}
+          <small style="color:var(--d-text-muted);margin-inline-start:8px">{{ v.value }}</small>
+        {% endif %}
+      </div>
+      <span class="pill {% if v.set %}set{% else %}miss{% endif %}">
+        {% if v.set %}<i class="fa-solid fa-check"></i> محدد{% else %}<i class="fa-solid fa-xmark"></i> ناقص{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ── اختبارات الربط ──────────────────── #}
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-vial"></i>اختبارات الربط</h3>
+    <span style="font-size:11.5px;color:var(--d-text-muted)">قراءة فقط — آمنة 100%</span>
+    <form method="POST" action="{{ url_for('admin_api_test_reset') }}" style="margin-inline-start:auto">
+      {{ csrf_token_input() | safe }}
+      <button class="d-pill-btn d-pill-btn--ghost" type="submit" style="padding:6px 12px;font-size:12px">
+        <i class="fa-solid fa-rotate-right"></i>إعادة تعيين الجلسة
+      </button>
+    </form>
+  </div>
+  <div class="d-card-body" style="display:grid;gap:14px">
+
+    {# Test 1 #}
+    <div>
+      <form method="POST" action="{{ url_for('admin_api_test_run') }}">
+        {{ csrf_token_input() | safe }}
+        <input type="hidden" name="test" value="health_check">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong>1) فحص الاتصال وقراءة إصدار الخدمة</strong>
+            <div style="font-size:12px;color:var(--d-text-muted)">اختبار وصول آمن للخادم بدون تسجيل دخول.</div>
+          </div>
+          <button class="d-pill-btn d-pill-btn--gold" type="submit" {% if not api_ready %}disabled style="opacity:.5"{% endif %}>
+            <i class="fa-solid fa-bolt"></i>اختبر
+          </button>
+        </div>
+      </form>
+      {% if last_test == 'health_check' %}
+      <div class="test-result {% if last_ok %}ok{% else %}fail{% endif %}">{{ last_result }}</div>
+      {% endif %}
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--d-border);margin:0">
+
+    {# Test 2 #}
+    <div>
+      <form method="POST" action="{{ url_for('admin_api_test_run') }}">
+        {{ csrf_token_input() | safe }}
+        <input type="hidden" name="test" value="permissions">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong>2) تسجيل الدخول وقراءة الصلاحيات</strong>
+            <div style="font-size:12px;color:var(--d-text-muted)">يتحقق من بيانات الربط ثم يقرأ صلاحيات الحساب.</div>
+          </div>
+          <button class="d-pill-btn d-pill-btn--gold" type="submit" {% if not api_ready %}disabled style="opacity:.5"{% endif %}>
+            <i class="fa-solid fa-shield-halved"></i>اختبر
+          </button>
+        </div>
+      </form>
+      {% if last_test == 'permissions' %}
+      <div class="test-result {% if last_ok %}ok{% else %}fail{% endif %}">{{ last_result }}</div>
+      {% endif %}
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--d-border);margin:0">
+
+    {# Test 3 #}
+    <div>
+      <form method="POST" action="{{ url_for('admin_api_test_run') }}">
+        {{ csrf_token_input() | safe }}
+        <input type="hidden" name="test" value="balance">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong>3) قراءة الرصيد</strong>
+            <div style="font-size:12px;color:var(--d-text-muted)">رصيد الحساب الإداري.</div>
+          </div>
+          <button class="d-pill-btn d-pill-btn--gold" type="submit" {% if not api_ready %}disabled style="opacity:.5"{% endif %}>
+            <i class="fa-solid fa-wallet"></i>اختبر
+          </button>
+        </div>
+      </form>
+      {% if last_test == 'balance' %}
+      <div class="test-result {% if last_ok %}ok{% else %}fail{% endif %}">{{ last_result }}</div>
+      {% endif %}
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--d-border);margin:0">
+
+    {# Test 4 #}
+    <div>
+      <form method="POST" action="{{ url_for('admin_api_test_run') }}">
+        {{ csrf_token_input() | safe }}
+        <input type="hidden" name="test" value="server_status">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong>4) قراءة حالة الخادم</strong>
+            <div style="font-size:12px;color:var(--d-text-muted)">حالة خادم المصادقة.</div>
+          </div>
+          <button class="d-pill-btn d-pill-btn--gold" type="submit" {% if not api_ready %}disabled style="opacity:.5"{% endif %}>
+            <i class="fa-solid fa-server"></i>اختبر
+          </button>
+        </div>
+      </form>
+      {% if last_test == 'server_status' %}
+      <div class="test-result {% if last_ok %}ok{% else %}fail{% endif %}">{{ last_result }}</div>
+      {% endif %}
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--d-border);margin:0">
+
+    {# Test 5: online_users #}
+    <div>
+      <form method="POST" action="{{ url_for('admin_api_test_run') }}">
+        {{ csrf_token_input() | safe }}
+        <input type="hidden" name="test" value="online_users">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong>5) قراءة المتصلين الآن</strong>
+            <div style="font-size:12px;color:var(--d-text-muted)">قائمة الجلسات النشطة لحظيًا.</div>
+          </div>
+          <button class="d-pill-btn d-pill-btn--gold" type="submit" {% if not api_ready %}disabled style="opacity:.5"{% endif %}>
+            <i class="fa-solid fa-wifi"></i>اختبر
+          </button>
+        </div>
+      </form>
+      {% if last_test == 'online_users' %}
+      <div class="test-result {% if last_ok %}ok{% else %}fail{% endif %}">{{ last_result }}</div>
+      {% endif %}
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--d-border);margin:0">
+
+    {# Test 6: quick_stats #}
+    <div>
+      <form method="POST" action="{{ url_for('admin_api_test_run') }}">
+        {{ csrf_token_input() | safe }}
+        <input type="hidden" name="test" value="quick_stats">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong>6) إحصائيات سريعة</strong>
+            <div style="font-size:12px;color:var(--d-text-muted)">مؤشرات لحظية للوحة التحكم.</div>
+          </div>
+          <button class="d-pill-btn d-pill-btn--gold" type="submit" {% if not api_ready %}disabled style="opacity:.5"{% endif %}>
+            <i class="fa-solid fa-chart-pie"></i>اختبر
+          </button>
+        </div>
+      </form>
+      {% if last_test == 'quick_stats' %}
+      <div class="test-result {% if last_ok %}ok{% else %}fail{% endif %}">{{ last_result }}</div>
+      {% endif %}
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--d-border);margin:0">
+
+    {# Test 7: dashboard_metrics #}
+    <div>
+      <form method="POST" action="{{ url_for('admin_api_test_run') }}">
+        {{ csrf_token_input() | safe }}
+        <input type="hidden" name="test" value="dashboard_metrics">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong>7) قراءة مؤشرات لوحة التحكم</strong>
+            <div style="font-size:12px;color:var(--d-text-muted)">مقاييس موسّعة.</div>
+          </div>
+          <button class="d-pill-btn d-pill-btn--gold" type="submit" {% if not api_ready %}disabled style="opacity:.5"{% endif %}>
+            <i class="fa-solid fa-chart-line"></i>اختبر
+          </button>
+        </div>
+      </form>
+      {% if last_test == 'dashboard_metrics' %}
+      <div class="test-result {% if last_ok %}ok{% else %}fail{% endif %}">{{ last_result }}</div>
+      {% endif %}
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--d-border);margin:0">
+
+    {# Test 8: profiles #}
+    <div>
+      <form method="POST" action="{{ url_for('admin_api_test_run') }}">
+        {{ csrf_token_input() | safe }}
+        <input type="hidden" name="test" value="profiles">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong>8) قراءة الباقات المتاحة</strong>
+            <div style="font-size:12px;color:var(--d-text-muted)">قائمة الباقات في نظام المصادقة.</div>
+          </div>
+          <button class="d-pill-btn d-pill-btn--gold" type="submit" {% if not api_ready %}disabled style="opacity:.5"{% endif %}>
+            <i class="fa-solid fa-layer-group"></i>اختبر
+          </button>
+        </div>
+      </form>
+      {% if last_test == 'profiles' %}
+      <div class="test-result {% if last_ok %}ok{% else %}fail{% endif %}">{{ last_result }}</div>
+      {% endif %}
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--d-border);margin:0">
+
+    {# Test 9: search demo #}
+    <div>
+      <form method="POST" action="{{ url_for('admin_api_test_run') }}">
+        {{ csrf_token_input() | safe }}
+        <input type="hidden" name="test" value="search_demo">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong>9) بحث المشتركين: أول 10 نتائج</strong>
+            <div style="font-size:12px;color:var(--d-text-muted)">يجلب أول 10 نتائج بدون فلتر.</div>
+          </div>
+          <button class="d-pill-btn d-pill-btn--gold" type="submit" {% if not api_ready %}disabled style="opacity:.5"{% endif %}>
+            <i class="fa-solid fa-magnifying-glass"></i>اختبر
+          </button>
+        </div>
+      </form>
+      {% if last_test == 'search_demo' %}
+      <div class="test-result {% if last_ok %}ok{% else %}fail{% endif %}">{{ last_result }}</div>
+      {% endif %}
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--d-border);margin:0">
+
+    {# Test full suite #}
+    <div>
+      <form method="POST" action="{{ url_for('admin_api_test_run') }}">
+        {{ csrf_token_input() | safe }}
+        <input type="hidden" name="test" value="full_suite">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong>تشغيل كل الاختبارات بالتسلسل</strong>
+            <div style="font-size:12px;color:var(--d-text-muted)">يجمع الاختبارات السابقة في تقرير واحد.</div>
+          </div>
+          <button class="d-pill-btn" type="submit" style="background:var(--d-black)" {% if not api_ready %}disabled style="opacity:.5"{% endif %}>
+            <i class="fa-solid fa-circle-play"></i>الكل
+          </button>
+        </div>
+      </form>
+      {% if last_test == 'full_suite' %}
+      <div class="test-result {% if last_ok %}ok{% else %}fail{% endif %}">{{ last_result }}</div>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+
+{# ── ملاحظات للمطوّر ─────────────────────────── #}
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-book"></i>ملاحظات</h3>
+  </div>
+  <div class="d-card-body">
+    <ul style="padding-inline-start:20px;line-height:2;color:var(--d-text-soft);font-size:13.5px;margin:0">
+      <li>هذه الاختبارات آمنة بالكامل ولا تعدّل أي بيانات.</li>
+      <li>اختبار تسجيل الدخول يستخدم نفس طريقة التحقق المعتمدة في خدمة المصادقة.</li>
+      <li>المسار الحالي مضبوط من إعدادات التشغيل ولا يظهر للمستخدمين.</li>
+      <li>عمليات الكتابة تحتاج تفعيلًا إضافيًا من إعدادات التشغيل.</li>
+      <li>إن فشل اختبار، تحقق من الرابط، مفتاح الترخيص، حساب الربط، كلمة المرور، والشبكة.</li>
+    </ul>
+  </div>
+</section>
+
+{% endblock %}

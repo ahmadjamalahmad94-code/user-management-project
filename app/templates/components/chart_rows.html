@@ -1,0 +1,27 @@
+{% macro chart_rows(items, label_key="label", value_key="value", empty_text="لا توجد بيانات كافية.") -%}
+  {% if items %}
+    {% set ns = namespace(max_value=0) %}
+    {% for item in items %}
+      {% set value = item[value_key]|int %}
+      {% if value > ns.max_value %}
+        {% set ns.max_value = value %}
+      {% endif %}
+    {% endfor %}
+    {% set max_value = ns.max_value if ns.max_value else 1 %}
+    <div class="bar-list">
+      {% for item in items %}
+        {% set label = item[label_key] %}
+        {% set value = item[value_key]|int %}
+        {% set raw_width = ((value / max_value) * 100)|round|int %}
+        {% set width = 8 if raw_width < 8 else raw_width %}
+        <div class="bar-row">
+          <div class="bar-label" title="{{ label }}">{{ label }}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ width }}%"></div></div>
+          <div><strong>{{ value }}</strong></div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">{{ empty_text }}</div>
+  {% endif %}
+{%- endmacro %}

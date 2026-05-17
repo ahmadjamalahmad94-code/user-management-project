@@ -1,0 +1,1085 @@
+{% extends "admin/users_account/_layout.html" %}
+{% block title %}إدارة حسابات الإنترنت — نظرة عامة{% endblock %}
+{% block page_title %}مشتركو حساب الإنترنت{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_hub.css') }}">
+<style>
+.ua-row-actions{display:inline-flex;gap:5px;flex-wrap:wrap;align-items:center}
+.ua-row-actions form{margin:0}
+.ua-act{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 10px;border-radius:7px;
+  background:#fff;border:1px solid var(--d-border-strong);
+  color:var(--d-text);font-size:11.5px;font-weight:800;
+  text-decoration:none;font-family:inherit;cursor:pointer;
+  transition:.15s ease;white-space:nowrap;
+}
+.ua-act:hover{background:#1E1E1E;color:#fff;border-color:#1E1E1E}
+.ua-act i{font-size:10.5px}
+.ua-act--icon{
+  width:31px;height:31px;padding:0;justify-content:center;gap:0;
+}
+.ua-act--icon i{font-size:12px}
+.ua-act--disabled{opacity:.45;cursor:not-allowed;background:#fafaf8}
+.ua-act--disabled:hover{background:#fafaf8;color:var(--d-text);border-color:var(--d-border-strong)}
+.ua-act--danger{background:#fff5f5;color:#b91c1c;border-color:#fbc2c2}
+.ua-act--danger:hover{background:#b91c1c;color:#fff;border-color:#b91c1c}
+.ua-act--api{background:#eef4ff;color:#1d4ed8;border-color:#c7d8ff}
+.ua-act--api:hover{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.ua-table td{vertical-align:middle}
+
+/* ─── Password column ─── */
+.ua-pwd{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;
+  background:#fbfaf7;border:1px solid #e8e2d5;border-radius:8px;min-height:30px}
+.ua-pwd-text{font-family:monospace;font-size:13px;font-weight:800;color:#1E1E1E;min-width:60px}
+.ua-pwd-empty{font-size:11.5px;color:#9a8a6e;font-style:italic;font-weight:700}
+.ua-pwd-eye,.ua-pwd-edit{
+  background:transparent;border:0;color:#7a7368;cursor:pointer;padding:2px 5px;
+  font-size:11px;border-radius:5px;font-family:inherit;
+}
+.ua-pwd-eye:hover{color:#1d4ed8;background:#eef4ff}
+.ua-pwd-edit:hover{color:#7c2d12;background:#fff7df}
+.ua-pwd-input{
+  font-family:monospace;font-size:12.5px;padding:5px 8px;border-radius:6px;
+  border:1.5px solid var(--d-gold);background:#fff;width:120px;outline:0;
+}
+.ua-pwd-save,.ua-pwd-cancel{
+  width:24px;height:24px;border-radius:6px;border:0;cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center;
+}
+.ua-pwd-save{background:#22c55e;color:#fff}
+.ua-pwd-cancel{background:#e5e7eb;color:#1E1E1E}
+
+/* ─── API Status modal ─── */
+.api-bd{position:fixed;inset:0;background:rgba(15,15,15,.55);display:none;align-items:center;
+  justify-content:center;z-index:9999;padding:18px;backdrop-filter:blur(2px)}
+.api-bd.is-open{display:flex}
+.api-modal{width:min(640px,100%);max-height:90vh;overflow-y:auto;background:#fff;
+  border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.25);display:flex;flex-direction:column}
+.api-head{display:flex;align-items:center;gap:12px;padding:18px 22px;
+  background:linear-gradient(135deg,#1d4ed8,#3b6dd8);color:#fff;border-radius:18px 18px 0 0}
+.api-head-ico{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);
+  color:#fff;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.api-head h3{margin:0;font-size:16px;font-weight:900}
+.api-head p{margin:2px 0 0;font-size:12px;color:rgba(255,255,255,.75)}
+.api-close{margin-inline-start:auto;width:34px;height:34px;border-radius:10px;
+  background:rgba(255,255,255,.18);border:0;color:#fff;cursor:pointer;font-size:14px}
+.api-close:hover{background:rgba(255,255,255,.28)}
+.api-body{padding:20px 22px}
+.api-loading{padding:40px;text-align:center;color:#6b7280}
+.api-loading i{display:block;font-size:32px;margin-bottom:10px;color:#3b6dd8}
+.api-err{padding:14px 16px;background:#fde2e2;color:#b91c1c;border-radius:11px;font-weight:700;font-size:13px}
+.api-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.api-stat{background:#fbfaf7;border:1px solid #e8e2d5;border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px}
+.api-stat-ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.api-stat-ico.g{background:#e8f6ee;color:#166534}
+.api-stat-ico.b{background:#eef4ff;color:#1d4ed8}
+.api-stat-ico.y{background:#fff7df;color:#92400e}
+.api-stat-ico.r{background:#fde2e2;color:#b91c1c}
+.api-stat .lbl{font-size:10.5px;color:#7a7368;font-weight:800;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:2px}
+.api-stat .val{font-size:14px;font-weight:900;color:#1E1E1E;line-height:1.2}
+.api-bar-wrap{margin-top:6px}
+.api-bar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;font-weight:800;color:#7a7368}
+.api-bar-track{height:16px;background:#f5efe1;border-radius:999px;overflow:hidden;border:1px solid #e8e2d5}
+.api-bar-fill{height:100%;background:linear-gradient(90deg,#F4BA2A,#FFD96A);border-radius:999px;transition:width .5s ease}
+
+/* ─── Edit modal ───────────────────────────────── */
+.ue-backdrop{
+  position:fixed;inset:0;background:rgba(15,15,15,.55);
+  display:none;align-items:center;justify-content:center;z-index:9999;padding:18px;
+  backdrop-filter:blur(2px);
+}
+.ue-backdrop.is-open{display:flex}
+.ue-modal{
+  width:min(720px,100%);max-height:90vh;overflow-y:auto;
+  background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.25);
+  display:flex;flex-direction:column;
+}
+.ue-head{
+  display:flex;align-items:center;gap:12px;padding:18px 22px;
+  border-bottom:1px solid var(--d-border);background:linear-gradient(90deg,#fbfaf7,#fff);
+  border-radius:18px 18px 0 0;
+}
+.ue-head-ico{
+  width:40px;height:40px;border-radius:11px;
+  background:linear-gradient(135deg,var(--d-gold),#FFD96A);color:#1E1E1E;
+  display:grid;place-items:center;font-size:16px;flex-shrink:0;
+}
+.ue-head h3{margin:0;font-size:16px;font-weight:900;color:var(--d-black)}
+.ue-head p{margin:2px 0 0;font-size:12px;color:var(--d-text-soft);font-weight:700}
+.ue-close{
+  margin-inline-start:auto;width:34px;height:34px;border-radius:10px;
+  background:#fff;border:1px solid var(--d-border-strong);color:var(--d-text-soft);
+  cursor:pointer;font-size:14px;font-family:inherit;
+}
+.ue-close:hover{background:#fde2e2;color:#b91c1c;border-color:#fbc2c2}
+
+.ue-body{padding:20px 22px;display:grid;gap:14px}
+.ue-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.ue-field{display:flex;flex-direction:column;gap:5px}
+.ue-field.full{grid-column:1 / -1}
+.ue-field label{font-size:12px;font-weight:800;color:var(--d-text-soft)}
+.ue-field input,.ue-field select,.ue-field textarea{
+  padding:10px 12px;border-radius:10px;border:1.5px solid var(--d-border-strong);
+  font-size:13px;font-family:inherit;background:#FAFAF8;transition:.15s ease;
+}
+.ue-field input:focus,.ue-field select:focus,.ue-field textarea:focus{
+  outline:0;border-color:var(--d-gold);background:#fff;
+  box-shadow:0 0 0 3px rgba(244,186,42,.20);
+}
+.ue-section{
+  background:#fcfbf7;border:1px solid #ead9b5;border-radius:12px;padding:14px 16px;
+}
+.ue-section-title{
+  font-size:12.5px;font-weight:900;color:#7c2d12;margin:0 0 10px;
+  display:flex;align-items:center;gap:7px;
+}
+.ue-section-title i{color:var(--d-gold-deep)}
+
+.ue-msg{
+  margin:0;padding:10px 12px;border-radius:10px;font-size:12.5px;font-weight:800;display:none;
+}
+.ue-msg.show{display:block}
+.ue-msg.ok{background:#e8f6ee;color:#166534;border:1px solid #bce5cb}
+.ue-msg.err{background:#fde2e2;color:#b91c1c;border:1px solid #fbc2c2}
+
+.ue-foot{
+  display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;
+  border-top:1px solid var(--d-border);background:#fbfaf7;border-radius:0 0 18px 18px;
+}
+.ue-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:10px 18px;border-radius:10px;font-size:13px;font-weight:900;
+  font-family:inherit;cursor:pointer;border:1.5px solid transparent;transition:.15s ease;
+}
+.ue-btn--primary{background:#1E1E1E;color:#fff}
+.ue-btn--primary:hover{background:#000}
+.ue-btn--ghost{background:#fff;color:var(--d-text);border-color:var(--d-border-strong)}
+.ue-btn--ghost:hover{background:var(--d-cream-soft)}
+.ue-btn:disabled{opacity:.5;cursor:wait}
+.hidden-section{display:none}
+
+/* Unified hub styles live in: app/static/css/dashboard_hub.css */
+</style>
+{% endblock %}
+
+{% block users_content %}
+
+<!-- ─── Unified Control Hub ─── -->
+<section class="hub">
+  <!-- KPI stats strip -->
+  <div class="hub-stats">
+    <div class="hub-stat">
+      <span class="hub-stat-ico"><i class="fa-solid fa-circle-user"></i></span>
+      <div>
+        <span class="lbl">إجمالي المشتركين</span>
+        <span class="val">{{ users_count | default(0) }}</span>
+      </div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico warn{% if (user_requests_count|default(0)) > 0 %} has-pulse{% endif %}"><i class="fa-solid fa-hourglass-half"></i></span>
+      <div>
+        <span class="lbl">طلبات معلّقة</span>
+        <span class="val">{{ user_requests_count | default(0) }}</span>
+      </div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico ok{% if api_kpis.available and (api_kpis.data.online_users|default(0)) > 0 %} has-pulse{% endif %}"><i class="fa-solid fa-wifi"></i></span>
+      <div>
+        <span class="lbl">جلسات نشطة</span>
+        <span class="val">
+          {% if api_kpis.available %}{{ api_kpis.data.online_users | default(0) }}<small>RADIUS</small>{% else %}—{% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico muted"><i class="fa-solid fa-bolt"></i></span>
+      <div>
+        <span class="lbl">whitelist السرعة</span>
+        <span class="val">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick action pills -->
+  <div class="hub-pills">
+    <a class="hub-pill{% if (counts.reset_password|default(0)) == 0 %} is-zero{% endif %}" href="{{ url_for('admin_users_account_requests') }}?type=reset_password">
+      <i class="fa-solid fa-key"></i>إعادة كلمة مرور
+      <span class="qa-count">{{ counts.reset_password | default(0) }}</span>
+    </a>
+    <a class="hub-pill{% if (counts.unblock_site|default(0)) == 0 %} is-zero{% endif %}" href="{{ url_for('admin_users_account_requests') }}?type=unblock_site">
+      <i class="fa-solid fa-globe"></i>فتح موقع
+      <span class="qa-count">{{ counts.unblock_site | default(0) }}</span>
+    </a>
+    <a class="hub-pill{% if (counts.speed_upgrade|default(0)) == 0 %} is-zero{% endif %}" href="{{ url_for('admin_users_account_requests') }}?type=speed_upgrade">
+      <i class="fa-solid fa-gauge-high"></i>رفع سرعة
+      <span class="qa-count">{{ counts.speed_upgrade | default(0) }}</span>
+    </a>
+    <a class="hub-pill{% if (counts.create_user|default(0)) == 0 %} is-zero{% endif %}" href="{{ url_for('admin_users_account_requests') }}?type=create_user">
+      <i class="fa-solid fa-user-plus"></i>إنشاء حساب
+      <span class="qa-count">{{ counts.create_user | default(0) }}</span>
+    </a>
+  </div>
+
+  <!-- Search row -->
+  <form class="hub-search" id="ua-filter-form" autocomplete="off" method="GET">
+    <div class="hub-search-input">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" name="q" id="ua-q" value="{{ filters.q or '' }}" placeholder="ابحث بالاسم أو رقم الجوال…">
+      <span class="hub-search-spinner" id="ua-search-status" aria-hidden="true"></span>
+    </div>
+    <select name="user_type" id="ua-user-type" class="hub-search-select">
+      <option value="">كل الأنواع</option>
+      <option value="university" {% if filters.user_type == 'university' %}selected{% endif %}>جامعي</option>
+      <option value="freelancer" {% if filters.user_type == 'freelancer' %}selected{% endif %}>عمل حر</option>
+    </select>
+    <button type="button" class="hub-search-clear" id="ua-clear-btn" title="مسح"><i class="fa-solid fa-xmark"></i></button>
+  </form>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-users-viewfinder"></i>قائمة مشتركي حساب الإنترنت</h3>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--d-text-muted)"><span id="ua-results-count">{{ users | length }}</span> نتيجة (جامعي + عمل حر فقط)</span>
+      <button type="button" class="d-pill-btn d-pill-btn--gold" id="ua-open-add">
+        <i class="fa-solid fa-user-plus"></i>إضافة مشترك حساب إنترنت
+      </button>
+    </div>
+  </div>
+  <div class="d-card-body--flush d-table-wrap" id="ua-table-wrap">
+    <table class="d-table ua-table" id="ua-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="users-account-overview">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الاسم</th>
+          <th>يوزر RADIUS</th>
+          <th title="كلمة مرور RADIUS — تُستخدم في كل اتصال API. مستقلّة عن كلمة مرور البوابة.">كلمة مرور RADIUS</th>
+          <th>النوع</th>
+          <th>حالة الحساب</th>
+          <th style="white-space:nowrap">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="ua-tbody">
+        {% for u in users %}
+        <tr>
+          <td>#{{ u.id }}</td>
+          <td><strong>{{ u.full_name }}</strong></td>
+          <td style="font-family:monospace">{{ u.portal_username or u.phone or '—' }}</td>
+          <td style="white-space:nowrap">
+            <div class="ua-pwd" data-bid="{{ u.id }}">
+              {% if u.portal_password %}
+                <span class="ua-pwd-text" data-pwd="{{ u.portal_password }}">••••••</span>
+                <button type="button" class="ua-pwd-eye" title="إظهار/إخفاء"><i class="fa-solid fa-eye"></i></button>
+                <button type="button" class="ua-pwd-edit" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+              {% else %}
+                <span class="ua-pwd-empty">— لا يوجد —</span>
+                <button type="button" class="ua-pwd-edit" title="إضافة كلمة مرور"><i class="fa-solid fa-plus"></i></button>
+              {% endif %}
+            </div>
+          </td>
+          <td><span class="d-badge d-badge--neutral">{{ u.user_type_label }}</span></td>
+          <td>
+            {% if u.has_portal_account %}
+              <span class="d-badge d-badge--success">مفعّل</span>
+            {% else %}
+              <span class="d-badge d-badge--warn">بانتظار التفعيل</span>
+            {% endif %}
+          </td>
+          <td style="white-space:nowrap">
+            <div class="ua-row-actions">
+              <form method="POST" action="{{ url_for('admin_beneficiary_convert_access', beneficiary_id=u.id) }}"
+                    style="display:inline"
+                    data-beneficiary-name="{{ u.full_name }}"
+                    data-target-label="{% if u.access_mode == 'username' %}نظام البطاقات{% else %}حساب إنترنت{% endif %}"
+                    onsubmit="return confirmBeneficiaryConvert(this)">
+                {{ csrf_token_input() | safe }}
+                <input type="hidden" name="confirm_convert" value="">
+                {% if u.access_mode == 'username' %}
+                  <input type="hidden" name="target_mode" value="cards">
+                  <button class="ua-act" type="submit" title="تحويل لبطاقات"><i class="fa-solid fa-arrow-right-arrow-left"></i>بطاقات</button>
+                {% else %}
+                  <input type="hidden" name="target_mode" value="username">
+                  {% if u.can_switch %}
+                  <button class="ua-act" type="submit" title="تحويل إلى حساب إنترنت"><i class="fa-solid fa-arrow-right-arrow-left"></i>حساب إنترنت</button>
+                  {% else %}
+                  <button class="ua-act ua-act--disabled ua-act--icon" type="button" disabled title="{{ u.switch_reason }}" aria-label="{{ u.switch_reason }}"><i class="fa-solid fa-lock"></i></button>
+                  {% endif %}
+                {% endif %}
+              </form>
+              <a class="ua-act ua-act--icon" href="{{ url_for('admin_user_profile_page', beneficiary_id=u.id) }}" title="الملف الشخصي" aria-label="الملف الشخصي">
+                <i class="fa-solid fa-id-card-clip"></i>
+              </a>
+              <button type="button" class="ua-act ua-act--api ua-act--icon" title="حالة API الحية" aria-label="حالة API الحية"
+                      data-api-id="{{ u.id }}"
+                      data-api-name="{{ u.full_name }}">
+                <i class="fa-solid fa-broadcast-tower"></i>
+              </button>
+              <button type="button" class="ua-act ua-act--icon" title="تعديل البيانات" aria-label="تعديل البيانات"
+                      data-edit-id="{{ u.id }}"
+                      data-edit-name="{{ u.full_name }}">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <form method="POST" action="{{ url_for('delete_beneficiary', beneficiary_id=u.id) }}"
+                    class="ua-delete-form"
+                    style="display:inline"
+                    data-beneficiary-name="{{ u.full_name }}">
+                {{ csrf_token_input() | safe }}
+                <button class="ua-act ua-act--danger ua-act--icon" type="submit" title="حذف المشترك" aria-label="حذف المشترك">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="7" style="text-align:center;color:var(--d-text-muted);padding:24px">لا يوجد مشتركو حساب إنترنت مطابقون للفلتر.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{# ─── Edit modal — صندوق عائم لتعديل بيانات المشترك ────────── #}
+<div class="ue-backdrop" id="ua-add-backdrop" role="dialog" aria-modal="true" aria-labelledby="ua-add-title">
+  <div class="ue-modal">
+    <div class="ue-head">
+      <span class="ue-head-ico"><i class="fa-solid fa-user-plus"></i></span>
+      <div>
+        <h3 id="ua-add-title">إضافة مشترك حساب إنترنت</h3>
+        <p>اسم الدخول سيكون رقم الجوال، وكلمة المرور يحددها المدير الآن.</p>
+      </div>
+      <button type="button" class="ue-close" id="ua-add-close" aria-label="إغلاق">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form id="ua-add-form">
+      {{ csrf_token_input() | safe if csrf_token_input is defined else '' }}
+      <div class="ue-body">
+        <div class="ue-msg" id="ua-add-msg"></div>
+
+        <div class="ue-grid">
+          <div class="ue-field full">
+            <label>اسم المشترك</label>
+            <input type="text" name="full_name" placeholder="مثلاً: محمد سالم العبد" required>
+          </div>
+          <div class="ue-field">
+            <label>رقم الجوال / اسم الدخول</label>
+            <input type="tel" name="phone" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" placeholder="0599123456" required>
+          </div>
+          <div class="ue-field">
+            <label>كلمة المرور</label>
+            <input type="text" name="password" minlength="6" autocomplete="new-password" required>
+          </div>
+          <div class="ue-field">
+            <label>نوع المشترك</label>
+            <select name="user_type" id="ua-add-type" required>
+              <option value="university">جامعة</option>
+              <option value="freelancer">عمل حر</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ue-section" id="ua-add-univ">
+          <h4 class="ue-section-title"><i class="fa-solid fa-building-columns"></i>بيانات الجامعة</h4>
+          <div class="ue-grid">
+            <div class="ue-field"><label>اسم الجامعة</label><input type="text" name="university_name"></div>
+            <div class="ue-field"><label>الرقم الجامعي</label><input type="text" name="university_number"></div>
+            <div class="ue-field"><label>الكلية</label><input type="text" name="university_college"></div>
+            <div class="ue-field"><label>التخصص</label><input type="text" name="university_specialization"></div>
+          </div>
+        </div>
+
+        <div class="ue-section hidden-section" id="ua-add-free">
+          <h4 class="ue-section-title"><i class="fa-solid fa-briefcase"></i>بيانات العمل الحر</h4>
+          <div class="ue-grid">
+            <div class="ue-field"><label>التخصص</label><input type="text" name="freelancer_specialization"></div>
+            <div class="ue-field"><label>الشركة / الجهة</label><input type="text" name="freelancer_company"></div>
+          </div>
+        </div>
+
+        <div class="ue-grid">
+          <div class="ue-field full"><label>ملاحظات</label><textarea name="notes" rows="3"></textarea></div>
+        </div>
+      </div>
+      <div class="ue-foot">
+        <button type="button" class="ue-btn ue-btn--ghost" id="ua-add-cancel">إلغاء</button>
+        <button type="submit" class="ue-btn ue-btn--primary" id="ua-add-save">
+          <i class="fa-solid fa-floppy-disk"></i> إنشاء الحساب
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="ue-backdrop" id="ue-backdrop" role="dialog" aria-modal="true" aria-labelledby="ue-title">
+  <div class="ue-modal">
+    <div class="ue-head">
+      <span class="ue-head-ico"><i class="fa-solid fa-user-pen"></i></span>
+      <div>
+        <h3 id="ue-title">تعديل بيانات المشترك</h3>
+        <p id="ue-sub">جارٍ تحميل البيانات…</p>
+      </div>
+      <button type="button" class="ue-close" id="ue-close-btn" aria-label="إغلاق">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form id="ue-form">
+      {{ csrf_token_input() | safe if csrf_token_input is defined else '' }}
+      <div class="ue-body">
+
+        <div class="ue-msg" id="ue-msg"></div>
+
+        {# الاسم والاتصال #}
+        <div class="ue-grid">
+          <div class="ue-field"><label>الاسم الأول</label><input type="text" name="first_name" required></div>
+          <div class="ue-field"><label>اسم الأب</label><input type="text" name="second_name" required></div>
+          <div class="ue-field"><label>اسم الجد</label><input type="text" name="third_name" required></div>
+          <div class="ue-field"><label>اللقب</label><input type="text" name="fourth_name" required></div>
+          <div class="ue-field"><label>رقم الجوال</label><input type="tel" name="phone" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required></div>
+          <div class="ue-field">
+            <label>النوع</label>
+            <select name="user_type" id="ue-user-type">
+              <option value="university">جامعي</option>
+              <option value="freelancer">عمل حر</option>
+            </select>
+          </div>
+        </div>
+
+        {# قسم الجامعي #}
+        <div class="ue-section" id="ue-univ-block">
+          <h4 class="ue-section-title"><i class="fa-solid fa-school"></i>بيانات الجامعي</h4>
+          <div class="ue-grid">
+            <div class="ue-field"><label>اسم الجامعة</label><input type="text" name="university_name"></div>
+            <div class="ue-field"><label>الرقم الجامعي</label><input type="text" name="university_number"></div>
+            <div class="ue-field"><label>الكلية</label><input type="text" name="university_college"></div>
+            <div class="ue-field"><label>التخصص</label><input type="text" name="university_specialization"></div>
+            <div class="ue-field"><label>أيام الدوام</label><input type="text" name="university_days" placeholder="مثلاً: السبت، الأحد"></div>
+            <div class="ue-field">
+              <label>طريقة الإنترنت</label>
+              <select name="university_internet_method">
+                <option value="">— تلقائي —</option>
+                <option value="نظام البطاقات">نظام البطاقات</option>
+                <option value="يوزر إنترنت">يوزر إنترنت</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {# قسم عمل حر #}
+        <div class="ue-section" id="ue-free-block">
+          <h4 class="ue-section-title"><i class="fa-solid fa-briefcase"></i>بيانات عمل حر</h4>
+          <div class="ue-grid">
+            <div class="ue-field"><label>التخصص</label><input type="text" name="freelancer_specialization"></div>
+            <div class="ue-field"><label>الشركة/الجهة</label><input type="text" name="freelancer_company"></div>
+            <div class="ue-field">
+              <label>نمط الدوام</label>
+              <select name="freelancer_schedule_type">
+                <option value="">— اختر —</option>
+                <option value="دوام كامل">دوام كامل</option>
+                <option value="دوام جزئي">دوام جزئي</option>
+              </select>
+            </div>
+            <div class="ue-field">
+              <label>طريقة الإنترنت</label>
+              <select name="freelancer_internet_method">
+                <option value="">— تلقائي —</option>
+                <option value="نظام البطاقات">نظام البطاقات</option>
+                <option value="يوزر إنترنت">يوزر إنترنت</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {# ملاحظات #}
+        <div class="ue-grid">
+          <div class="ue-field full"><label>ملاحظات</label><textarea name="notes" rows="3"></textarea></div>
+        </div>
+
+      </div>
+      <div class="ue-foot">
+        <button type="button" class="ue-btn ue-btn--ghost" id="ue-cancel-btn">إلغاء</button>
+        <button type="submit" class="ue-btn ue-btn--primary" id="ue-save-btn">
+          <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ─── API Status modal ─── #}
+<div class="api-bd" id="api-bd" role="dialog" aria-modal="true">
+  <div class="api-modal">
+    <div class="api-head">
+      <span class="api-head-ico"><i class="fa-solid fa-broadcast-tower"></i></span>
+      <div>
+        <h3>حالة المشترك الحية (RADIUS API)</h3>
+        <p id="api-sub">…</p>
+      </div>
+      <button type="button" class="api-close" id="api-close-btn"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="api-body" id="api-body">
+      <div class="api-loading"><i class="fa-solid fa-spinner fa-spin"></i><div>جارٍ الاتصال بـ RADIUS API…</div></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+// ─── Global helpers ───────────────────────────────────────────
+function uaCsrf(){
+  var el = document.querySelector('input[name="csrf_token"]');
+  return el ? el.value : '';
+}
+function uaEscape(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+function uaUserTypeLabel(ut){
+  if(ut === 'university') return 'جامعي';
+  if(ut === 'freelancer') return 'عمل حر';
+  return ut || '—';
+}
+function uaRowHtml(u){
+  var nm  = uaEscape(u.full_name);
+  var ph  = uaEscape(u.portal_username || u.phone || '—');
+  var pwd = u.portal_password || '';
+  var pwdBlock = pwd
+      ? '<span class="ua-pwd-text" data-pwd="'+uaEscape(pwd)+'">••••••</span>'
+        + '<button type="button" class="ua-pwd-eye" title="إظهار/إخفاء"><i class="fa-solid fa-eye"></i></button>'
+        + '<button type="button" class="ua-pwd-edit" title="تعديل"><i class="fa-solid fa-pen"></i></button>'
+      : '<span class="ua-pwd-empty">— لا يوجد —</span>'
+        + '<button type="button" class="ua-pwd-edit" title="إضافة كلمة مرور"><i class="fa-solid fa-plus"></i></button>';
+  var statusBadge = u.has_portal_account
+      ? '<span class="d-badge d-badge--success">مفعّل</span>'
+      : '<span class="d-badge d-badge--warn">بانتظار التفعيل</span>';
+  var convertBtn;
+  if(u.access_mode === 'username'){
+    convertBtn = '<input type="hidden" name="target_mode" value="cards">'
+               + '<button class="ua-act" type="submit" title="تحويل لبطاقات"><i class="fa-solid fa-arrow-right-arrow-left"></i>بطاقات</button>';
+  } else {
+    convertBtn = '<input type="hidden" name="target_mode" value="username">'
+               + (u.can_switch
+                  ? '<button class="ua-act" type="submit" title="تحويل إلى حساب إنترنت"><i class="fa-solid fa-arrow-right-arrow-left"></i>حساب إنترنت</button>'
+                  : '<button class="ua-act ua-act--disabled ua-act--icon" type="button" disabled title="'+uaEscape(u.switch_reason||'')+'" aria-label="'+uaEscape(u.switch_reason||'')+'"><i class="fa-solid fa-lock"></i></button>');
+  }
+  var csrfHidden = '<input type="hidden" name="csrf_token" value="'+uaEscape(uaCsrf())+'">';
+  var targetLabel = (u.access_mode === 'username') ? 'نظام البطاقات' : 'حساب إنترنت';
+  return ''
+    + '<tr>'
+    +   '<td>#'+u.id+'</td>'
+    +   '<td><strong>'+nm+'</strong></td>'
+    +   '<td style="font-family:monospace">'+ph+'</td>'
+    +   '<td style="white-space:nowrap"><div class="ua-pwd" data-bid="'+u.id+'">'+pwdBlock+'</div></td>'
+    +   '<td><span class="d-badge d-badge--neutral">'+uaEscape(u.user_type_label || uaUserTypeLabel(u.user_type))+'</span></td>'
+    +   '<td>'+statusBadge+'</td>'
+    +   '<td style="white-space:nowrap"><div class="ua-row-actions">'
+    +     '<form method="POST" action="/admin/beneficiary/'+u.id+'/convert-access" style="display:inline" '
+    +       'data-beneficiary-name="'+nm+'" data-target-label="'+targetLabel+'" '
+    +       'onsubmit="return confirmBeneficiaryConvert(this)">'
+    +       csrfHidden
+    +       '<input type="hidden" name="confirm_convert" value="">'
+    +       convertBtn
+    +     '</form>'
+    +     '<a class="ua-act ua-act--icon" href="/admin/users/'+u.id+'" title="الملف الشخصي" aria-label="الملف الشخصي"><i class="fa-solid fa-id-card-clip"></i></a>'
+    +     '<button type="button" class="ua-act ua-act--api ua-act--icon" title="حالة الربط الحية" aria-label="حالة الربط الحية" data-api-id="'+u.id+'" data-api-name="'+nm+'"><i class="fa-solid fa-broadcast-tower"></i></button>'
+    +     '<button type="button" class="ua-act ua-act--icon" title="تعديل البيانات" aria-label="تعديل البيانات" data-edit-id="'+u.id+'" data-edit-name="'+nm+'"><i class="fa-solid fa-pen-to-square"></i></button>'
+    +     '<form method="POST" action="/beneficiaries/delete/'+u.id+'" class="ua-delete-form" style="display:inline" '
+    +       'data-beneficiary-name="'+nm+'">'
+    +       csrfHidden
+    +       '<button class="ua-act ua-act--danger ua-act--icon" type="submit" title="حذف المشترك" aria-label="حذف المشترك"><i class="fa-solid fa-trash-can"></i></button>'
+    +     '</form>'
+    +   '</div></td>'
+    + '</tr>';
+}
+function uaEmptyRowHtml(){
+  return '<tr class="no-paginate"><td colspan="7" style="text-align:center;color:var(--d-text-muted);padding:24px">لا يوجد مشتركو حساب إنترنت مطابقون للفلتر.</td></tr>';
+}
+function uaReinitPagination(){
+  var table = document.getElementById('ua-table');
+  if(table && window.DashboardTable && typeof window.DashboardTable.reattach === 'function'){
+    window.DashboardTable.reattach(table);
+  }
+}
+
+// ─── Password column: event delegation on tbody ───────────────
+(function(){
+  var tbody = document.getElementById('ua-tbody');
+  if(!tbody) return;
+
+  tbody.addEventListener('click', function(e){
+    // Show/hide
+    var eyeBtn = e.target.closest('.ua-pwd-eye');
+    if(eyeBtn){
+      var box = eyeBtn.closest('.ua-pwd');
+      var textEl = box && box.querySelector('.ua-pwd-text');
+      if(!textEl) return;
+      var shown = textEl.dataset.shown === '1';
+      shown = !shown;
+      textEl.dataset.shown = shown ? '1' : '0';
+      textEl.textContent = shown ? (textEl.getAttribute('data-pwd') || '') : '••••••';
+      var ic = eyeBtn.querySelector('i');
+      if(ic) ic.className = shown ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+      return;
+    }
+    // Inline edit
+    var editBtn = e.target.closest('.ua-pwd-edit');
+    if(editBtn){
+      var box = editBtn.closest('.ua-pwd');
+      if(!box) return;
+      var bid = box.getAttribute('data-bid');
+      var textEl = box.querySelector('.ua-pwd-text');
+      var current = textEl ? (textEl.getAttribute('data-pwd') || '') : '';
+      var savedHtml = box.innerHTML;
+      box.innerHTML = '';
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'ua-pwd-input';
+      input.value = current;
+      input.placeholder = 'كلمة المرور';
+      var saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.className = 'ua-pwd-save';
+      saveBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+      var cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'ua-pwd-cancel';
+      cancelBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+      box.appendChild(input); box.appendChild(saveBtn); box.appendChild(cancelBtn);
+      input.focus(); input.select();
+      cancelBtn.addEventListener('click', function(){ box.innerHTML = savedHtml; });
+      function commit(){
+        var v = input.value.trim();
+        if(!v){ box.innerHTML = savedHtml; return; }
+        saveBtn.disabled = true;
+        var fd = new FormData();
+        fd.append('password', v);
+        fetch('/admin/users/' + bid + '/api/set-password', {
+          method:'POST', body:fd, credentials:'same-origin',
+          headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          if(j.ok){
+            // تحديث ذاتي بدون reload
+            box.innerHTML = ''
+              + '<span class="ua-pwd-text" data-pwd="'+uaEscape(v)+'">••••••</span>'
+              + '<button type="button" class="ua-pwd-eye" title="إظهار/إخفاء"><i class="fa-solid fa-eye"></i></button>'
+              + '<button type="button" class="ua-pwd-edit" title="تعديل"><i class="fa-solid fa-pen"></i></button>';
+          } else {
+            alert(j.error || 'تعذّر الحفظ');
+            box.innerHTML = savedHtml;
+          }
+        })
+        .catch(function(){ alert('تعذّر الاتصال'); box.innerHTML = savedHtml; });
+      }
+      saveBtn.addEventListener('click', commit);
+      input.addEventListener('keydown', function(ev){
+        if(ev.key === 'Enter'){ ev.preventDefault(); commit(); }
+        else if(ev.key === 'Escape'){ box.innerHTML = savedHtml; }
+      });
+    }
+  });
+})();
+
+// ─── API status modal ─────────────────────────────────────────
+(function(){
+  var bd = document.getElementById('api-bd');
+  var body = document.getElementById('api-body');
+  var sub = document.getElementById('api-sub');
+  if(!bd) return;
+
+  function close(){ bd.classList.remove('is-open'); }
+  document.getElementById('api-close-btn').addEventListener('click', close);
+  bd.addEventListener('click', function(e){ if(e.target === bd) close(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+
+  function esc(v){
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+    });
+  }
+
+  function render(payload){
+    if(!payload.ok){
+      body.innerHTML = '<div class="api-err"><i class="fa-solid fa-triangle-exclamation"></i> '
+                     + (payload.error || 'فشل غير معروف') + '</div>';
+      return;
+    }
+    var d = payload.details || {};
+    var isOnline = d.conn_code === 'online' || d.is_online == 1;
+    var usageBytes = Number(d.val_usage_qouta || 0);
+    var usageGb = (usageBytes / 1073741824).toFixed(2);
+    var html = '<div class="api-stats">'
+             + '<div class="api-stat"><span class="api-stat-ico ' + (isOnline ? 'g' : 'r') + '"><i class="fa-solid fa-' + (isOnline ? 'wifi' : 'plug-circle-xmark') + '"></i></span>'
+             +   '<div><span class="lbl">الحالة</span><span class="val">' + (isOnline ? 'متصل' : 'غير متصل') + '</span></div></div>'
+             + '<div class="api-stat"><span class="api-stat-ico b"><i class="fa-solid fa-box"></i></span>'
+             +   '<div><span class="lbl">الباقة</span><span class="val">' + (d.profile_name || '—') + '</span></div></div>'
+             + '<div class="api-stat"><span class="api-stat-ico y"><i class="fa-solid fa-calendar-day"></i></span>'
+             +   '<div><span class="lbl">تنتهي في</span><span class="val" style="font-size:11.5px">' + (d.expiration || '—') + '</span></div></div>'
+             + '<div class="api-stat"><span class="api-stat-ico g"><i class="fa-solid fa-arrow-down"></i></span>'
+             +   '<div><span class="lbl">سرعة التنزيل</span><span class="val">' + (d.down_speed || '—') + '</span></div></div>'
+             + '<div class="api-stat"><span class="api-stat-ico b"><i class="fa-solid fa-arrow-up"></i></span>'
+             +   '<div><span class="lbl">سرعة الرفع</span><span class="val">' + (d.up_speed || '—') + '</span></div></div>'
+             + '<div class="api-stat"><span class="api-stat-ico ' + ((d.money || '0.00') == '0.00' ? 'g' : 'y') + '"><i class="fa-solid fa-wallet"></i></span>'
+             +   '<div><span class="lbl">الرصيد</span><span class="val">' + (d.money || '0.00') + ' ' + (d.currency || '') + '</span></div></div>'
+             + '</div>'
+             + '<div class="api-bar-wrap">'
+             +   '<div class="api-bar-head"><span>الاستهلاك التراكمي</span><b>' + usageGb + ' GB</b></div>'
+             +   '<div class="api-bar-track"><div class="api-bar-fill" style="width:' + Math.min(100, (parseFloat(usageGb)/500*100)) + '%"></div></div>'
+             + '</div>';
+    body.innerHTML = html;
+  }
+
+  function open(id, name){
+    sub.textContent = name + ' (#' + id + ')';
+    body.innerHTML = '<div class="api-loading"><i class="fa-solid fa-spinner fa-spin"></i><div>جارٍ الاتصال بـ RADIUS API…</div></div>';
+    bd.classList.add('is-open');
+    fetch('/admin/users/' + id + '/api/status', {credentials:'same-origin', headers:{'Accept':'application/json'}})
+      .then(function(r){ return r.json(); })
+      .then(function(payload){ render(payload); })
+      .catch(function(){ body.innerHTML = '<div class="api-err">تعذّر الاتصال بالخادم.</div>'; });
+  }
+
+  // لا يوجد جلب تلقائي من RADIUS هنا؛ الاتصال يحدث فقط عند ضغط زر الحالة لمشترك محدد.
+  var tbody = document.getElementById('ua-tbody');
+  if(tbody){
+    tbody.addEventListener('click', function(e){
+      var btn = e.target.closest('[data-api-id]');
+      if(btn){ open(btn.getAttribute('data-api-id'), btn.getAttribute('data-api-name') || 'مشترك'); return; }
+    });
+  }
+})();
+
+// إضافة مشترك حساب إنترنت
+(function(){
+  var openBtn = document.getElementById('ua-open-add');
+  var bd = document.getElementById('ua-add-backdrop');
+  var form = document.getElementById('ua-add-form');
+  if(!openBtn || !bd || !form) return;
+  var msg = document.getElementById('ua-add-msg');
+  var saveBtn = document.getElementById('ua-add-save');
+  var typeSel = document.getElementById('ua-add-type');
+  var univBlock = document.getElementById('ua-add-univ');
+  var freeBlock = document.getElementById('ua-add-free');
+
+  function showMsg(kind, text){ msg.className = 'ue-msg show ' + kind; msg.textContent = text; }
+  function clearMsg(){ msg.className = 'ue-msg'; msg.textContent = ''; }
+  function applyType(){
+    var isFree = typeSel.value === 'freelancer';
+    univBlock.classList.toggle('hidden-section', isFree);
+    freeBlock.classList.toggle('hidden-section', !isFree);
+  }
+  function openModal(){
+    form.reset();
+    clearMsg();
+    applyType();
+    saveBtn.disabled = false;
+    bd.classList.add('is-open');
+    setTimeout(function(){ var el = form.querySelector('[name="full_name"]'); if(el) el.focus(); }, 40);
+  }
+  function closeModal(){ bd.classList.remove('is-open'); clearMsg(); }
+
+  openBtn.addEventListener('click', openModal);
+  document.getElementById('ua-add-close').addEventListener('click', closeModal);
+  document.getElementById('ua-add-cancel').addEventListener('click', closeModal);
+  bd.addEventListener('click', function(e){ if(e.target === bd) closeModal(); });
+  typeSel.addEventListener('change', applyType);
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    clearMsg();
+    saveBtn.disabled = true;
+    fetch('/admin/users-account/create', {
+      method:'POST',
+      body:new FormData(form),
+      credentials:'same-origin',
+      headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}
+    })
+    .then(function(r){ return r.json().then(function(j){ j.__status = r.status; return j; }); })
+    .then(function(j){
+      if(j.ok){
+        showMsg('ok', j.message || 'تم إنشاء الحساب.');
+        setTimeout(function(){ location.reload(); }, 700);
+      } else {
+        saveBtn.disabled = false;
+        showMsg('err', j.message || 'تعذّر إنشاء الحساب.');
+      }
+    })
+    .catch(function(){
+      saveBtn.disabled = false;
+      showMsg('err', 'تعذّر الاتصال بالخادم.');
+    });
+  });
+})();
+
+// ─── Edit modal logic ──────────────────────────────────────────
+(function(){
+  var bd = document.getElementById('ue-backdrop');
+  var form = document.getElementById('ue-form');
+  var sub = document.getElementById('ue-sub');
+  var msg = document.getElementById('ue-msg');
+  var saveBtn = document.getElementById('ue-save-btn');
+  var typeSel = document.getElementById('ue-user-type');
+  var univBlock = document.getElementById('ue-univ-block');
+  var freeBlock = document.getElementById('ue-free-block');
+  var currentId = null;
+
+  function showMsg(kind, text){
+    msg.className = 'ue-msg show ' + kind;
+    msg.textContent = text;
+  }
+  function clearMsg(){ msg.className = 'ue-msg'; msg.textContent = ''; }
+
+  function applyUserTypeVisibility(ut){
+    if(ut === 'freelancer'){ univBlock.classList.add('hidden-section'); freeBlock.classList.remove('hidden-section'); }
+    else { univBlock.classList.remove('hidden-section'); freeBlock.classList.add('hidden-section'); }
+  }
+
+  function fillForm(d){
+    var fields = ['first_name','second_name','third_name','fourth_name','phone',
+                  'university_name','university_number','university_college','university_specialization',
+                  'university_days','university_internet_method',
+                  'freelancer_specialization','freelancer_company','freelancer_schedule_type','freelancer_internet_method',
+                  'notes'];
+    fields.forEach(function(name){
+      var el = form.querySelector('[name="'+name+'"]');
+      if(el) el.value = d[name] || '';
+    });
+    typeSel.value = (d.user_type === 'freelancer') ? 'freelancer' : 'university';
+    applyUserTypeVisibility(typeSel.value);
+  }
+
+  function openModal(id, name){
+    currentId = id;
+    sub.textContent = name || ('مشترك #' + id);
+    clearMsg();
+    // reset
+    form.reset();
+    bd.classList.add('is-open');
+    saveBtn.disabled = true;
+    // fetch data
+    fetch('/admin/beneficiaries/' + id + '/quick-edit', {
+      headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'},
+      credentials:'same-origin'
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok && j.data){
+        fillForm(j.data);
+        saveBtn.disabled = false;
+      } else {
+        showMsg('err', (j && j.message) || 'تعذّر تحميل بيانات المشترك.');
+      }
+    })
+    .catch(function(){ showMsg('err', 'تعذّر الاتصال بالخادم.'); });
+  }
+
+  function closeModal(){
+    bd.classList.remove('is-open');
+    currentId = null;
+    clearMsg();
+  }
+
+  // Triggers — أزرار تعديل في الجدول (event delegation)
+  var tbodyEd = document.getElementById('ua-tbody');
+  if(tbodyEd){
+    tbodyEd.addEventListener('click', function(e){
+      var btn = e.target.closest('[data-edit-id]');
+      if(btn){ openModal(btn.getAttribute('data-edit-id'), btn.getAttribute('data-edit-name')); }
+    });
+  }
+
+  // Close
+  document.getElementById('ue-close-btn').addEventListener('click', closeModal);
+  document.getElementById('ue-cancel-btn').addEventListener('click', closeModal);
+  bd.addEventListener('click', function(e){ if(e.target === bd) closeModal(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && bd.classList.contains('is-open')) closeModal(); });
+
+  // Type change
+  typeSel.addEventListener('change', function(){ applyUserTypeVisibility(typeSel.value); });
+
+  // Submit
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!currentId) return;
+    clearMsg();
+    saveBtn.disabled = true;
+    var fd = new FormData(form);
+    fetch('/admin/beneficiaries/' + currentId + '/quick-edit', {
+      method:'POST', body:fd, credentials:'same-origin',
+      headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}
+    })
+    .then(function(r){ return r.json().then(function(j){ j.__status = r.status; return j; }); })
+    .then(function(j){
+      saveBtn.disabled = false;
+      if(j.ok){
+        showMsg('ok', j.message || 'تم الحفظ بنجاح.');
+        setTimeout(function(){ location.reload(); }, 600);
+      } else {
+        showMsg('err', j.message || 'تعذّر حفظ التعديلات.');
+      }
+    })
+    .catch(function(){
+      saveBtn.disabled = false;
+      showMsg('err', 'تعذّر الاتصال بالخادم.');
+    });
+  });
+})();
+
+// ─── AJAX search + filter + delete + pushState ───────────────
+(function(){
+  var qInput   = document.getElementById('ua-q');
+  var typeSel  = document.getElementById('ua-user-type');
+  var clearBtn = document.getElementById('ua-clear-btn');
+  var statusEl = document.getElementById('ua-search-status');
+  var tbody    = document.getElementById('ua-tbody');
+  var countEl  = document.getElementById('ua-results-count');
+  var form     = document.getElementById('ua-filter-form');
+  if(!qInput || !tbody || !form) return;
+
+  // امنع الـ submit الافتراضي (Enter)
+  form.addEventListener('submit', function(e){ e.preventDefault(); doFetch(true); });
+
+  var debounceTimer = null;
+  function scheduleFetch(){
+    clearTimeout(debounceTimer);
+    setStatus('searching');
+    debounceTimer = setTimeout(function(){ doFetch(true); }, 280);
+  }
+  function setStatus(state, txt){
+    if(!statusEl) return;
+    statusEl.innerHTML = '';
+    statusEl.classList.remove('is-on');
+    statusEl.removeAttribute('title');
+    if(state === 'searching'){
+      statusEl.classList.add('is-on');
+      statusEl.title = 'جارٍ البحث…';
+    } else if(state === 'error'){
+      statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#b91c1c"></i>';
+      statusEl.title = txt || 'فشل البحث';
+    } else if(state === 'done'){
+      statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#166534"></i>';
+      statusEl.title = txt || 'تم';
+      setTimeout(function(){ statusEl.innerHTML = ''; statusEl.removeAttribute('title'); }, 900);
+    }
+  }
+  function buildParams(){
+    var q = qInput.value.trim();
+    var ut = typeSel.value;
+    var p = new URLSearchParams();
+    if(q) p.set('q', q);
+    if(ut) p.set('user_type', ut);
+    return p;
+  }
+  function updateUrl(params){
+    var qs = params.toString();
+    var url = window.location.pathname + (qs ? ('?' + qs) : '');
+    history.replaceState(null, '', url);
+  }
+  function render(users){
+    if(!users || users.length === 0){
+      tbody.innerHTML = uaEmptyRowHtml();
+    } else {
+      tbody.innerHTML = users.map(uaRowHtml).join('');
+    }
+    countEl.textContent = users ? users.length : 0;
+    uaReinitPagination();
+    // إعادة جلب حالة RADIUS لكل الصفوف الجديدة
+    if(typeof window.uaHydrateRadius === 'function'){
+      try { window.uaHydrateRadius(); } catch(e) {}
+    }
+  }
+  function doFetch(showStatus){
+    var params = buildParams();
+    updateUrl(params);
+    if(showStatus) setStatus('searching');
+    fetch('/admin/users-account/data.json?' + params.toString(), {
+      credentials:'same-origin',
+      headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j && j.ok){
+        render(j.users || []);
+        setStatus('done', (j.users || []).length + ' نتيجة');
+      } else {
+        setStatus('error', (j && j.message) || 'فشل البحث');
+      }
+    })
+    .catch(function(){ setStatus('error', 'تعذّر الاتصال'); });
+  }
+
+  qInput.addEventListener('input', scheduleFetch);
+  typeSel.addEventListener('change', function(){ doFetch(true); });
+  clearBtn.addEventListener('click', function(){
+    qInput.value = ''; typeSel.value = '';
+    doFetch(true); qInput.focus();
+  });
+
+  // ─── Delete via AJAX (event delegation) ─────────────────
+  tbody.addEventListener('submit', function(e){
+    var delForm = e.target.closest('form.ua-delete-form');
+    if(!delForm) return;
+    e.preventDefault();
+    var name = delForm.dataset.beneficiaryName || 'هذا المشترك';
+    if(!confirm('سيتم حذف "'+name+'" نهائيًا من النظام مع كل بياناته المرتبطة.\n\nهل أنت متأكد؟ هذا الإجراء لا يمكن التراجع عنه.')) return;
+    var btn = delForm.querySelector('button[type="submit"]');
+    var origHtml = btn ? btn.innerHTML : '';
+    if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+    fetch(delForm.action, {
+      method:'POST',
+      body:new FormData(delForm),
+      credentials:'same-origin',
+      headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}
+    })
+    .then(function(r){ return r.json().then(function(j){ j.__status = r.status; return j; }); })
+    .then(function(j){
+      if(j.ok){
+        var row = delForm.closest('tr');
+        if(row && row.parentNode) row.parentNode.removeChild(row);
+        var remaining = tbody.querySelectorAll('tr:not(.no-paginate)').length;
+        countEl.textContent = remaining;
+        if(remaining === 0) tbody.innerHTML = uaEmptyRowHtml();
+        uaReinitPagination();
+      } else {
+        if(btn){ btn.disabled = false; btn.innerHTML = origHtml; }
+        alert(j.message || 'تعذّر الحذف');
+      }
+    })
+    .catch(function(){
+      if(btn){ btn.disabled = false; btn.innerHTML = origHtml; }
+      alert('تعذّر الاتصال بالخادم.');
+    });
+  });
+})();
+
+function confirmBeneficiaryConvert(form) {
+  const confirmationInput = form.querySelector('input[name="confirm_convert"]');
+  const beneficiaryName = form.dataset.beneficiaryName || 'هذا المشترك';
+  const targetLabel = form.dataset.targetLabel || 'طريقة الوصول الجديدة';
+  const message = `سيتم تحويل ${beneficiaryName} إلى ${targetLabel}.\n\nهذا الإجراء يغيّر نوع دخول المشترك. هل تريد المتابعة؟`;
+
+  if (!window.confirm(message)) {
+    if (confirmationInput) confirmationInput.value = '';
+    return false;
+  }
+
+  if (confirmationInput) confirmationInput.value = '1';
+  return true;
+}
+
+function confirmBeneficiaryDelete(form) {
+  const name = form.dataset.beneficiaryName || 'هذا المشترك';
+  const msg = `سيتم حذف "${name}" نهائيًا من النظام مع كل بياناته المرتبطة.\n\nهل أنت متأكد؟ هذا الإجراء لا يمكن التراجع عنه.`;
+  return window.confirm(msg);
+}
+</script>
+{% endblock %}

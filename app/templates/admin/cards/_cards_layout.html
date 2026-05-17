@@ -1,0 +1,43 @@
+{# قالب أب لكل صفحات إدارة البطاقات. يمتد من dashboard/_layout.html. #}
+{% extends "admin/_admin_layout.html" %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_hub.css') }}">
+<style>
+.cards-subnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.cards-subnav a{
+  display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;
+  border:1px solid var(--d-border-strong);background:#fff;color:var(--d-text-soft);
+  font-size:12.5px;font-weight:800;text-decoration:none;transition:var(--d-transition)
+}
+.cards-subnav a:hover{border-color:var(--d-gold);color:var(--d-black)}
+.cards-subnav a.is-active{background:var(--d-black);border-color:var(--d-black);color:#fff}
+</style>
+{% endblock %}
+
+
+
+
+
+{% block crumbs %}
+  <span>إدارة البطاقات</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>{{ self.page_title() }}</span>
+{% endblock %}
+
+{% block content %}
+{% set p = request.path %}
+<nav class="cards-subnav" aria-label="تنقل إدارة البطاقات">
+  <a class="{% if p == '/admin/cards/subscribers' %}is-active{% endif %}" href="/admin/cards/subscribers"><i class="fa-solid fa-users"></i>مشتركو البطاقات</a>
+  <a class="{% if p in ['/admin/cards', '/admin/cards/overview'] %}is-active{% endif %}" href="/admin/cards"><i class="fa-solid fa-chart-pie"></i>نظرة عامة</a>
+  <a class="{% if p == '/admin/cards/inventory' %}is-active{% endif %}" href="{{ url_for('admin_cards_inventory_page') }}"><i class="fa-solid fa-boxes-stacked"></i>المخزون والصادرة</a>
+  <a class="{% if p.startswith('/admin/cards/categories') %}is-active{% endif %}" href="{{ url_for('admin_cards_categories') }}"><i class="fa-solid fa-layer-group"></i>الفئات</a>
+  <a class="{% if p == '/admin/cards/policies' %}is-active{% endif %}" href="{{ url_for('admin_cards_policies') }}"><i class="fa-solid fa-sliders"></i>السياسات</a>
+  <a class="{% if p == '/admin/cards/user-type-rules' %}is-active{% endif %}" href="/admin/cards/user-type-rules"><i class="fa-solid fa-user-tag"></i>قواعد الأنواع</a>
+  <a class="{% if p == '/admin/quota-groups' %}is-active{% endif %}" href="/admin/quota-groups"><i class="fa-solid fa-people-group"></i>المجموعات</a>
+  <a class="{% if p == '/admin/cards/import' %}is-active{% endif %}" href="{{ url_for('admin_cards_import_page') }}"><i class="fa-solid fa-file-arrow-up"></i>رفع بطاقات</a>
+  <a class="{% if p == '/admin/cards/pending' %}is-active{% endif %}" href="{{ url_for('admin_cards_pending') }}"><i class="fa-solid fa-hourglass-half"></i>الطلبات</a>
+</nav>
+{% block cards_content %}{% endblock %}
+{% endblock %}

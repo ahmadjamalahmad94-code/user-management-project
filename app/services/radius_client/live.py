@@ -1,0 +1,391 @@
+"""
+LiveRadiusClient — Phase 2 (تفعيل تدريجي).
+
+✅ مُفعَّل الآن (قراءة فقط):
+    - health_check  → GET /get_app_version (بدون auth)
+    - get_my_permissions
+    - get_my_balance
+    - get_server_status
+
+🚧 لا يزال معطّلًا (Write operations):
+    - generate_user_cards, create_user, reset_password, update_user
+    - add_time, add_quota_mb, disconnect, set_mac_lock, broadcast_sms
+
+ملاحظات الاتصال:
+    - Base URL: /app_ad2/ (وليس /app_ad/)
+    - Password MD5-hashed
+    - Headers: X-Api-Key + adv_auth_ad
+    - Login response: account.api_key
+
+التفعيل:
+    .env:
+        RADIUS_API_BASE_URL=http://HOST/app_ad2
+        RADIUS_API_MASTER_KEY=<license_id>
+        RADIUS_API_USERNAME=<sub_admin>
+        RADIUS_API_PASSWORD=<plain>
+        RADIUS_MODE=live
+        RADIUS_API_READY=1
+"""
+from __future__ import annotations
+
+import hashlib
+import os
+
+from .base import RadiusClient, RadiusClientError, RadiusClientNotImplemented
+
+
+# ─── helpers ──────────────────────────────────────────────────────────
+def _api_ready() -> bool:
+    return os.getenv("RADIUS_API_READY", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _writes_enabled() -> bool:
+    """write ops محمية بـ flag منفصل — تتطلب تفعيلًا صريحًا إضافيًا."""
+    return os.getenv("RADIUS_API_WRITES_ENABLED", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _guard_read():
+    if not _api_ready():
+        raise RadiusClientNotImplemented(
+            "🚧 RADIUS API غير مفعّل. اضبط RADIUS_API_READY=1."
+        )
+
+
+def _guard_write():
+    if not _api_ready():
+        raise RadiusClientNotImplemented("🚧 RADIUS API غير مفعّل.")
+    if not _writes_enabled():
+        raise RadiusClientNotImplemented(
+            "🚧 عمليات الكتابة في الـ API ما زالت قيد التطوير. "
+            "اضبط RADIUS_API_WRITES_ENABLED=1 بعد اختبار كامل."
+        )
+
+
+def md5_password(plain: str) -> str:
+    """يحوّل الباسوورد إلى MD5 hash كما يتوقع الـ API."""
+    return hashlib.md5((plain or "").encode("utf-8")).hexdigest()
+
+
+_REQUEST_TIMEOUT = 15
+
+
+class LiveRadiusClient(RadiusClient):
+    """Phase 2 — قراءة فقط مُفعَّلة، كتابة معطّلة افتراضيًا."""
+
+    def __init__(self):
+        self.base_url = (os.getenv("RADIUS_API_BASE_URL", "") or "").strip().rstrip("/")
+        self.master_key = (os.getenv("RADIUS_API_MASTER_KEY", "") or "").strip()
+        self.api_username = (os.getenv("RADIUS_API_USERNAME", "") or "").strip()
+        self.api_password = (os.getenv("RADIUS_API_PASSWORD", "") or "").strip()
+        self._api_key: str | None = None
+        self._login_failure: str | None = None
+        self._login_failure_until: float = 0.0
+        self._verify_ssl = os.getenv("RADIUS_API_VERIFY_SSL", "1").strip().lower() in {"1", "true", "yes", "on"}
+
+    @property
+    def mode(self) -> str:
+        return "live"
+
+    # ─── HTTP layer ──────────────────────────────────────────────────
+    def _endpoint_url(self, endpoint: str) -> str:
+        if not self.base_url:
+            raise RadiusClientError("RADIUS_API_BASE_URL غير محدد.")
+        return f"{self.base_url}/{endpoint.lstrip('/')}"
+
+    def _headers(self, *, with_auth: bool = True) -> dict[str, str]:
+        h: dict[str, str] = {}
+        if self.master_key:
+            h["X-Api-Key"] = self.master_key
+        if with_auth and self._api_key:
+            h["adv_auth_ad"] = self._api_key
+        return h
+
+    def _http_post(self, endpoint: str, data: dict | None = None, *, with_auth: bool = True) -> dict:
+        """POST عام مع معالجة أخطاء. يرجع dict دائمًا."""
+        try:
+            import requests
+        except ImportError:
+            raise RadiusClientError("مكتبة requests غير مثبتة — pip install requests")
+
+        url = self._endpoint_url(endpoint)
+        try:
+            r = requests.post(
+                url,
+                data=data or {},
+                headers=self._headers(with_auth=with_auth),
+                timeout=_REQUEST_TIMEOUT,
+                verify=self._verify_ssl,
+            )
+        except Exception as exc:
+            return {"error": True, "__transport_error__": str(exc), "__url__": url}
+
+        out: dict = {"__http_status__": r.status_code, "__url__": url}
+        try:
+            body = r.json()
+            if isinstance(body, dict):
+                out.update(body)
+            else:
+                out["__list__"] = body
+        except ValueError:
+            out["__raw__"] = r.text[:500]
+            out["error"] = True
+            out["msg"] = "الرد ليس JSON صحيحًا"
+        return out
+
+    def _login(self) -> str:
+        """يطلب /login إن لم يكن لديه api_key محفوظ. يكاش فشل الـ login لـ 60ث منعًا للحظر."""
+        import time
+        if self._api_key:
+            return self._api_key
+        # حماية: لو login فشل قبل قليل، لا تحاول مجددًا
+        if self._login_failure and time.time() < self._login_failure_until:
+            remaining = int(self._login_failure_until - time.time())
+            raise RadiusClientError(
+                f"Login مُعطَّل مؤقتًا (تبقّى {remaining}ث) — تجنبًا للحظر. "
+                f"السبب: {self._login_failure}"
+            )
+        if not self.api_username or not self.api_password:
+            raise RadiusClientError("بيانات اعتماد API ناقصة (USERNAME أو PASSWORD).")
+        body = self._http_post(
+            "login",
+            {
+                "username": self.api_username,
+                "password": md5_password(self.api_password),
+            },
+            with_auth=False,
+        )
+        if body.get("error"):
+            err = body.get("message") or body.get("msg") or body.get("__transport_error__") or str(body)
+            # احفظ الفشل لـ 60ث
+            self._login_failure = str(err)[:200]
+            self._login_failure_until = time.time() + 60
+            raise RadiusClientError(f"Login failed: {err}")
+        api_key = (body.get("account") or {}).get("api_key")
+        if not api_key:
+            self._login_failure = "Login نجح بدون api_key"
+            self._login_failure_until = time.time() + 60
+            raise RadiusClientError(self._login_failure)
+        # نجاح — امسح الفشل
+        self._api_key = api_key
+        self._login_failure = None
+        self._login_failure_until = 0
+        return api_key
+
+    # ═══════════════════════════════════════════════════════════════════
+    # ✅ Read operations (مُفعَّلة)
+    # ═══════════════════════════════════════════════════════════════════
+    def health_check(self) -> dict:
+        """ping بسيط بدون auth — يرجع معلومات نسخة الـ API."""
+        if not _api_ready():
+            return {"ok": False, "mode": "live", "message": "RADIUS_API_READY=0"}
+        body = self._http_post("get_app_version", {}, with_auth=False)
+        if body.get("error"):
+            return {
+                "ok": False,
+                "mode": "live",
+                "error": body.get("msg") or body.get("__transport_error__") or "خطأ غير محدد",
+                "http_status": body.get("__http_status__"),
+                "url": body.get("__url__"),
+            }
+        return {"ok": True, "mode": "live", "data": {k: v for k, v in body.items() if not k.startswith("__")}}
+
+    def get_my_permissions(self) -> dict:
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post("get_my_permissions", {})
+            if body.get("error"):
+                return {"ok": False, "error": body.get("msg") or body.get("__transport_error__")}
+            return {"ok": True, "data": {k: v for k, v in body.items() if not k.startswith("__")}}
+        except (RadiusClientError, RadiusClientNotImplemented) as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def get_my_balance(self) -> dict:
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post("get_my_balance", {})
+            if body.get("error"):
+                return {"ok": False, "error": body.get("msg") or body.get("__transport_error__")}
+            return {"ok": True, "data": {k: v for k, v in body.items() if not k.startswith("__")}}
+        except (RadiusClientError, RadiusClientNotImplemented) as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def get_server_status(self) -> dict:
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post("get_server_status", {})
+            if body.get("error"):
+                return {"ok": False, "error": body.get("msg") or body.get("__transport_error__")}
+            return {"ok": True, "data": {k: v for k, v in body.items() if not k.startswith("__")}}
+        except (RadiusClientError, RadiusClientNotImplemented) as exc:
+            return {"ok": False, "error": str(exc)}
+
+    # ═══════════════════════════════════════════════════════════════════
+    # 🚧 Write operations (معطّلة)
+    # ═══════════════════════════════════════════════════════════════════
+    def generate_user_cards(self, category_code, count=1, *, beneficiary_id=None, requested_by="", notes=""):
+        _guard_write()
+        raise RadiusClientNotImplemented("generate_user_cards — لم يُختبر بعد")
+
+    def validate_card(self, username, password):
+        _guard_write()
+        raise RadiusClientNotImplemented("validate_card — لم يُختبر بعد")
+
+    def remove_user_card(self, card_external_id, *, requested_by=""):
+        _guard_write()
+        raise RadiusClientNotImplemented("remove_user_card — لم يُختبر بعد")
+
+    def create_user(self, username, password, profile_id, *, beneficiary_id=None, requested_by="", **opts):
+        _guard_write()
+        raise RadiusClientNotImplemented("create_user — لم يُختبر بعد")
+
+    def update_user(self, user_external_id, *, beneficiary_id=None, requested_by="", **changes):
+        _guard_write()
+        raise RadiusClientNotImplemented("update_user — لم يُختبر بعد")
+
+    def reset_password(self, user_external_id, new_password="", *, beneficiary_id=None, requested_by=""):
+        _guard_write()
+        raise RadiusClientNotImplemented("reset_password — لم يُختبر بعد")
+
+    def add_time(self, user_external_id, *, sel_time, add_time, beneficiary_id=None, requested_by=""):
+        _guard_write()
+        raise RadiusClientNotImplemented("add_time — لم يُختبر بعد")
+
+    def add_quota_mb(self, user_external_id, mb, *, beneficiary_id=None, requested_by=""):
+        _guard_write()
+        raise RadiusClientNotImplemented("add_quota_mb — لم يُختبر بعد")
+
+    def disconnect(self, user_external_id, *, beneficiary_id=None, requested_by=""):
+        _guard_write()
+        raise RadiusClientNotImplemented("disconnect — لم يُختبر بعد")
+
+    def set_mac_lock(self, user_external_id, mac="", *, action="set", beneficiary_id=None, requested_by=""):
+        _guard_write()
+        raise RadiusClientNotImplemented("set_mac_lock — لم يُختبر بعد")
+
+    def get_online_users(self) -> list:
+        """قائمة الجلسات المتصلة حاليًا. ✅ مُفعَّل."""
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post("get_online_users", {})
+            if body.get("error"):
+                return []
+            data = body.get("data") or body.get("__list__") or []
+            return data if isinstance(data, list) else []
+        except (RadiusClientError, RadiusClientNotImplemented):
+            return []
+
+    def get_user_bandwidth(self, user_external_id):
+        """استخدام لحظي للمشترك. ✅ مُفعَّل."""
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post("get_user_bandwidth", {"user_id": user_external_id})
+            if body.get("error"):
+                return None
+            return body  # raw dict — caller يقرر
+        except (RadiusClientError, RadiusClientNotImplemented):
+            return None
+
+    def get_user_usage(self, user_external_id):
+        """ملخص استخدام تاريخي. ✅ مُفعَّل."""
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post("get_user_usage", {"user_id": user_external_id})
+            if body.get("error"):
+                return None
+            return body
+        except (RadiusClientError, RadiusClientNotImplemented):
+            return None
+
+    def get_user_sessions(self, user_external_id):
+        """جلسات المستخدم السابقة/الحالية. قراءة فقط وتستخدمها طبقة حالة البطاقات."""
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post(
+                "get_user_sessions",
+                {"user_id": user_external_id, "username": user_external_id},
+            )
+            if body.get("error"):
+                return None
+            return body
+        except (RadiusClientError, RadiusClientNotImplemented):
+            return None
+
+    def get_profiles(self) -> list:
+        """قائمة الباقات المتاحة. ✅ مُفعَّل."""
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post("get_profiles_for_user", {})
+            if body.get("error"):
+                return []
+            data = body.get("data") or body.get("profiles") or body.get("__list__") or []
+            return data if isinstance(data, list) else []
+        except (RadiusClientError, RadiusClientNotImplemented):
+            return []
+
+    def broadcast_sms(self, message, *, profile_filter_external_id="", requested_by=""):
+        _guard_write()
+        raise RadiusClientNotImplemented("broadcast_sms — لم يُختبر بعد")
+
+
+    # ─── إضافات (✅ مُفعَّلة) ─────────────────────────────────
+    def quick_stats(self) -> dict:
+        """KPIs لحظية للوحة الإدارة."""
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post("quick_stats", {})
+            if body.get("error"):
+                return {"ok": False, "error": body.get("message") or body.get("msg")}
+            return {"ok": True, "data": {k: v for k, v in body.items() if not k.startswith("__")}}
+        except (RadiusClientError, RadiusClientNotImplemented) as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def search_users(self, query: str = "", limit: int = 50) -> dict:
+        """يبحث عن مشتركين باسم/جوال/MAC."""
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post("search_users", {"q": query, "limit": int(limit)})
+            if body.get("error"):
+                return {"ok": False, "error": body.get("message") or body.get("msg"), "data": []}
+            data = body.get("data") or body.get("users") or body.get("__list__") or []
+            return {"ok": True, "data": data if isinstance(data, list) else []}
+        except (RadiusClientError, RadiusClientNotImplemented) as exc:
+            return {"ok": False, "error": str(exc), "data": []}
+
+    def get_dashboard_metrics(self) -> dict:
+        """مقاييس داشبورد كاملة."""
+        try:
+            _guard_read()
+            self._login()
+            body = self._http_post("get_dashboard_metrics", {})
+            if body.get("error"):
+                return {"ok": False, "error": body.get("message") or body.get("msg")}
+            return {"ok": True, "data": {k: v for k, v in body.items() if not k.startswith("__")}}
+        except (RadiusClientError, RadiusClientNotImplemented) as exc:
+            return {"ok": False, "error": str(exc)}
+
+    # ─── pending actions (مشتركة مع manual) ─────────────────────────
+    def list_pending_actions(self, *, action_type="", status="pending", limit=50):
+        from .manual import ManualRadiusClient
+        return ManualRadiusClient().list_pending_actions(action_type=action_type, status=status, limit=limit)
+
+    def mark_pending_done(self, action_id, *, executed_by="", api_response=None, notes=""):
+        from .manual import ManualRadiusClient
+        return ManualRadiusClient().mark_pending_done(action_id, executed_by=executed_by, api_response=api_response, notes=notes)
+
+    def mark_pending_failed(self, action_id, *, error_message, executed_by=""):
+        from .manual import ManualRadiusClient
+        return ManualRadiusClient().mark_pending_failed(action_id, error_message=error_message, executed_by=executed_by)
+
+    def cancel_pending(self, action_id, *, executed_by="", notes=""):
+        from .manual import ManualRadiusClient
+        return ManualRadiusClient().cancel_pending(action_id, executed_by=executed_by, notes=notes)

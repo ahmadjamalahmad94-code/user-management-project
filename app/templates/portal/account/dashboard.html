@@ -1,0 +1,385 @@
+{% extends "portal/account/_layout.html" %}
+{% block title %}بوابتي — حساب الإنترنت{% endblock %}
+{% block page_title %}مرحبًا 👋{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+/* فلسفة التصميم: بسيط، كبير، واضح للأطفال وغير الخبراء. */
+
+:root{
+  --kid-radius: 22px;
+  --kid-radius-sm: 16px;
+}
+
+/* ── HERO ─────────────────────────────────────────────── */
+.kid-hero{
+  border-radius:var(--kid-radius);
+  padding:32px 36px;
+  background:linear-gradient(135deg, #1E1E1E 0%, #2a2724 100%);
+  color:#fff;
+  position:relative;overflow:hidden;
+  box-shadow:0 10px 30px rgba(30,30,30,.18);
+}
+.kid-hero::after{
+  content:"";position:absolute;inset:auto -80px -120px auto;
+  width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle, rgba(244,186,42,.30), transparent 70%);
+  pointer-events:none;
+}
+.kid-hero h1{margin:0 0 6px;font-size:32px;font-weight:800;letter-spacing:-.2px}
+.kid-hero h1 .name{color:var(--d-gold)}
+.kid-hero p.sub{margin:0;font-size:17px;color:rgba(255,255,255,.75);line-height:1.55}
+
+/* بطاقة بيانات الاتصال داخل Hero */
+.kid-creds{
+  margin-top:20px;display:grid;
+  grid-template-columns:1fr 1fr;gap:14px;
+}
+@media (max-width:560px){.kid-creds{grid-template-columns:1fr}}
+.kid-cred{
+  padding:14px 18px;border-radius:var(--kid-radius-sm);
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+}
+.kid-cred .label{
+  font-size:12px;font-weight:700;color:rgba(255,255,255,.55);
+  letter-spacing:.3px;text-transform:uppercase;margin-bottom:6px;
+}
+.kid-cred .value{
+  font-size:22px;font-weight:800;color:var(--d-gold);
+  font-family:monospace;letter-spacing:.5px;
+}
+.kid-cred .value .copy-hint{
+  font-size:10px;font-family:inherit;color:rgba(255,255,255,.4);
+  margin-inline-start:6px;font-weight:600;
+}
+.kid-cred.is-status .value{font-family:inherit}
+.kid-status-on{color:#73e29a !important}
+.kid-status-off{color:#ff8b8b !important}
+
+/* ── 4 إجراءات كبيرة (بدل 3 لأن المستخدم له خيارات أكثر) ── */
+.kid-grid-4{
+  display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+  gap:14px;margin-top:24px;
+}
+.kid-tile{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:28px 18px;border-radius:var(--kid-radius-sm);
+  background:#fff;border:2px solid var(--d-border);
+  color:#1E1E1E;text-decoration:none;text-align:center;
+  transition:.22s ease;cursor:pointer;
+  font-family:inherit;
+}
+.kid-tile:hover{
+  transform:translateY(-3px);
+  border-color:var(--d-gold);
+  box-shadow:0 8px 22px rgba(244,186,42,.18);
+}
+.kid-tile .kt-ico{
+  width:72px;height:72px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:32px;background:rgba(244,186,42,.16);color:#7c2d12;
+}
+.kid-tile.tile-primary .kt-ico{
+  background:linear-gradient(135deg, #F4BA2A 0%, #FFD96A 100%);
+  color:#1E1E1E;
+}
+.kid-tile .kt-label{font-size:18px;font-weight:800;line-height:1.4}
+.kid-tile .kt-sub{font-size:13px;color:#8a8675;font-weight:600;line-height:1.55}
+.kid-tile.tile-whatsapp{
+  background:linear-gradient(135deg,#ecfff3,#fff);
+  border-color:#b7efcc;
+}
+.kid-tile.tile-whatsapp .kt-ico{
+  background:#25D366;color:#102316;
+}
+.kid-tile.tile-whatsapp:hover{
+  border-color:#25D366;
+  box-shadow:0 8px 22px rgba(37,211,102,.18);
+}
+.kid-tile.has-badge{position:relative}
+.kid-tile.has-badge::after{
+  content:attr(data-badge);
+  position:absolute;top:12px;left:12px;
+  background:#b91c1c;color:#fff;
+  min-width:24px;height:24px;border-radius:12px;padding:0 8px;
+  font-size:12px;font-weight:800;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+
+/* قسم سفلي بسيط */
+.kid-bottom{
+  margin-top:30px;display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;
+}
+.kid-info-card{
+  padding:22px 24px;border-radius:var(--kid-radius-sm);
+  background:#fff;border:2px solid var(--d-border);
+}
+.kid-info-card h3{
+  display:flex;align-items:center;gap:10px;
+  margin:0 0 14px;font-size:18px;font-weight:800;color:#1E1E1E;
+}
+.kid-info-card h3 i{color:var(--d-gold)}
+.kid-info-list{display:flex;flex-direction:column;gap:8px}
+.kid-info-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 12px;border-radius:10px;background:#FAFAF8;
+  border:1px solid var(--d-border);
+}
+.kid-info-row .k{font-size:12.5px;color:#8a8675;font-weight:700}
+.kid-info-row .v{font-size:14px;color:#1E1E1E;font-weight:800}
+
+.kid-step{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:10px;border-radius:10px;background:#FAFAF8;margin-bottom:8px;
+}
+.kid-step:last-child{margin-bottom:0}
+.kid-step-num{
+  flex-shrink:0;width:28px;height:28px;border-radius:50%;
+  background:var(--d-gold);color:#1E1E1E;
+  font-weight:800;font-size:13px;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.kid-step-text{font-size:13.5px;color:#5b5849;line-height:1.6}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ───── HERO ───── #}
+<section class="kid-hero">
+  <h1>أهلًا <span class="name">{{ (beneficiary_full_name or 'مشترك').split(' ')[0] }}</span> 👋</h1>
+  <p class="sub">هذه بوابتك لإدارة حساب الإنترنت. من هنا يمكنك متابعة حالة الحساب، طلب فتح موقع، أو طلب رفع السرعة بسهولة.</p>
+
+  <div class="kid-creds">
+    <div class="kid-cred">
+      <div class="label">اسم المستخدم</div>
+      <div class="value">
+        {{ radius_username | default('—') }}
+      </div>
+    </div>
+    <div class="kid-cred is-status">
+      <div class="label">حالة الاشتراك</div>
+      <div class="value {% if (account_status or '') == 'active' %}kid-status-on{% else %}kid-status-off{% endif %}">
+        {% if (account_status or '') == 'active' %}
+          <i class="fa-solid fa-circle-check"></i> نشط
+        {% elif (account_status or '') == 'suspended' %}
+          <i class="fa-solid fa-circle-pause"></i> موقوف
+        {% elif (account_status or '') == 'expired' %}
+          <i class="fa-solid fa-circle-xmark"></i> منتهي
+        {% else %}
+          <i class="fa-solid fa-hourglass-half"></i> {{ account_status | default('بانتظار') }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ───── status widget (live from API) ───── #}
+<section id="acc-status-card" class="acc-status-card">
+  <div class="acc-status-head">
+    <h3><i class="fa-solid fa-signal"></i> حالة حسابي الآن</h3>
+    <button type="button" id="acc-status-refresh" class="acc-status-refresh"><i class="fa-solid fa-rotate"></i></button>
+  </div>
+  <div id="acc-status-body" class="acc-status-body">
+    <div class="acc-status-loading"><i class="fa-solid fa-spinner fa-spin"></i> جارٍ جلب البيانات…</div>
+  </div>
+</section>
+
+{% include "components/power_timer_viewer.html" %}
+
+<section class="kid-bottom" style="margin-top:18px">
+  <div class="kid-info-card">
+    <h3><i class="fa-solid fa-sliders"></i> تحكمات جاهزة للربط</h3>
+    <div class="kid-step"><span class="kid-step-num">1</span><span class="kid-step-text">طلبات فتح المواقع ورفع السرعة تدخل للمراجعة، ثم تظهر نتيجتها في صفحة طلباتي.</span></div>
+    <div class="kid-step"><span class="kid-step-num">2</span><span class="kid-step-text">رفع السرعة وفصل الجلسة وإضافة وقت أو حصة بيانات جاهزة كطبقة خدمة، وتحتاج فقط تفعيل الكتابة على الـ API.</span></div>
+    <div class="kid-step"><span class="kid-step-num">3</span><span class="kid-step-text">القراءات الحية مثل المتصل الآن والاستخدام وباقة السرعة تظهر تلقائيًا عند تفعيل RADIUS_API_READY.</span></div>
+  </div>
+</section>
+
+{# ───── الإجراءات الرئيسية ───── #}
+<section class="kid-grid-4">
+  <a class="kid-tile tile-primary" href="/user/account/unblock-site">
+    <span class="kt-ico"><i class="fa-solid fa-globe"></i></span>
+    <span class="kt-label">طلب فتح موقع</span>
+    <span class="kt-sub">أرسل طلبًا لمراجعة موقع لا يفتح لديك</span>
+  </a>
+
+  <a class="kid-tile" href="/user/account/speed-upgrade">
+    <span class="kt-ico"><i class="fa-solid fa-gauge-high"></i></span>
+    <span class="kt-label">رفع السرعة</span>
+    <span class="kt-sub">طلب سرعة أعلى مؤقتًا أو دائمًا</span>
+  </a>
+
+  {% if whatsapp_group_url %}
+  <a class="kid-tile tile-whatsapp" href="{{ whatsapp_group_url }}" target="_blank" rel="noopener noreferrer">
+    <span class="kt-ico"><i class="fa-brands fa-whatsapp"></i></span>
+    <span class="kt-label">مجموعة واتساب</span>
+    <span class="kt-sub">ادخل مجموعة فئتك الخاصة للتنبيهات والمتابعة</span>
+  </a>
+  {% endif %}
+
+  <a class="kid-tile {% if pending_count and pending_count > 0 %}has-badge{% endif %}"
+     href="/user/account/requests"
+     {% if pending_count and pending_count > 0 %}data-badge="{{ pending_count }}"{% endif %}>
+    <span class="kt-ico"><i class="fa-solid fa-list-check"></i></span>
+    <span class="kt-label">طلباتي</span>
+    <span class="kt-sub">
+      {% if pending_count and pending_count > 0 %}
+        {{ pending_count }} طلب قيد المراجعة
+      {% else %}
+        لا توجد طلبات معلّقة
+      {% endif %}
+    </span>
+  </a>
+</section>
+
+{# ───── المعلومات والخطوات ───── #}
+<div class="kid-bottom">
+  <section class="kid-info-card">
+    <h3><i class="fa-solid fa-id-badge"></i>بياناتي</h3>
+    <div class="kid-info-list">
+      <div class="kid-info-row"><span class="k">الاسم الكامل</span><span class="v">{{ beneficiary_full_name }}</span></div>
+      <div class="kid-info-row"><span class="k">رقم الجوال</span><span class="v">{{ beneficiary_phone or '—' }}</span></div>
+      <div class="kid-info-row"><span class="k">اسم المستخدم</span><span class="v" style="font-family:monospace">{{ radius_username or '—' }}</span></div>
+      {% if current_profile_name %}
+      <div class="kid-info-row"><span class="k">باقة الإنترنت</span><span class="v">{{ current_profile_name }}</span></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="kid-info-card">
+    <h3><i class="fa-solid fa-circle-info"></i>كيف يعمل النظام؟</h3>
+    <div class="kid-step">
+      <span class="kid-step-num">1</span>
+      <span class="kid-step-text">اختر الإجراء المطلوب من الأزرار الكبيرة فوق.</span>
+    </div>
+    <div class="kid-step">
+      <span class="kid-step-num">2</span>
+      <span class="kid-step-text">املأ النموذج البسيط واضغط حفظ.</span>
+    </div>
+    <div class="kid-step">
+      <span class="kid-step-num">3</span>
+      <span class="kid-step-text">الإدارة تراجع طلبك بسرعة، وتجد النتيجة في «طلباتي».</span>
+    </div>
+  </section>
+</div>
+
+<style>
+.acc-status-card{
+  margin-top:24px;background:linear-gradient(135deg,#fbfaf7,#fff);
+  border:1.5px solid #e8e2d5;border-radius:20px;padding:0;overflow:hidden;
+  box-shadow:0 10px 30px rgba(30,30,30,.06);
+}
+.acc-status-head{
+  display:flex;align-items:center;gap:10px;padding:14px 20px;
+  background:linear-gradient(90deg,#1E1E1E,#2a2724);color:#fff;
+}
+.acc-status-head h3{margin:0;font-size:15px;font-weight:900;flex:1}
+.acc-status-head h3 i{color:#F4BA2A;margin-inline-end:6px}
+.acc-status-refresh{
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  color:#fff;width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:14px;
+}
+.acc-status-refresh:hover{background:rgba(255,255,255,.22)}
+.acc-status-body{padding:18px 20px}
+.acc-status-loading{text-align:center;padding:30px;color:#7a7368;font-size:13.5px}
+.acc-status-err{padding:14px;background:#fde2e2;color:#b91c1c;border-radius:10px;font-size:13px}
+
+.acc-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.acc-stat{padding:14px;background:#fff;border:1px solid #e8e2d5;border-radius:14px;
+  display:flex;align-items:center;gap:11px}
+.acc-stat-ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:14px;flex-shrink:0}
+.acc-stat-ico.g{background:#e8f6ee;color:#166534}
+.acc-stat-ico.b{background:#eef4ff;color:#1d4ed8}
+.acc-stat-ico.y{background:#fff7df;color:#92400e}
+.acc-stat-ico.r{background:#fde2e2;color:#b91c1c}
+.acc-stat .l{font-size:10.5px;font-weight:800;color:#7a7368;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:2px}
+.acc-stat .v{font-size:14.5px;font-weight:900;color:#1E1E1E;line-height:1.2;font-family:Tahoma,sans-serif}
+
+.acc-bar-wrap{margin-top:6px}
+.acc-bar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;
+  font-size:12px;font-weight:800;color:#7a7368}
+.acc-bar-track{height:18px;background:#f5efe1;border-radius:999px;overflow:hidden;
+  border:1px solid #e8e2d5}
+.acc-bar-fill{height:100%;background:linear-gradient(90deg,#F4BA2A,#FFD96A);border-radius:999px;
+  transition:width .5s ease}
+
+.acc-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.acc-act{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:11px;
+  background:#1E1E1E;color:#fff;font-size:13px;font-weight:800;text-decoration:none;
+  border:0;cursor:pointer;font-family:inherit}
+.acc-act:hover{background:#000}
+.acc-act--gold{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E}
+
+</style>
+
+<script>
+(function(){
+  var body = document.getElementById('acc-status-body');
+  var refreshBtn = document.getElementById('acc-status-refresh');
+
+  function fmtBytes(b){
+    b = Number(b||0);
+    if(b >= 1073741824) return (b/1073741824).toFixed(2) + ' GB';
+    if(b >= 1048576) return (b/1048576).toFixed(1) + ' MB';
+    if(b >= 1024) return (b/1024).toFixed(0) + ' KB';
+    return b + ' B';
+  }
+
+  function renderStatus(payload){
+    if(!payload.ok){
+      body.innerHTML = '<div class="acc-status-err"><i class="fa-solid fa-triangle-exclamation"></i> ' + (payload.error || 'تعذّر جلب البيانات') + '</div>';
+      return;
+    }
+    // البيانات قد تيجي من /details (الـ self API) أو من /get_user_usage (admin API)
+    var d = payload.details || payload.usage || {};
+    var isOnline = d.conn_code === 'online' || d.is_online == 1;
+    var usageBytes = Number(d.val_usage_qouta || 0);
+    var usageGb = (usageBytes / 1073741824).toFixed(2);
+    var profile = d.profile_name || '—';
+    var expir = d.expiration || '—';
+    var dn = d.down_speed || '—';
+    var up = d.up_speed || '—';
+    var status = d.status || d.status_code || '—';
+
+    var html = '<div class="acc-stats">'
+             + '<div class="acc-stat"><span class="acc-stat-ico ' + (isOnline ? 'g' : 'r') + '"><i class="fa-solid fa-' + (isOnline ? 'wifi' : 'plug-circle-xmark') + '"></i></span>'
+             +   '<div><span class="l">الحالة</span><span class="v">' + (isOnline ? 'متصل الآن' : 'غير متصل') + '</span></div></div>'
+             + '<div class="acc-stat"><span class="acc-stat-ico b"><i class="fa-solid fa-box"></i></span>'
+             +   '<div><span class="l">الباقة</span><span class="v">' + profile + '</span></div></div>'
+             + '<div class="acc-stat"><span class="acc-stat-ico y"><i class="fa-solid fa-calendar-day"></i></span>'
+             +   '<div><span class="l">تنتهي في</span><span class="v" style="font-size:12.5px">' + expir + '</span></div></div>'
+             + '<div class="acc-stat"><span class="acc-stat-ico g"><i class="fa-solid fa-arrow-down"></i></span>'
+             +   '<div><span class="l">سرعة التنزيل</span><span class="v">' + dn + '</span></div></div>'
+             + '<div class="acc-stat"><span class="acc-stat-ico b"><i class="fa-solid fa-arrow-up"></i></span>'
+             +   '<div><span class="l">سرعة الرفع</span><span class="v">' + up + '</span></div></div>'
+             + '</div>';
+
+    // شريط استهلاك بصري
+    html += '<div class="acc-bar-wrap">'
+          +   '<div class="acc-bar-head"><span>الاستهلاك التراكمي</span><b>' + usageGb + ' GB</b></div>'
+          +   '<div class="acc-bar-track"><div class="acc-bar-fill" style="width:' + Math.min(100, (parseFloat(usageGb)/500*100)) + '%"></div></div>'
+          + '</div>';
+
+    body.innerHTML = html;
+  }
+
+  function fetchStatus(){
+    body.innerHTML = '<div class="acc-status-loading"><i class="fa-solid fa-spinner fa-spin"></i> جارٍ جلب البيانات…</div>';
+    fetch('/portal/account/api/status', {credentials:'same-origin',headers:{'Accept':'application/json'}})
+      .then(function(r){ return r.json(); })
+      .then(renderStatus)
+      .catch(function(){
+        body.innerHTML = '<div class="acc-status-err">تعذّر الاتصال بالخادم.</div>';
+      });
+  }
+
+  if(refreshBtn) refreshBtn.addEventListener('click', fetchStatus);
+  fetchStatus();
+})();
+</script>
+
+{% endblock %}

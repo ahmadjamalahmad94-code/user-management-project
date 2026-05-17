@@ -1,0 +1,72 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}لوحة التحكم بالنظام{% endblock %}
+{% block page_title %}لوحة التحكم بالنظام{% endblock %}
+{% block crumbs %}<span>الإدارة</span><i class="fa-solid fa-chevron-left"></i><span>النظام</span><i class="fa-solid fa-chevron-left"></i><span>التحكم</span>{% endblock %}
+
+{% block head_extra %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.danger-card{padding:18px 20px;border-radius:14px;background:#fff;border:2px solid var(--d-border);margin-bottom:12px}
+.danger-card.lvl-1{border-color:rgba(244,186,42,.5);background:rgba(244,186,42,.05)}
+.danger-card.lvl-2{border-color:rgba(255,99,71,.5);background:rgba(255,99,71,.05)}
+.danger-card.lvl-3{border-color:rgba(185,28,28,.55);background:rgba(185,28,28,.05)}
+.danger-card h4{margin:0 0 6px;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+.danger-card.lvl-1 h4{color:#7c2d12}.danger-card.lvl-2 h4{color:#a14633}.danger-card.lvl-3 h4{color:#b91c1c}
+.danger-card p{margin:0 0 10px;font-size:13px;color:var(--d-text-soft);line-height:1.55}
+.btn-act{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;border:0;cursor:pointer;font-size:13px;font-weight:800;font-family:inherit;color:#fff}
+.btn-act-1{background:#7c2d12}.btn-act-2{background:#a14633}.btn-act-3{background:#b91c1c}
+.btn-act:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.warning-banner{padding:14px 18px;border-radius:12px;background:rgba(244,186,42,.10);border:1px dashed rgba(244,186,42,.5);color:#7c2d12;font-size:13px;font-weight:600;margin-bottom:16px}
+</style>{% endblock %}
+
+{% block content %}
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for cat,msg in msgs %}<div class="flash-toast" style="padding:11px 14px;border-radius:11px;margin-bottom:12px;font-weight:700;{% if cat=='success' %}background:#e8f6ee;color:#1f8f51{% else %}background:#fde2e2;color:#b91c1c{% endif %}">{{ msg }}</div>{% endfor %}{% endwith %}
+
+<section class="d-hero">
+  <div><h2>🛠 لوحة التحكم بالنظام</h2><p>أدوات إدارية حساسة. اقرأ كل عملية قبل تنفيذها.</p></div>
+</section>
+
+<div class="warning-banner"><i class="fa-solid fa-triangle-exclamation"></i> هذه الصفحة تحوي عمليات حذف وتصفير قد لا يمكن التراجع عنها. تأكد دائمًا من النسخ الاحتياطي قبل أي عملية.</div>
+
+{% if can_bulk %}
+<section class="d-card" style="margin-bottom:14px">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-broom"></i>عمليات تنظيف جماعية</h3></div>
+  <div class="d-card-body">
+
+    <div class="danger-card lvl-1">
+      <h4><i class="fa-solid fa-rotate-left"></i> تصفير عداد الأسبوع</h4>
+      <p>يعيد عداد الاستخدام الأسبوعي لكل المستفيدين إلى صفر. لا يحذف السجلات.</p>
+      <form method="POST" action="{{ url_for('reset_weekly_usage') }}" onsubmit="return confirm('سيتم تصفير العداد الأسبوعي لكل المستفيدين. متابعة؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <button type="submit" class="btn-act btn-act-1"><i class="fa-solid fa-rotate-left"></i>تصفير</button>
+      </form>
+    </div>
+
+    <div class="danger-card lvl-2">
+      <h4><i class="fa-solid fa-box-archive"></i> أرشفة كل السجلات الحالية</h4>
+      <p>ينقل كل السجل الحالي إلى الأرشيف (يمكن استرجاعه لاحقًا).</p>
+      <form method="POST" action="{{ url_for('archive_usage_logs') }}" onsubmit="return confirm('سيتم نقل كل السجلات للأرشيف. متابعة؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <button type="submit" class="btn-act btn-act-2"><i class="fa-solid fa-box-archive"></i>أرشفة الكل</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if can_cleanup %}
+<section class="d-card">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-skull-crossbones"></i>عمليات حذف نهائية</h3></div>
+  <div class="d-card-body">
+
+    <div class="danger-card lvl-3">
+      <h4><i class="fa-solid fa-trash-can"></i> حذف السجل الحالي بالكامل</h4>
+      <p><strong>غير قابل للتراجع.</strong> يحذف نهائيًا كل السجلات الحالية. الأرشيف يبقى محفوظًا.</p>
+      <form method="POST" action="{{ url_for('clear_usage_logs') }}" onsubmit="return confirm('سيتم حذف كل السجل الحالي نهائيًا. هل أنت متأكد؟')">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <button type="submit" class="btn-act btn-act-3"><i class="fa-solid fa-trash-can"></i>حذف السجل</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

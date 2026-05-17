@@ -1,0 +1,279 @@
+/* dashboard_hub.css
+ * ─────────────────────────────────────────────────────────
+ * Unified "Control Hub" header — dark gradient card combining
+ * KPI stats + quick-action pills + slim search/filter bar.
+ *
+ * Markup pattern:
+ *   <section class="hub">
+ *     <div class="hub-stats">
+ *       <div class="hub-stat">
+ *         <span class="hub-stat-ico [warn|ok|muted|brand] [has-pulse]"><i class="..."></i></span>
+ *         <div>
+ *           <span class="lbl">label</span>
+ *           <span class="val">value <small>hint</small></span>
+ *         </div>
+ *       </div>
+ *       ... (2–6 stats; grid auto-fits)
+ *     </div>
+ *
+ *     <div class="hub-pills">    ← optional pills row
+ *       <a class="hub-pill [is-zero]" href="..."><i class="..."></i>label
+ *         <span class="qa-count">N</span>
+ *       </a>
+ *     </div>
+ *
+ *     <form class="hub-search" ...>   ← optional search row
+ *       <div class="hub-search-input">
+ *         <i class="fa-solid fa-magnifying-glass"></i>
+ *         <input type="search" ...>
+ *         <span class="hub-search-spinner" aria-hidden="true"></span>
+ *       </div>
+ *       <select class="hub-search-select">...</select>
+ *       <button type="button" class="hub-search-clear" title="مسح">
+ *         <i class="fa-solid fa-xmark"></i>
+ *       </button>
+ *     </form>
+ *   </section>
+ */
+
+.hub{
+  position:relative;margin-bottom:14px;border-radius:18px;overflow:hidden;
+  background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 55%,#3a3531 100%);
+  box-shadow:0 12px 30px rgba(30,30,30,.18);
+}
+.hub::before{
+  content:"";position:absolute;inset-block-start:-70px;inset-inline-end:-70px;
+  width:240px;height:240px;border-radius:50%;
+  background:radial-gradient(circle,rgba(244,186,42,.28),transparent 70%);
+  pointer-events:none;
+}
+.hub::after{
+  content:"";position:absolute;inset-block-end:-80px;inset-inline-start:-60px;
+  width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(244,186,42,.10),transparent 70%);
+  pointer-events:none;
+}
+
+/* ── KPI strip (top) ───────────────────────────────────────── */
+.hub-stats{
+  position:relative;display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:1px;background:rgba(255,255,255,.08);
+}
+.hub-stat{
+  display:flex;align-items:center;gap:10px;padding:14px 16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);
+  transition:.22s ease;
+}
+.hub-stat:hover{background:linear-gradient(180deg,rgba(244,186,42,.08),transparent)}
+.hub-stat-ico{
+  width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  font-size:15px;flex-shrink:0;position:relative;
+  background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;
+  box-shadow:0 6px 14px rgba(244,186,42,.25);
+}
+.hub-stat-ico.warn{
+  background:linear-gradient(135deg,#FFB454,#FFD96A);
+  color:#5b2c08;box-shadow:0 6px 14px rgba(255,180,84,.30);
+}
+.hub-stat-ico.ok{
+  background:linear-gradient(135deg,#34d399,#86efac);
+  color:#064e3b;box-shadow:0 6px 14px rgba(52,211,153,.30);
+}
+.hub-stat-ico.muted{
+  background:linear-gradient(135deg,#6366f1,#a5b4fc);
+  color:#fff;box-shadow:0 6px 14px rgba(99,102,241,.30);
+}
+.hub-stat-ico.danger{
+  background:linear-gradient(135deg,#ef4444,#fca5a5);
+  color:#fff;box-shadow:0 6px 14px rgba(239,68,68,.30);
+}
+.hub-stat-ico.cyan{
+  background:linear-gradient(135deg,#22d3ee,#a5f3fc);
+  color:#155e75;box-shadow:0 6px 14px rgba(34,211,238,.30);
+}
+.hub-stat-ico.has-pulse::after{
+  content:"";position:absolute;inset:-3px;border-radius:14px;
+  border:2px solid currentColor;opacity:.4;
+  animation:hubPulse 2.4s ease-out infinite;
+}
+@keyframes hubPulse{
+  0%{transform:scale(.9);opacity:.5}
+  80%{transform:scale(1.5);opacity:0}
+  100%{opacity:0}
+}
+.hub-stat .lbl{
+  font-size:10.5px;font-weight:800;color:rgba(255,255,255,.65);
+  letter-spacing:.3px;line-height:1.2;display:block;margin-bottom:3px;
+}
+.hub-stat .val{
+  font-size:20px;font-weight:900;color:#fff;line-height:1;letter-spacing:-.5px;
+}
+.hub-stat .val small{
+  font-size:9.5px;font-weight:700;color:rgba(255,255,255,.45);
+  margin-inline-start:5px;
+}
+
+/* ── Quick-action pills row ─────────────────────────────────── */
+.hub-pills{
+  position:relative;display:flex;gap:6px;flex-wrap:wrap;
+  padding:10px 14px;background:rgba(255,255,255,.04);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.hub-pill{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);
+  color:rgba(255,255,255,.88);font-size:12px;font-weight:800;text-decoration:none;
+  transition:.18s ease;backdrop-filter:blur(2px);
+}
+.hub-pill:hover{
+  background:linear-gradient(135deg,#F4BA2A,#FFD96A);
+  color:#1E1E1E;border-color:transparent;transform:translateY(-1px);
+  box-shadow:0 6px 14px rgba(244,186,42,.30);
+}
+.hub-pill i{font-size:10.5px}
+.hub-pill .qa-count{
+  background:#b91c1c;color:#fff;padding:1px 7px;border-radius:999px;
+  font-size:10px;font-weight:900;line-height:1.4;
+}
+.hub-pill.is-zero .qa-count{
+  background:rgba(255,255,255,.18);color:rgba(255,255,255,.65);
+}
+.hub-pill:hover .qa-count{background:#1E1E1E;color:#fff}
+
+/* ── Search/filter row ──────────────────────────────────────── */
+.hub-search{
+  position:relative;display:flex;align-items:stretch;gap:6px;
+  padding:10px 14px 12px;background:rgba(255,255,255,.04);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.hub-search-input{
+  flex:1;display:flex;align-items:center;gap:8px;min-width:0;
+  padding:0 12px;background:rgba(255,255,255,.96);border-radius:10px;
+  border:1px solid transparent;transition:.18s ease;
+}
+.hub-search-input:focus-within{
+  background:#fff;border-color:#F4BA2A;
+  box-shadow:0 0 0 3px rgba(244,186,42,.30);
+}
+.hub-search-input > i{color:#7a7368;font-size:12.5px}
+.hub-search-input input{
+  flex:1;min-width:0;border:0;background:transparent;outline:0;
+  font-family:inherit;font-size:13px;padding:9px 0;color:#1E1E1E;font-weight:700;
+}
+.hub-search-input input::placeholder{color:#aea596;font-weight:600}
+.hub-search-spinner{
+  width:14px;height:14px;flex-shrink:0;display:inline-flex;
+  align-items:center;justify-content:center;color:#D8A11C;font-size:11px;
+}
+.hub-search-spinner.is-on::before{
+  content:"";width:12px;height:12px;border-radius:50%;
+  border:2px solid rgba(244,186,42,.30);border-top-color:#D8A11C;
+  animation:hubSpin .6s linear infinite;
+}
+@keyframes hubSpin{to{transform:rotate(360deg)}}
+.hub-search-select{
+  border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.10);
+  padding:9px 12px;border-radius:10px;font-family:inherit;font-size:12.5px;
+  font-weight:800;color:#fff;outline:0;min-width:130px;cursor:pointer;
+  transition:.18s ease;
+}
+.hub-search-select option{color:#1E1E1E}
+.hub-search-select:hover{background:rgba(255,255,255,.18);border-color:#F4BA2A}
+.hub-search-select:focus{
+  border-color:#F4BA2A;box-shadow:0 0 0 3px rgba(244,186,42,.20);
+}
+.hub-search-clear{
+  width:36px;flex-shrink:0;border-radius:10px;
+  border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.75);cursor:pointer;font-size:12px;font-family:inherit;
+  display:grid;place-items:center;transition:.15s ease;
+}
+.hub-search-clear:hover{background:#b91c1c;border-color:#b91c1c;color:#fff}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+/* ── Action pills variants (for archive/clean/danger actions) ─ */
+/* Unified height across all pill variants (33px content + 1px borders = 33px box) */
+.hub-pill,
+.hub-pill-date{
+  height:34px;box-sizing:border-box;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:0 14px;border-radius:999px;
+  font-size:12.5px;font-weight:800;line-height:1;white-space:nowrap;
+  transition:.18s ease;
+}
+
+.hub-pill--warn{
+  background:rgba(255,180,84,.14);border-color:rgba(255,180,84,.35);color:#FFD96A;
+}
+.hub-pill--warn:hover{
+  background:linear-gradient(135deg,#FFB454,#FFD96A);color:#5b2c08;border-color:transparent;
+  box-shadow:0 6px 14px rgba(255,180,84,.32);transform:translateY(-1px);
+}
+.hub-pill--warn i{color:#FFD96A}
+.hub-pill--warn:hover i{color:#5b2c08}
+
+.hub-pill--danger{
+  background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.35);color:#fca5a5;
+}
+.hub-pill--danger:hover{
+  background:linear-gradient(135deg,#ef4444,#fca5a5);color:#fff;border-color:transparent;
+  box-shadow:0 6px 14px rgba(239,68,68,.32);transform:translateY(-1px);
+}
+.hub-pill--danger i{color:#fca5a5}
+.hub-pill--danger:hover i{color:#fff}
+
+/* ── Inline date-trigger pill (split: label + date input + apply btn) ── */
+.hub-pill-date{
+  padding:0 4px 0 12px;        /* مساحة أقل من جهة الزر، أكبر من جهة الـ label */
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.92);
+}
+.hub-pill-date:hover{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.20)}
+.hub-pill-date > i{font-size:11px;color:#fca5a5;flex-shrink:0}
+.hub-pill-date.warn > i{color:#FFD96A}
+.hub-pill-date form{
+  display:inline-flex;align-items:center;gap:6px;margin:0;height:100%;
+}
+.hub-pill-date form > span{
+  font-weight:800;font-size:12px;color:rgba(255,255,255,.92);
+}
+.hub-pill-date input[type="date"]{
+  height:26px;box-sizing:border-box;
+  border:1px solid transparent;background:rgba(255,255,255,.95);color:#1E1E1E;
+  padding:0 8px;border-radius:14px;font-family:inherit;font-size:11.5px;font-weight:800;
+  outline:0;cursor:pointer;
+  transition:.15s ease;
+}
+.hub-pill-date input[type="date"]:focus{
+  background:#fff;border-color:rgba(244,186,42,.60);
+  box-shadow:0 0 0 3px rgba(244,186,42,.25);
+}
+.hub-pill-date button[type="submit"]{
+  width:26px;height:26px;flex-shrink:0;
+  border:0;background:rgba(239,68,68,.20);color:#fca5a5;
+  border-radius:50%;display:grid;place-items:center;font-size:11px;
+  font-family:inherit;cursor:pointer;transition:.15s ease;
+}
+.hub-pill-date.warn button[type="submit"]{background:rgba(255,180,84,.22);color:#FFD96A}
+.hub-pill-date button[type="submit"]:hover{
+  background:#ef4444;color:#fff;transform:scale(1.05);
+  box-shadow:0 4px 10px rgba(239,68,68,.40);
+}
+.hub-pill-date.warn button[type="submit"]:hover{
+  background:linear-gradient(135deg,#FFB454,#FFD96A);color:#5b2c08;
+  box-shadow:0 4px 10px rgba(255,180,84,.40);
+}
+
+/* Date inputs in webkit need explicit color override for the calendar icon */
+.hub-pill-date input[type="date"]::-webkit-calendar-picker-indicator{
+  cursor:pointer;opacity:.75;
+}
+.hub-pill-date input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1}
+
+@media (max-width:760px){
+  .hub-stats{grid-template-columns:repeat(2,1fr)}
+  .hub-search{flex-wrap:wrap}
+  .hub-search-select{min-width:0;flex:1}
+}

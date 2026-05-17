@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=20260515-sidebar02">
+</head>
+<body>
+<div class="layout">
+  <div class="mobile-sidebar-overlay" onclick="toggleSidebar()"></div>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-badge">H</div>
+      <div class="brand-text">Hobe Hub<small>منصة إدارة الوصول إلى الإنترنت</small></div>
+    </div>
+
+    <div class="nav">
+      {% set path = request.path %}
+
+      <div class="nav-group nav-group-primary">
+        <div class="nav-group-label"><i class="fa-solid fa-gauge-high"></i><span class="nav-label">لوحة التشغيل</span></div>
+        <a href="{{ url_for('admin_dashboard_alias') }}" class="{% if path in ['/admin', '/admin/dashboard'] %}active{% endif %}"><i class="fa-solid fa-house"></i><span class="nav-label">الرئيسية</span></a>
+        <a href="{{ url_for('admin_dashboard_alias') }}#kpi-overview"><i class="fa-solid fa-chart-line"></i><span class="nav-label">الإحصائيات السريعة</span></a>
+        <a href="{{ url_for('admin_internet_requests_page') }}" class="{% if path == '/admin/internet-requests' %}active{% endif %}"><i class="fa-solid fa-list-check"></i><span class="nav-label">طلبات الإنترنت</span></a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label"><i class="fa-solid fa-users"></i><span class="nav-label">المستفيدون</span></div>
+        <a href="{{ url_for('admin_beneficiaries_alias') }}" class="{% if path == '/admin/beneficiaries' %}active{% endif %}"><i class="fa-solid fa-users-viewfinder"></i><span class="nav-label">جميع المستفيدين</span></a>
+        {% if has_permission('add') %}
+        <a href="/admin/beneficiaries/add" class="{% if path == '/admin/beneficiaries/add' %}active{% endif %}"><i class="fa-solid fa-user-plus"></i><span class="nav-label">إضافة مستفيد</span></a>
+        {% endif %}
+        {% if has_permission('manage_accounts') %}
+        <a href="{{ url_for('admin_portal_accounts_page') }}" class="{% if path == '/admin/portal-accounts' %}active{% endif %}"><i class="fa-solid fa-id-card-clip"></i><span class="nav-label">حسابات البوابة</span></a>
+        {% endif %}
+        <a href="{{ url_for('admin_dashboard_alias') }}#recent-activity"><i class="fa-solid fa-wave-square"></i><span class="nav-label">النشاط الأخير</span></a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label"><i class="fa-solid fa-globe"></i><span class="nav-label">خدمات الإنترنت</span></div>
+        {% if has_permission('submit_internet_requests') %}
+        <a href="{{ url_for('admin_internet_requests_page') }}" class="{% if path == '/admin/internet-requests' and not request.args.get('status') %}active{% endif %}"><i class="fa-solid fa-plus"></i><span class="nav-label">إنشاء طلب يدوي</span></a>
+        {% endif %}
+        {% if has_permission('view_internet_requests') %}
+        <a href="{{ url_for('admin_internet_requests_page') }}?status=pending" class="{% if path == '/admin/internet-requests' and request.args.get('status') == 'pending' %}active{% endif %}"><i class="fa-solid fa-clipboard-list"></i><span class="nav-label">طلباتي الداخلية</span></a>
+        <a href="/admin/users-account/list" class="{% if path == '/admin/users-account/list' %}active{% endif %}"><i class="fa-solid fa-link"></i><span class="nav-label">الوصول المرتبط</span></a>
+        {% endif %}
+        <a href="{{ url_for('admin_internet_requests_page') }}?status=pending" class="{% if path == '/admin/internet-requests' and request.args.get('status') == 'pending' %}active{% endif %}"><i class="fa-regular fa-hourglass-half"></i><span class="nav-label">الطلبات المعلقة</span></a>
+        <a href="{{ url_for('admin_internet_requests_page') }}?status=executed" class="{% if path == '/admin/internet-requests' and request.args.get('status') == 'executed' %}active{% endif %}"><i class="fa-solid fa-circle-check"></i><span class="nav-label">الطلبات المنفذة</span></a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label"><i class="fa-solid fa-ticket"></i><span class="nav-label">بطاقات هوت سبوت</span></div>
+        <a href="{{ url_for('admin_cards_inventory_page') }}" class="{% if path == '/admin/cards/inventory' %}active{% endif %}"><i class="fa-solid fa-layer-group"></i><span class="nav-label">جرد البطاقات</span></a>
+        <a href="{{ url_for('admin_cards_import_page') }}" class="{% if path == '/admin/cards/import' %}active{% endif %}"><i class="fa-solid fa-file-import"></i><span class="nav-label">استيراد بطاقات</span></a>
+        <a href="{{ url_for('admin_cards_settings_page') }}" class="{% if path == '/admin/cards/settings' %}active{% endif %}"><i class="fa-solid fa-sliders"></i><span class="nav-label">إعدادات البطاقات</span></a>
+        <a href="{{ url_for('admin_usage_logs_alias') }}" class="{% if path == '/admin/usage-logs' %}active{% endif %}"><i class="fa-solid fa-ticket-simple"></i><span class="nav-label">سجل الاستخدام</span></a>
+        {% if has_permission('view_archive') %}
+        <a href="/admin/usage-archive" class="{% if path == '/admin/usage-archive' %}active{% endif %}"><i class="fa-solid fa-box-archive"></i><span class="nav-label">أرشيف البطاقات</span></a>
+        {% endif %}
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label"><i class="fa-solid fa-satellite-dish"></i><span class="nav-label">RADIUS والربط</span></div>
+        <a href="{{ url_for('radius_online_users_page') }}" class="{% if path == '/admin/radius/users-online' %}active{% endif %}"><i class="fa-solid fa-wifi"></i><span class="nav-label">المتصلون الآن</span></a>
+        <a href="{{ url_for('radius_user_lookup_page') }}" class="{% if path == '/admin/radius/user-lookup' %}active{% endif %}"><i class="fa-solid fa-magnifying-glass"></i><span class="nav-label">بحث عن مستخدم</span></a>
+        <a href="{{ url_for('radius_settings_page') }}" class="{% if path == '/admin/radius/settings' %}active{% endif %}"><i class="fa-solid fa-plug-circle-bolt"></i><span class="nav-label">إعدادات الربط</span></a>
+        <a href="{{ url_for('advradius_app_test_route') }}" class="{% if path == '/admin/radius/app-test' %}active{% endif %}"><i class="fa-solid fa-mobile-screen-button"></i><span class="nav-label">اختبار API التطبيق</span></a>
+      </div>
+
+      <div class="nav-group nav-group-secondary">
+        <div class="nav-group-label"><i class="fa-solid fa-folder-tree"></i><span class="nav-label">البيانات والملفات</span></div>
+        {% if has_permission('import') %}
+        <a href="{{ url_for('admin_import_alias') }}" class="{% if path == '/admin/import' %}active{% endif %}"><i class="fa-solid fa-file-arrow-up"></i><span class="nav-label">الاستيراد</span></a>
+        {% endif %}
+        {% if has_permission('export') %}
+        <a href="{{ url_for('admin_exports_alias') }}" class="{% if path == '/admin/exports' %}active{% endif %}"><i class="fa-solid fa-file-arrow-down"></i><span class="nav-label">التصدير</span></a>
+        {% endif %}
+        {% if has_permission('backup') %}
+        <a href="/admin/backup-sql" class="{% if path == '/admin/backup-sql' %}active{% endif %}"><i class="fa-solid fa-database"></i><span class="nav-label">نسخة SQL احتياطية</span></a>
+        {% endif %}
+      </div>
+
+      <div class="nav-group nav-group-secondary">
+        <div class="nav-group-label"><i class="fa-solid fa-gear"></i><span class="nav-label">النظام والحساب</span></div>
+        {% if has_permission('manage_accounts') %}
+        <a href="{{ url_for('admin_accounts_alias') }}" class="{% if path == '/admin/accounts' %}active{% endif %}"><i class="fa-solid fa-user-shield"></i><span class="nav-label">الحسابات والصلاحيات</span></a>
+        {% endif %}
+        <a href="{{ url_for('admin_profile_alias') }}" class="{% if path == '/admin/profile' %}active{% endif %}"><i class="fa-solid fa-id-badge"></i><span class="nav-label">الحساب الشخصي</span></a>
+        <a href="{{ url_for('admin_timer_alias') }}" class="{% if path == '/admin/timer' %}active{% endif %}"><i class="fa-solid fa-bolt"></i><span class="nav-label">مؤقت الكهرباء</span></a>
+        {% if has_permission('view_audit_log') %}
+        <a href="{{ url_for('admin_audit_log_alias') }}" class="{% if path == '/admin/audit-log' %}active{% endif %}"><i class="fa-solid fa-clock-rotate-left"></i><span class="nav-label">سجل العمليات</span></a>
+        {% endif %}
+        {% if has_permission('manage_bulk_ops') or has_permission('manage_system_cleanup') %}
+        <a href="{{ url_for('admin_cleanup_alias') }}" class="{% if path == '/admin/system-cleanup' %}active{% endif %}"><i class="fa-solid fa-broom"></i><span class="nav-label">تنظيف النظام</span></a>
+        {% endif %}
+        <a href="{{ url_for('portal_entry') }}"><i class="fa-solid fa-arrow-up-right-from-square"></i><span class="nav-label">بوابة المشترك</span></a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" type="button" onclick="return toggleSidebar()" title="إظهار أو إخفاء القائمة"><i class="fa-solid fa-bars"></i></button>
+        <div class="topbar-title">
+          <strong>{{ title }}</strong>
+          <small>واجهة الإدارة والتشغيل</small>
+        </div>
+      </div>
+      <div class="userbox">
+        <span class="badge badge-blue">الإدارة</span>
+        <span class="badge">{{ session.get('username','') }}</span>
+        <a class="btn btn-soft" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% set guide = admin_page_guide(request.path, title) %}
+    <div class="admin-workspace">
+      <section class="admin-content">
+        {{ content|safe }}
+      </section>
+      <aside class="page-guide" aria-label="دليل استخدام الصفحة">
+        <div class="guide-kicker">{{ guide.eyebrow }}</div>
+        <h2>{{ guide.title }}</h2>
+        <p>{{ guide.summary }}</p>
+        {% if guide.steps %}
+        <div class="guide-block">
+          <h3>طريقة الاستخدام</h3>
+          <ol>
+            {% for step in guide.steps %}
+            <li>{{ step }}</li>
+            {% endfor %}
+          </ol>
+        </div>
+        {% endif %}
+        {% if guide.tips %}
+        <div class="guide-block">
+          <h3>ملاحظات مهمة</h3>
+          <ul>
+            {% for tip in guide.tips %}
+            <li>{{ tip }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        {% if guide.links %}
+        <div class="guide-links">
+          {% for label, endpoint in guide.links %}
+          <a href="{{ url_for(endpoint) }}"><i class="fa-solid fa-arrow-left-long"></i>{{ label }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </aside>
+    </div>
+  </main>
+</div>
+<script src="{{ url_for('static', filename='js/app.js') }}?v=20260515-foundation01"></script>
+</body>
+</html>

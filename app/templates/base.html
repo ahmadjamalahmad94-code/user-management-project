@@ -1,0 +1,139 @@
+﻿
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+<script src="{{ url_for('static', filename='js/app.js') }}?v=20260515-foundation01"></script>
+</head>
+<body>
+{% if session.get('account_id') %}
+<div class="layout" id="app-layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-badge">H</div>
+      <div class="brand-text">Hobe Hub<small>Professional+ Edition</small></div>
+    </div>
+    <div class="nav">
+      <a href="/admin/dashboard"><i class="fa-solid fa-gauge"></i><span class="nav-label">لوحة التحكم</span></a>
+      <a href="/admin/beneficiaries"><i class="fa-solid fa-users"></i><span class="nav-label">المستفيدون</span></a>
+      <a href="/admin/usage-logs"><i class="fa-solid fa-ticket"></i><span class="nav-label">سجل البطاقات</span></a>
+      {% if has_permission('view_archive') %}
+      <a href="/admin/usage-archive"><i class="fa-solid fa-box-archive"></i><span class="nav-label">أرشيف البطاقات</span></a>
+      {% endif %}
+      <a href="/admin/timer"><i class="fa-solid fa-bolt"></i><span class="nav-label">مؤقت الكهرباء</span></a>
+      {% if has_permission('manage_bulk_ops') or has_permission('manage_system_cleanup') %}
+      <a href="/admin/system-cleanup"><i class="fa-solid fa-sliders"></i><span class="nav-label">لوحة التحكم المتقدم</span></a>
+      {% endif %}
+      {% if has_permission('add') %}
+      <details open>
+        <summary><i class="fa-solid fa-user-plus"></i><span class="nav-label">إضافة مستفيد</span></summary>
+        <div class="submenu">
+          <a href="/admin/beneficiaries/add?user_type=tawjihi"><i class="fa-solid fa-user-graduate"></i><span class="nav-label">طالب توجيهي</span></a>
+          <a href="/admin/beneficiaries/add?user_type=university"><i class="fa-solid fa-building-columns"></i><span class="nav-label">طالب جامعي</span></a>
+          <a href="/admin/beneficiaries/add?user_type=freelancer"><i class="fa-solid fa-laptop-code"></i><span class="nav-label">فري لانسر</span></a>
+        </div>
+      </details>
+      {% endif %}
+      {% if has_permission('import') %}
+      <a href="/admin/import"><i class="fa-solid fa-file-arrow-up"></i><span class="nav-label">استيراد CSV</span></a>
+      {% endif %}
+      {% if has_permission('export') %}
+      <a href="/admin/exports"><i class="fa-solid fa-file-arrow-down"></i><span class="nav-label">مركز التصدير</span></a>
+      {% endif %}
+      {% if has_permission('backup') %}
+      <a href="/admin/backup-sql"><i class="fa-solid fa-database"></i><span class="nav-label">Backup SQL</span></a>
+      {% endif %}
+      <div class="section">الحساب</div>
+      <a href="/admin/profile"><i class="fa-solid fa-id-badge"></i><span class="nav-label">صفحتي الشخصية</span></a>
+      {% if has_permission('manage_accounts') %}
+      <a href="/admin/accounts"><i class="fa-solid fa-user-shield"></i><span class="nav-label">إدارة المستخدمين</span></a>
+      {% endif %}
+      {% if has_permission('view_audit_log') %}
+      <a href="/admin/audit-log"><i class="fa-solid fa-clock-rotate-left"></i><span class="nav-label">سجل العمليات</span></a>
+      {% endif %}
+    </div>
+  </aside>
+  <div class="mobile-sidebar-overlay" onclick="return closeSidebar()"></div>
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left"><button class="sidebar-toggle" type="button" onclick="return toggleSidebar()" title="إظهار/إخفاء القائمة الجانبية"><i class="fa-solid fa-bars"></i></button><strong>{{ title }}</strong></div>
+      <div class="userbox">
+        <div class="topbar-clock"><i class="fa-regular fa-clock"></i><div><div id="global-live-clock-time">--:--:--</div><small id="global-live-clock-date">--/--/----</small></div></div>
+        <a href="/admin/timer" id="timer-global-badge" class="timer-mini timer-status-stopped" title="مؤقت الكهرباء"><i class="fa-solid fa-bolt"></i> <span id="timer-global-badge-state">متوقف</span> <span id="timer-global-badge-remaining">--:--</span></a>
+        <span class="badge">{{ session.get('username','') }}</span>
+        {% if session.get('full_name') %}<span class="badge">{{ session.get('full_name') }}</span>{% endif %}
+        <a class="logout-btn" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+      </div>
+    </div>
+    <div id="live-flash-area"></div><div id="toast-stack" class="toast-stack"></div>
+    <div id="global-usage-modal" class="modal" onclick="if(event.target===this) closeGlobalUsageModal()">
+      <div class="modal-card global-usage-modal-card">
+        <button class="modal-close" type="button" onclick="return closeGlobalUsageModal()">×</button>
+        <div class="hero" style="margin-bottom:8px">
+          <h1>إضافة بطاقة</h1>
+          <p>اختر السبب ونوع البطاقة ثم احفظ.</p>
+        </div>
+        <form id="global-usage-form" method="POST" onsubmit="return guardSingleSubmit(this)">
+          <div class="choice-section">
+            <label>سبب البطاقة</label>
+            <input type="hidden" name="usage_reason" id="usage_reason" required>
+            <div id="usage-reason-grid" class="choice-grid">
+              <div class="choice-card choice-blue" data-rank="6" data-value="تقديم اختبار" onclick="selectReason(this)"><i class="fa-solid fa-pen-to-square"></i><span>اختبار</span><small>سريع ومباشر</small></div>
+              <div class="choice-card choice-green" data-rank="5" data-value="دراسة" onclick="selectReason(this)"><i class="fa-solid fa-book-open-reader"></i><span>دراسة</span><small>جلسة تعلم</small></div>
+              <div class="choice-card choice-orange" data-rank="4" data-value="حل واجب" onclick="selectReason(this)"><i class="fa-solid fa-list-check"></i><span>واجب</span><small>إنجاز مهمة</small></div>
+              <div class="choice-card choice-purple" data-rank="3" data-value="عمل حر" onclick="selectReason(this)"><i class="fa-solid fa-laptop-code"></i><span>عمل حر</span><small>شغل مستقل</small></div>
+              <div class="choice-card choice-cyan" data-rank="2" data-value="تحميل محاضرات" onclick="selectReason(this)"><i class="fa-solid fa-cloud-arrow-down"></i><span>تحميل</span><small>محاضرات وملفات</small></div>
+              <div class="choice-card choice-red" data-rank="1" data-value="تنفيذ تجربة" onclick="selectReason(this)"><i class="fa-solid fa-flask-vial"></i><span>تجربة</span><small>اختبار عملي</small></div>
+              <div class="choice-card choice-slate" data-rank="0" data-value="أخرى" onclick="selectReason(this)"><i class="fa-solid fa-shapes"></i><span>أخرى</span><small>سبب مخصص</small></div>
+            </div>
+          </div>
+          <div class="choice-section">
+            <label>نوع البطاقة</label>
+            <input type="hidden" name="card_type" id="card_type" value="ساعة" required>
+            <div id="card-type-grid" class="choice-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+              <div class="choice-card choice-blue" data-value="ساعة" onclick="selectCardType(this)"><i class="fa-regular fa-clock"></i><span>ساعة</span><small>استخدام سريع</small></div>
+              <div class="choice-card choice-purple" data-value="ساعتين" onclick="selectCardType(this)"><i class="fa-solid fa-hourglass-half"></i><span>ساعتين</span><small>جلسة مركزة</small></div>
+              <div class="choice-card choice-orange" data-value="3 ساعات" onclick="selectCardType(this)"><i class="fa-solid fa-bolt"></i><span>3 ساعات</span><small>جلسة طويلة</small></div>
+            </div>
+          </div>
+          <div style="margin-top:4px">
+            <label>ملاحظة إضافية</label>
+            <textarea name="usage_notes" placeholder="اختياري"></textarea>
+          </div>
+          <div class="actions" style="margin-top:4px">
+            <button class="btn btn-accent" type="submit"><i class="fa-solid fa-check"></i> تثبيت البطاقة</button>
+            <button class="btn btn-soft" type="button" onclick="return closeGlobalUsageModal()">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div id="power-timer-alert" class="timer-alert"><div id="power-timer-alert-text">انتهى الوقت.</div><div class="actions"><button class="btn btn-danger btn-icon" type="button" onclick="return dismissPowerTimerAlert()" title="إيقاف الصوت"><i class="fa-solid fa-volume-xmark"></i></button></div></div>
+    <audio id="power-timer-audio" preload="auto"><source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg"></audio>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {{ content|safe }}
+  </main>
+</div>
+{% else %}
+<div class="main">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+        <div class="flash {{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {{ content|safe }}
+</div>
+{% endif %}
+</body>
+</html>

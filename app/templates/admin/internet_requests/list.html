@@ -1,0 +1,180 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}طلبات الإنترنت{% endblock %}
+{% block page_title %}إدارة طلبات الإنترنت{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>RADIUS</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>طلبات الإنترنت</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_hub.css') }}">
+<style>
+.req-row td{vertical-align:middle;font-size:13px}
+.req-row td.col-id{font-family:monospace;color:var(--d-text-muted);font-size:11.5px}
+.req-row td.col-name{font-weight:700;color:var(--d-black)}
+.req-row td.col-when{font-size:11.5px;color:var(--d-text-muted);font-family:monospace;white-space:nowrap}
+
+.status-pill{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+  border-radius:999px;font-size:11.5px;font-weight:700;
+}
+.st-pending{background:#FDF1CF;color:#7c2d12}
+.st-approved{background:#e7f0fd;color:#1c52a8}
+.st-executed{background:#e8f6ee;color:#1f8f51}
+.st-failed{background:#fde2e2;color:#b91c1c}
+.st-rejected{background:#F4F3EF;color:var(--d-text-soft)}
+
+.type-badge{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 9px;
+  border-radius:8px;font-size:11.5px;font-weight:700;
+  background:rgba(244,186,42,.14);color:#7c2d12;
+}
+
+.filter-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filter-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 16px;border-radius:999px;
+  background:#fff;border:1px solid var(--d-border-strong);
+  color:var(--d-text-soft);font-size:13.5px;font-weight:700;
+  transition:var(--d-transition);
+}
+.filter-pill:hover{border-color:var(--d-gold);color:var(--d-black)}
+.filter-pill.active{background:var(--d-black);color:#fff;border-color:var(--d-black)}
+.filter-pill .pill-count{
+  background:rgba(255,255,255,.15);padding:2px 8px;border-radius:999px;font-size:11px;
+}
+.filter-pill:not(.active) .pill-count{background:var(--d-gold-faint);color:var(--d-black)}
+
+.dev-note{
+  margin-top:8px;padding:10px 14px;border-radius:12px;
+  background:rgba(244,186,42,.10);border:1px dashed rgba(244,186,42,.45);
+  color:#7c2d12;font-size:12.5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "admin/requests/_request_nav.html" %}
+
+<div class="dev-note" style="margin-bottom:14px">
+  <i class="fa-solid fa-screwdriver-wrench"></i>
+  هذه صفحة تنفيذ فنية لطلبات الإنترنت. المتابعة اليومية الموحدة أصبحت من
+  <a href="{{ url_for('admin_request_center', type='internet') }}" style="font-weight:800;color:inherit">مركز الطلبات</a>.
+</div>
+
+{# Hero #}
+<section class="d-hero">
+  <div>
+    <h2>إدارة طلبات الإنترنت</h2>
+    <p>مراجعة الطلبات المقدَّمة من المستفيدين، اعتمادها وتنفيذها عبر RADIUS API.</p>
+    <div class="dev-note">
+      <i class="fa-solid fa-flask"></i> ميزة التنفيذ التلقائي عبر الـ API <strong>قيد التطوير</strong>. حاليًا الاعتماد فقط يحفظ القرار في النظام.
+    </div>
+  </div>
+  <div class="d-hero-actions">
+    <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_request_center', type='internet') }}">
+      <i class="fa-solid fa-inbox"></i>مركز الطلبات
+    </a>
+    <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_radius_online') }}">
+      <i class="fa-solid fa-wifi"></i>المتصلون الآن
+    </a>
+    <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_api_test') }}">
+      <i class="fa-solid fa-plug"></i>اختبار الـ API
+    </a>
+  </div>
+</section>
+
+{# Unified Control Hub #}
+<section class="hub">
+  <div class="hub-stats">
+    <div class="hub-stat">
+      <span class="hub-stat-ico"><i class="fa-solid fa-inbox"></i></span>
+      <div><span class="lbl">إجمالي الطلبات</span><span class="val">{{ kpi_total }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico warn{% if (kpi_pending|default(0)) > 0 %} has-pulse{% endif %}"><i class="fa-solid fa-hourglass-half"></i></span>
+      <div><span class="lbl">قيد المراجعة</span><span class="val">{{ kpi_pending }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico cyan"><i class="fa-solid fa-check"></i></span>
+      <div><span class="lbl">معتمدة</span><span class="val">{{ kpi_approved }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico ok"><i class="fa-solid fa-circle-check"></i></span>
+      <div><span class="lbl">منفَّذة</span><span class="val">{{ kpi_executed }}</span></div>
+    </div>
+  </div>
+  <div class="hub-pills">
+    <a class="hub-pill{% if not filters.status %} is-zero{% endif %}" href="?"><i class="fa-solid fa-grip"></i>الكل<span class="qa-count">{{ kpi_total }}</span></a>
+    <a class="hub-pill{% if (kpi_pending|default(0)) == 0 %} is-zero{% endif %}" href="?status=pending"><i class="fa-solid fa-hourglass-half"></i>قيد المراجعة<span class="qa-count">{{ kpi_pending }}</span></a>
+    <a class="hub-pill{% if (kpi_approved|default(0)) == 0 %} is-zero{% endif %}" href="?status=approved"><i class="fa-solid fa-check"></i>معتمدة<span class="qa-count">{{ kpi_approved }}</span></a>
+    <a class="hub-pill{% if (kpi_executed|default(0)) == 0 %} is-zero{% endif %}" href="?status=executed"><i class="fa-solid fa-circle-check"></i>منفَّذة<span class="qa-count">{{ kpi_executed }}</span></a>
+    <a class="hub-pill{% if (kpi_failed|default(0)) == 0 %} is-zero{% endif %}" href="?status=failed"><i class="fa-solid fa-circle-exclamation"></i>فشل<span class="qa-count">{{ kpi_failed }}</span></a>
+    <a class="hub-pill{% if (kpi_rejected|default(0)) == 0 %} is-zero{% endif %}" href="?status=rejected"><i class="fa-solid fa-ban"></i>مرفوضة<span class="qa-count">{{ kpi_rejected }}</span></a>
+  </div>
+</section>
+
+{# Table #}
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list"></i>قائمة الطلبات</h3>
+    <span style="font-size:11.5px;color:var(--d-text-muted)">{{ rows|length }} نتيجة</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="internet-requests">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>المستفيد</th>
+          <th>نوع الطلب</th>
+          <th>الحالة</th>
+          <th>أنشأه</th>
+          <th>التاريخ</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr class="req-row">
+          <td class="col-id">#{{ r.id }}</td>
+          <td class="col-name">{{ r.full_name or '—' }}</td>
+          <td><span class="type-badge"><i class="fa-solid fa-bolt"></i>{{ internet_request_type_label(r.request_type) }}</span></td>
+          <td>
+            {% set s = (r.status or 'pending')|lower %}
+            {% if s == 'pending' %}
+              <span class="status-pill st-pending"><i class="fa-solid fa-hourglass-half"></i>قيد المراجعة</span>
+            {% elif s == 'approved' %}
+              <span class="status-pill st-approved"><i class="fa-solid fa-check"></i>معتمد</span>
+            {% elif s == 'executed' %}
+              <span class="status-pill st-executed"><i class="fa-solid fa-circle-check"></i>تم التنفيذ</span>
+            {% elif s == 'failed' %}
+              <span class="status-pill st-failed"><i class="fa-solid fa-circle-exclamation"></i>فشل</span>
+            {% elif s == 'rejected' %}
+              <span class="status-pill st-rejected"><i class="fa-solid fa-ban"></i>مرفوض</span>
+            {% else %}
+              <span class="status-pill st-pending">{{ r.status or '—' }}</span>
+            {% endif %}
+          </td>
+          <td style="font-size:12px;color:var(--d-text-soft)">{{ r.requested_by or '—' }}</td>
+          <td class="col-when">{{ format_dt_short(r.created_at) }}</td>
+          <td>
+            <a class="d-card-action" href="{{ url_for('admin_internet_request_detail_page', request_id=r.id) }}"
+               title="مراجعة" style="padding:4px 10px">
+              <i class="fa-solid fa-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="7" class="empty-state" style="text-align:center;padding:28px;color:var(--d-text-muted)">لا توجد طلبات مطابقة لهذه الفلترة.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,40 @@
+{# Partial: rows for مشتركي البوابة (خارج) #}
+{% for b in outside %}
+<tr class="out-row" data-bid="{{ b.id }}" data-name="{{ b.full_name or '' }}" data-phone="{{ b.phone or '' }}">
+  <td style="font-family:monospace;color:var(--d-text-muted)">#{{ b.id }}</td>
+  <td class="row-name">{{ b.full_name or '—' }}</td>
+  <td style="font-family:monospace;font-size:12.5px;color:var(--d-text-soft)">{{ b.phone or '—' }}</td>
+  <td>
+    {% if b.user_type == 'tawjihi' %}<span class="utype-badge utype-tawjihi"><i class="fa-solid fa-user-graduate"></i>توجيهي</span>
+    {% elif b.user_type == 'university' %}<span class="utype-badge utype-university"><i class="fa-solid fa-building-columns"></i>جامعي</span>
+    {% elif b.user_type == 'freelancer' %}<span class="utype-badge utype-freelancer"><i class="fa-solid fa-laptop-code"></i>عمل حر</span>
+    {% else %}—{% endif %}
+  </td>
+  <td>
+    {% if b.access_mode == 'username' %}
+      <span class="access-badge access-username"><i class="fa-solid fa-user-check"></i>مشترك حساب إنترنت</span>
+    {% elif b.access_mode == 'cards' %}
+      <span class="access-badge access-cards"><i class="fa-solid fa-ticket"></i>نظام بطاقات</span>
+    {% else %}
+      <span class="access-badge access-unknown"><i class="fa-solid fa-circle-question"></i>غير محدد</span>
+    {% endif %}
+  </td>
+  <td>
+    <div style="display:flex;gap:4px;flex-wrap:wrap">
+      <button type="button" class="d-pill-btn d-pill-btn--gold move-in-btn"
+              data-bid="{{ b.id }}" data-name="{{ b.full_name or '' }}" data-phone="{{ b.phone or '' }}"
+              style="padding:6px 12px;font-size:12px">
+        <i class="fa-solid fa-right-to-bracket"></i>نقل للبوابة
+      </button>
+      <a class="act-icon act-profile" href="/admin/users/{{ b.id }}/profile" title="الصفحة الشخصية">
+        <i class="fa-solid fa-id-card-clip"></i>
+      </a>
+    </div>
+  </td>
+</tr>
+{% else %}
+<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--d-text-muted)">
+  <i class="fa-regular fa-circle-check" style="font-size:32px;display:block;margin-bottom:8px;color:var(--d-border-strong)"></i>
+  كل المستفيدين لديهم حسابات بوابة.
+</td></tr>
+{% endfor %}

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1E1E1E">
+  <title>لوحة الإدارة — Hobe Hub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../app/static/css/dashboard.css">
+  
+</head>
+<body class="dashboard-body">
+
+<div class="d-shell is-collapsed" id="d-shell">
+  
+  <aside class="d-sidebar" aria-label="القائمة الجانبية">
+    <div class="d-sidebar-head">
+      <span class="d-brand-mark" aria-hidden="true">H</span>
+      <span class="d-brand-text">
+        <strong>Hobe Hub</strong>
+        <small>لوحة الإدارة</small>
+      </span>
+    </div>
+
+    <nav class="d-nav" aria-label="التنقل الرئيسي">
+      
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-gauge-high"></i><span>لوحة التحكم</span></div>
+  <a class="d-nav-item is-active" href="#" data-label="الرئيسية">
+    <i class="fa-solid fa-house"></i><span>الرئيسية</span>
+  </a>
+  <a class="d-nav-item" href="#" data-label="الإحصائيات">
+    <i class="fa-solid fa-chart-line"></i><span>الإحصائيات</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-users"></i><span>المستفيدون</span></div>
+  <a class="d-nav-item" href="#" data-label="جميع المستفيدين">
+    <i class="fa-solid fa-users-viewfinder"></i><span>جميع المستفيدين</span>
+    <span class="d-nav-badge">142</span>
+  </a>
+  <a class="d-nav-item" href="#" data-label="حسابات البوابة">
+    <i class="fa-solid fa-id-card-clip"></i><span>حسابات البوابة</span>
+  </a>
+  <a class="d-nav-item" href="#" data-label="طلبات الاشتراك">
+    <i class="fa-solid fa-user-plus"></i><span>طلبات الاشتراك</span>
+    <span class="d-nav-badge">7</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-globe"></i><span>الإنترنت</span></div>
+  <a class="d-nav-item" href="#" data-label="طلبات الإنترنت">
+    <i class="fa-solid fa-list-check"></i><span>طلبات الإنترنت</span>
+    <span class="d-nav-badge">3</span>
+  </a>
+  <a class="d-nav-item" href="#" data-label="بطاقات الاستخدام">
+    <i class="fa-solid fa-ticket"></i><span>بطاقات الاستخدام</span>
+  </a>
+  <a class="d-nav-item" href="#" data-label="المتصلون الآن">
+    <i class="fa-solid fa-wifi"></i><span>المتصلون الآن</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-satellite-dish"></i><span>الربط والإعدادات</span></div>
+  <a class="d-nav-item" href="#" data-label="إعدادات RADIUS">
+    <i class="fa-solid fa-plug-circle-bolt"></i><span>إعدادات RADIUS</span>
+  </a>
+  <a class="d-nav-item" href="#" data-label="الصلاحيات">
+    <i class="fa-solid fa-key"></i><span>الصلاحيات</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-folder-tree"></i><span>السجلات</span></div>
+  <a class="d-nav-item" href="#" data-label="سجل العمليات">
+    <i class="fa-solid fa-clock-rotate-left"></i><span>سجل العمليات</span>
+  </a>
+  <a class="d-nav-item" href="#" data-label="الأرشيف">
+    <i class="fa-solid fa-box-archive"></i><span>الأرشيف</span>
+  </a>
+  <a class="d-nav-item" href="#" data-label="استيراد / تصدير">
+    <i class="fa-solid fa-arrows-up-down"></i><span>استيراد / تصدير</span>
+  </a>
+</div>
+
+    </nav>
+
+    <div class="d-sidebar-foot">
+      <div class="d-user-pill">
+        <span class="d-user-avatar" aria-hidden="true">A</span>
+        <span class="d-user-meta">
+          <strong>مدير النظام</strong>
+          <small>مدير عام</small>
+        </span>
+        <a class="d-icon-btn" href="#" title="تسجيل الخروج"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+      </div>
+    </div>
+  </aside>
+
+  
+  <div class="d-main">
+    <header class="d-topbar">
+      <button class="d-sidebar-toggle" id="d-sidebar-toggle" type="button" aria-label="طي القائمة الجانبية">
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+      </button>
+      <div class="d-topbar-title">
+        <h1>الرئيسية</h1>
+        <div class="d-crumbs">
+          
+  <span>لوحة الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>الرئيسية</span>
+
+        </div>
+      </div>
+      <div class="d-topbar-actions">
+        
+<div class="d-search">
+  <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+  <input type="search" placeholder="ابحث عن مستفيد، طلب، أو حساب…" aria-label="بحث">
+</div>
+<a class="d-bell" href="#" aria-label="إشعارات"><i class="fa-regular fa-bell"></i><span class="dot"></span></a>
+<a class="d-pill-btn d-pill-btn--gold" href="#">
+  <i class="fa-solid fa-plus" aria-hidden="true"></i>
+  إضافة مستفيد
+</a>
+
+      </div>
+    </header>
+
+    <main class="d-content">
+      
+
+
+<section class="d-kpi-grid">
+  <div class="d-kpi">
+    <div class="d-kpi-head">
+      <span class="d-kpi-label">إجمالي المستفيدين</span>
+      <span class="d-kpi-icon d-kpi-icon--dark"><i class="fa-solid fa-users"></i></span>
+    </div>
+    <div class="d-kpi-value">142</div>
+    <div class="d-kpi-trend">
+      <i class="fa-solid fa-arrow-trend-up"></i> +8.4%
+      <small>هذا الشهر</small>
+    </div>
+  </div>
+
+  <div class="d-kpi">
+    <div class="d-kpi-head">
+      <span class="d-kpi-label">طلبات معلّقة</span>
+      <span class="d-kpi-icon d-kpi-icon--gold"><i class="fa-solid fa-hourglass-half"></i></span>
+    </div>
+    <div class="d-kpi-value">7</div>
+    <div class="d-kpi-trend is-flat">
+      <i class="fa-solid fa-minus"></i> بدون تغيّر
+      <small>منذ أمس</small>
+    </div>
+  </div>
+
+  <div class="d-kpi">
+    <div class="d-kpi-head">
+      <span class="d-kpi-label">جلسات الإنترنت النشطة</span>
+      <span class="d-kpi-icon d-kpi-icon--success"><i class="fa-solid fa-wifi"></i></span>
+    </div>
+    <div class="d-kpi-value">38</div>
+    <div class="d-kpi-trend">
+      <i class="fa-solid fa-arrow-trend-up"></i> +12
+      <small>منذ ساعة</small>
+    </div>
+  </div>
+
+  <div class="d-kpi">
+    <div class="d-kpi-head">
+      <span class="d-kpi-label">بطاقات استخدام صالحة</span>
+      <span class="d-kpi-icon"><i class="fa-solid fa-ticket"></i></span>
+    </div>
+    <div class="d-kpi-value">216</div>
+    <div class="d-kpi-trend is-down">
+      <i class="fa-solid fa-arrow-trend-down"></i> -3.1%
+      <small>هذا الأسبوع</small>
+    </div>
+  </div>
+</section>
+
+
+<section class="d-grid-2">
+  <div class="d-card">
+    <div class="d-card-head">
+      <h3 class="d-card-title"><i class="fa-solid fa-chart-column"></i>الاستخدام الأسبوعي</h3>
+      <a class="d-card-action" href="#">تقرير كامل</a>
+    </div>
+    <div class="d-card-body">
+      <div class="d-chart-mock" aria-label="رسم تخيلي للاستخدام الأسبوعي">
+        <div class="bar" style="height:38%"></div>
+        <div class="bar" style="height:62%"></div>
+        <div class="bar" style="height:48%"></div>
+        <div class="bar" style="height:78%"></div>
+        <div class="bar" style="height:55%"></div>
+        <div class="bar" style="height:88%"></div>
+        <div class="bar" style="height:70%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-card">
+    <div class="d-card-head">
+      <h3 class="d-card-title"><i class="fa-solid fa-wave-square"></i>النشاط الأخير</h3>
+      <a class="d-card-action" href="#">عرض الكل</a>
+    </div>
+    <div class="d-card-body--flush">
+      <div class="d-row-list">
+        <div class="d-row">
+          <span class="d-row-icon"><i class="fa-solid fa-user-plus"></i></span>
+          <div>
+            <strong>طلب اشتراك جديد — محمد علي</strong>
+            <span class="d-row-meta">منذ 4 دقائق</span>
+          </div>
+          <div class="d-row-suffix"><span class="d-badge d-badge--warn">قيد المراجعة</span></div>
+        </div>
+        <div class="d-row">
+          <span class="d-row-icon"><i class="fa-solid fa-circle-check"></i></span>
+          <div>
+            <strong>تنفيذ طلب إنترنت — سارة عمر</strong>
+            <span class="d-row-meta">منذ 22 دقيقة</span>
+          </div>
+          <div class="d-row-suffix"><span class="d-badge d-badge--success">منفّذ</span></div>
+        </div>
+        <div class="d-row">
+          <span class="d-row-icon d-row-icon--neutral"><i class="fa-solid fa-ticket"></i></span>
+          <div>
+            <strong>إصدار 12 بطاقة استخدام</strong>
+            <span class="d-row-meta">منذ ساعة</span>
+          </div>
+          <div class="d-row-suffix"><span class="d-badge d-badge--neutral">تلقائي</span></div>
+        </div>
+        <div class="d-row">
+          <span class="d-row-icon"><i class="fa-solid fa-plug-circle-xmark"></i></span>
+          <div>
+            <strong>فصل مستخدم RADIUS — uid-1029</strong>
+            <span class="d-row-meta">منذ ساعتين</span>
+          </div>
+          <div class="d-row-suffix"><span class="d-badge d-badge--danger">انتهت الجلسة</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-bolt"></i>اختصارات سريعة</h3>
+  </div>
+  <div class="d-card-body">
+    <div class="d-actions-grid">
+      <a class="d-action-tile" href="#">
+        <span class="d-action-tile-icon"><i class="fa-solid fa-user-plus"></i></span>
+        <strong>إضافة مستفيد</strong>
+        <small>تسجيل مستفيد جديد يدويًا</small>
+      </a>
+      <a class="d-action-tile" href="#">
+        <span class="d-action-tile-icon"><i class="fa-solid fa-file-arrow-up"></i></span>
+        <strong>استيراد CSV</strong>
+        <small>رفع قائمة مستفيدين دفعة واحدة</small>
+      </a>
+      <a class="d-action-tile" href="#">
+        <span class="d-action-tile-icon"><i class="fa-solid fa-list-check"></i></span>
+        <strong>مراجعة الطلبات</strong>
+        <small>الطلبات المعلّقة بانتظارك</small>
+      </a>
+      <a class="d-action-tile" href="#">
+        <span class="d-action-tile-icon"><i class="fa-solid fa-ticket-simple"></i></span>
+        <strong>إصدار بطاقات</strong>
+        <small>توليد بطاقات استخدام جديدة</small>
+      </a>
+      <a class="d-action-tile" href="#">
+        <span class="d-action-tile-icon"><i class="fa-solid fa-satellite-dish"></i></span>
+        <strong>المتصلون الآن</strong>
+        <small>الجلسات الحالية على RADIUS</small>
+      </a>
+      <a class="d-action-tile" href="#">
+        <span class="d-action-tile-icon"><i class="fa-solid fa-file-arrow-down"></i></span>
+        <strong>تصدير البيانات</strong>
+        <small>إخراج Excel / SQL</small>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-users"></i>أحدث المستفيدين</h3>
+    <a class="d-card-action" href="#">عرض الكل</a>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table">
+      <thead>
+        <tr>
+          <th>الاسم</th>
+          <th>المسار</th>
+          <th>الجوال</th>
+          <th>نوع الخدمة</th>
+          <th>الحالة</th>
+          <th>أُضيف</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>محمد علي</strong></td>
+          <td><span class="d-badge d-badge--neutral">توجيهي</span></td>
+          <td>0599345678</td>
+          <td><span class="d-badge">بطاقات</span></td>
+          <td><span class="d-badge d-badge--warn">قيد المراجعة</span></td>
+          <td>منذ 4د</td>
+        </tr>
+        <tr>
+          <td><strong>سارة عمر</strong></td>
+          <td><span class="d-badge d-badge--neutral">عمل حر</span></td>
+          <td>0599234567</td>
+          <td><span class="d-badge">بطاقات</span></td>
+          <td><span class="d-badge d-badge--success">نشط</span></td>
+          <td>أمس</td>
+        </tr>
+        <tr>
+          <td><strong>أحمد خالد</strong></td>
+          <td><span class="d-badge d-badge--neutral">جامعي</span></td>
+          <td>0599123456</td>
+          <td><span class="d-badge d-badge--dark">يوزر إنترنت</span></td>
+          <td><span class="d-badge d-badge--success">نشط</span></td>
+          <td>قبل يومين</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+    </main>
+  </div>
+
+  <div class="d-overlay" id="d-overlay" aria-hidden="true"></div>
+</div>
+
+<script>
+(function(){
+  var shell = document.getElementById('d-shell');
+  var toggle = document.getElementById('d-sidebar-toggle');
+  var overlay = document.getElementById('d-overlay');
+  if(!shell || !toggle) return;
+
+  // السايد بار يبدأ مطويًا في كل تحميل للصفحة (لا حفظ في localStorage)
+  function isMobile(){ return window.matchMedia('(max-width:860px)').matches; }
+
+  toggle.addEventListener('click', function(){
+    if (isMobile()) {
+      shell.classList.toggle('is-open');
+    } else {
+      shell.classList.toggle('is-collapsed');
+    }
+  });
+
+  overlay && overlay.addEventListener('click', function(){
+    shell.classList.remove('is-open');
+  });
+})();
+</script>
+
+
+</body>
+</html>

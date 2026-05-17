@@ -1,0 +1,293 @@
+{% extends "admin/cards/_cards_layout.html" %}
+{% block title %}إدارة البطاقات — نظرة عامة{% endblock %}
+{% block page_title %}نظرة عامة على البطاقات{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.cards-hub-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.cards-hub-card{display:flex;flex-direction:column;gap:10px;background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:18px;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(30,30,30,.04);transition:var(--d-transition)}
+.cards-hub-card:hover{border-color:var(--d-gold);transform:translateY(-1px);box-shadow:0 10px 24px rgba(30,30,30,.08)}
+.cards-hub-card .icon{width:42px;height:42px;border-radius:12px;background:var(--d-gold-faint);color:var(--d-black);display:inline-flex;align-items:center;justify-content:center;font-size:18px}
+.cards-hub-card strong{font-size:15px;font-weight:900;color:var(--d-black)}
+.cards-hub-card span{font-size:12.5px;color:var(--d-text-soft);line-height:1.7}
+.cards-hub-card small{margin-top:auto;color:var(--d-gold-deep);font-weight:800}
+.cards-secondary-links{display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 16px}
+@media (max-width:1050px){.cards-hub-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block cards_content %}
+
+<section class="cards-hub-grid">
+  <a class="cards-hub-card" href="{{ url_for('admin_cards_inventory_page') }}">
+    <span class="icon"><i class="fa-solid fa-boxes-stacked"></i></span>
+    <strong>المخزون والصادرة</strong>
+    <span>استعراض كل البطاقات، معرفة المتاح والمسلّم، وحذف المتاح عند الحاجة.</span>
+    <small>فتح المخزون</small>
+  </a>
+  <a class="cards-hub-card" href="{{ url_for('admin_cards_pending') }}">
+    <span class="icon"><i class="fa-solid fa-hourglass-half"></i></span>
+    <strong>طلبات البطاقات</strong>
+    <span>قائمة الطلبات التي تحتاج تسليمًا يدويًا أو مراجعة من الإدارة.</span>
+    <small>{{ pending_count | default(0) }} طلب معلق</small>
+  </a>
+  <a class="cards-hub-card" href="{{ url_for('admin_cards_import_page') }}">
+    <span class="icon"><i class="fa-solid fa-file-arrow-up"></i></span>
+    <strong>رفع بطاقات جديدة</strong>
+    <span>إضافة مخزون جديد حسب الفئة، مع منع التكرار من طبقة الاستيراد الحالية.</span>
+    <small>رفع ملف</small>
+  </a>
+  <a class="cards-hub-card" href="{{ url_for('admin_cards_categories') }}">
+    <span class="icon"><i class="fa-solid fa-layer-group"></i></span>
+    <strong>الفئات</strong>
+    <span>ضبط فئات نصف ساعة، ساعة، ساعتين، ثلاث ساعات، والحالات الخاصة.</span>
+    <small>إدارة الفئات</small>
+  </a>
+  <a class="cards-hub-card" href="{{ url_for('admin_cards_policies') }}">
+    <span class="icon"><i class="fa-solid fa-sliders"></i></span>
+    <strong>سياسات الحصص</strong>
+    <span>حدود يومية وأسبوعية وسياسات مخصصة لمشترك أو مجموعة.</span>
+    <small>{{ policies_count | default(0) }} سياسة نشطة</small>
+  </a>
+  <a class="cards-hub-card" href="{{ url_for('admin_request_center') }}">
+    <span class="icon"><i class="fa-solid fa-inbox"></i></span>
+    <strong>مركز الطلبات</strong>
+    <span>مشاهدة طلبات البطاقات جنبًا إلى جنب مع طلبات الإنترنت وحسابات الإنترنت.</span>
+    <small>فتح المركز</small>
+  </a>
+</section>
+
+<div class="cards-secondary-links">
+  <a class="d-card-action" href="{{ url_for('admin_cards_deliveries') }}"><i class="fa-solid fa-clipboard-list"></i> سجل التسليم</a>
+  <a class="d-card-action" href="{{ url_for('admin_cards_audit') }}"><i class="fa-solid fa-shield-halved"></i> التدقيق</a>
+</div>
+
+<!-- ─── Unified Control Hub: KPIs + RADIUS + Access rules + Search ─── -->
+<section class="hub">
+  <!-- Row 1: Operational KPIs -->
+  <div class="hub-stats">
+    <div class="hub-stat">
+      <span class="hub-stat-ico"><i class="fa-solid fa-boxes-stacked"></i></span>
+      <div><span class="lbl">إجمالي المتاح</span><span class="val">{{ inventory_total | default(0) }}<small>× {{ categories | length }} فئة</small></span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico warn{% if (pending_count|default(0)) > 0 %} has-pulse{% endif %}"><i class="fa-solid fa-hourglass-half"></i></span>
+      <div><span class="lbl">طلبات معلّقة</span><span class="val">{{ pending_count | default(0) }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico ok"><i class="fa-solid fa-check-double"></i></span>
+      <div><span class="lbl">سُلِّمت اليوم</span><span class="val">{{ delivered_today | default(0) }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico muted"><i class="fa-solid fa-sliders"></i></span>
+      <div><span class="lbl">سياسات نشطة</span><span class="val">{{ policies_count | default(0) }}</span></div>
+    </div>
+  </div>
+
+  {% if api_kpis %}
+  <!-- Row 2: RADIUS API live KPIs (compact) -->
+  <div class="hub-stats" style="border-top:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)">
+    <div class="hub-stat">
+      <span class="hub-stat-ico cyan{% if api_kpis.available %} has-pulse{% endif %}"><i class="fa-solid fa-satellite-dish"></i></span>
+      <div>
+        <span class="lbl">حالة RADIUS API</span>
+        <span class="val" style="font-size:14px">{% if api_kpis.available %}متّصل{% else %}غير متاح{% endif %}<small>{% if api_kpis.cached %}قبل {{ api_kpis.age_seconds }}ث{% endif %}</small></span>
+      </div>
+    </div>
+    {% if api_kpis.available and api_kpis.data %}
+    <div class="hub-stat">
+      <span class="hub-stat-ico muted"><i class="fa-solid fa-users"></i></span>
+      <div><span class="lbl">مستخدمو RADIUS</span><span class="val">{{ api_kpis.data.total_users | default(0) }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico ok"><i class="fa-solid fa-wifi"></i></span>
+      <div><span class="lbl">متّصلون الآن</span><span class="val">{{ api_kpis.data.online_users | default(0) }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico"><i class="fa-solid fa-wallet"></i></span>
+      <div><span class="lbl">رصيدك</span><span class="val">{{ "{:,.0f}".format(api_kpis.data.my_credit) if api_kpis.data.my_credit else '—' }}<small>ILS</small></span></div>
+    </div>
+    {% else %}
+    <div class="hub-stat" style="grid-column:span 3">
+      <span class="hub-stat-ico danger"><i class="fa-solid fa-circle-info"></i></span>
+      <div>
+        <span class="lbl">RADIUS API غير مفعّل</span>
+        <span class="val" style="font-size:12px;font-weight:700">{{ api_kpis.error or 'فعّله من الإعدادات لرؤية بيانات حيّة' }}</span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Row 3: Access rules + quick actions as pills -->
+  <div class="hub-pills">
+    {% for rule in access_rules %}
+    <span class="hub-pill{% if not rule.is_locked %} is-zero{% endif %}" title="مسموح: {{ rule.allowed_modes | join('، ') }}">
+      {% if rule.is_locked %}<i class="fa-solid fa-lock" style="color:#FFB454"></i>{% else %}<i class="fa-solid fa-unlock" style="color:#86efac"></i>{% endif %}
+      {{ rule.label }}
+      <span class="qa-count" style="font-size:9.5px">{{ rule.allowed_modes | join(' / ') }}</span>
+    </span>
+    {% endfor %}
+    <a class="hub-pill" href="{{ url_for('admin_cards_inventory_page') }}"><i class="fa-solid fa-boxes-stacked"></i>إدارة المخزون</a>
+    <a class="hub-pill" href="{{ url_for('admin_cards_categories') }}"><i class="fa-solid fa-layer-group"></i>الفئات</a>
+    <a class="hub-pill" href="{{ url_for('admin_cards_deliveries') }}"><i class="fa-solid fa-clipboard-list"></i>سجل التسليم</a>
+  </div>
+
+  <!-- Row 4: Live filter on recent deliveries (client-side) -->
+  <form class="hub-search" id="co-filter-form" autocomplete="off" onsubmit="return false">
+    <div class="hub-search-input">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" id="co-q" placeholder="فلتر فوري على آخر التسليمات (الاسم / الجوال / اسم البطاقة)…">
+      <span class="hub-search-spinner" id="co-search-status" aria-hidden="true"></span>
+    </div>
+    <select id="co-cat" class="hub-search-select" title="الفئة">
+      <option value="">كل الفئات</option>
+      {% for cat in categories %}
+      <option value="{{ cat.duration_minutes }}">{{ cat.label_ar }} • {{ cat.duration_minutes }}د</option>
+      {% endfor %}
+    </select>
+    <button type="button" class="hub-search-clear" id="co-clear-btn" title="مسح"><i class="fa-solid fa-xmark"></i></button>
+  </form>
+</section>
+
+{# ── فئات البطاقات والمخزون (عرض مرجعي، الفلتر للتسليمات في الأسفل) ── #}
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-layer-group"></i>الفئات والمخزون</h3>
+    <a class="d-card-action" href="{{ url_for('admin_cards_inventory_page') }}">إدارة المخزون</a>
+  </div>
+  <div class="d-card-body">
+    <div class="d-kpi-grid">
+      {% for cat in categories %}
+      <div class="d-category-card">
+        <span class="icon"><i class="fa-solid {{ cat.icon or 'fa-clock' }}"></i></span>
+        <div class="body">
+          <strong>{{ cat.label_ar }}</strong>
+          <small>{{ cat.duration_minutes }} دقيقة</small>
+        </div>
+        <div class="count">
+          {{ cat.available }}
+          <small>متاحة</small>
+        </div>
+      </div>
+      {% else %}
+      <div class="d-notice d-notice--info" style="grid-column:1/-1">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>لا توجد فئات بطاقات مفعّلة بعد. أضف فئات من <a href="{{ url_for('admin_cards_categories') }}">إدارة الفئات</a>.</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ── آخر التسليمات (يفلترها شريط البحث في الأعلى) ── #}
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-clipboard-list"></i>آخر التسليمات</h3>
+    <div style="display:inline-flex;align-items:center;gap:10px">
+      <span style="font-size:11.5px;color:var(--d-text-muted)"><span id="co-count">{{ recent_deliveries | length }}</span> تسليم</span>
+      <a class="d-card-action" href="{{ url_for('admin_cards_deliveries') }}">عرض الكل</a>
+    </div>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" id="co-deliv-table" data-paginated="1" data-page-size="10" data-page-sizes="10,20,50,100" data-persist-key="cards-overview">
+      <thead>
+        <tr>
+          <th>#</th><th>المشترك</th><th>الجوال</th>
+          <th>الفئة</th><th>اسم البطاقة</th>
+          <th>تاريخ التسليم</th><th>أُصدرت بواسطة</th>
+        </tr>
+      </thead>
+      <tbody id="co-deliv-tbody">
+        {% for d in recent_deliveries %}
+        <tr class="co-deliv-row"
+            data-name="{{ (d.full_name or '')|lower }}"
+            data-phone="{{ d.phone or '' }}"
+            data-card="{{ d.card_username or '' }}"
+            data-minutes="{{ d.duration_minutes or '' }}">
+          <td>#{{ d.id }}</td>
+          <td><strong>{{ d.full_name or '—' }}</strong></td>
+          <td>{{ d.phone or '—' }}</td>
+          <td><span class="d-badge">{{ d.duration_minutes }} دقيقة</span></td>
+          <td><code>{{ d.card_username }}</code></td>
+          <td>{{ d.issued_at or '—' }}</td>
+          <td>{{ d.issued_by or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate">
+          <td colspan="7" style="text-align:center;color:var(--d-text-muted);padding:28px">لا توجد بطاقات مسلّمة بعد.</td>
+        </tr>
+        {% endfor %}
+        <tr class="no-paginate" id="co-deliv-empty" style="display:none">
+          <td colspan="7" style="text-align:center;color:var(--d-text-muted);padding:28px">
+            <i class="fa-solid fa-magnifying-glass-minus" style="color:var(--d-gold-deep);margin-inline-end:6px"></i>
+            لا توجد تسليمات مطابقة للفلتر.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+(function(){
+  var qInput   = document.getElementById('co-q');
+  var catSel   = document.getElementById('co-cat');
+  var clearBtn = document.getElementById('co-clear-btn');
+  var status   = document.getElementById('co-search-status');
+  var countEl  = document.getElementById('co-count');
+  var tbody    = document.getElementById('co-deliv-tbody');
+  var emptyRow = document.getElementById('co-deliv-empty');
+  if(!qInput || !tbody) return;
+
+  function setSpinner(on){
+    if(!status) return;
+    status.classList.toggle('is-on', !!on);
+    if(!on){ status.innerHTML = ''; }
+  }
+
+  function apply(){
+    setSpinner(true);
+    var q = qInput.value.trim().toLowerCase();
+    var cat = catSel.value;
+    var rows = tbody.querySelectorAll('.co-deliv-row');
+    var shown = 0;
+    rows.forEach(function(r){
+      var name  = (r.getAttribute('data-name') || '').toLowerCase();
+      var phone = r.getAttribute('data-phone') || '';
+      var card  = (r.getAttribute('data-card') || '').toLowerCase();
+      var mins  = r.getAttribute('data-minutes') || '';
+      var matchText = !q
+        || name.indexOf(q) !== -1
+        || phone.indexOf(q) !== -1
+        || card.indexOf(q) !== -1;
+      var matchCat = !cat || mins === cat;
+      var show = matchText && matchCat;
+      r.style.display = show ? '' : 'none';
+      if(show) shown++;
+    });
+    countEl.textContent = shown;
+    if(emptyRow){
+      emptyRow.style.display = (shown === 0 && rows.length > 0) ? '' : 'none';
+    }
+    setTimeout(function(){ setSpinner(false); }, 120);
+  }
+
+  var t = null;
+  qInput.addEventListener('input', function(){
+    setSpinner(true);
+    clearTimeout(t);
+    t = setTimeout(apply, 180);
+  });
+  catSel.addEventListener('change', apply);
+  if(clearBtn){
+    clearBtn.addEventListener('click', function(){
+      qInput.value = ''; catSel.value = ''; apply(); qInput.focus();
+    });
+  }
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1E1E1E">
+  <title>الدخول — Hobe Hub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{
+      --ink:#1E1E1E;--ink-2:#2b2b2b;--muted:#6f6758;--line:#e8e2d5;
+      --cream:#f7f5ef;--cream-2:#fbfaf7;--gold:#F4BA2A;--gold-soft:#fff7df;
+      --ok:#166534;--ok-bg:#e8f6ee;--warn:#92400e;--warn-bg:#fef3c7;
+      --err:#b91c1c;--err-bg:#fde2e2;--shadow:0 18px 50px rgba(30,30,30,.10);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      min-height:100vh;background:
+        radial-gradient(1200px 600px at 80% -10%,#fff7df 0%,transparent 60%),
+        radial-gradient(900px 500px at -10% 110%,#f7f5ef 0%,transparent 55%),
+        #f7f5ef;
+      color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+      display:grid;place-items:center;padding:24px;
+    }
+    .shell{width:min(520px,100%);}
+    .brand{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:18px}
+    .brand-mark{
+      width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+      background:var(--ink);color:var(--gold);font-weight:900;font-size:22px;
+      box-shadow:0 10px 24px rgba(30,30,30,.18)
+    }
+    .brand b{font-size:18px;font-weight:900;letter-spacing:.2px}
+    .brand small{display:block;color:var(--muted);font-size:12px;font-weight:700}
+
+    .card{
+      background:#fff;border:1px solid var(--line);border-radius:18px;
+      box-shadow:var(--shadow);overflow:hidden;
+    }
+    .card-head{
+      padding:22px 24px 0 24px;
+    }
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--gold-soft);color:#7a5310;font-weight:800;font-size:12px;
+      padding:6px 10px;border-radius:999px;border:1px solid #f1d993;
+    }
+    h1{margin:10px 0 6px;font-size:24px;font-weight:900;letter-spacing:.2px}
+    .lede{margin:0;color:var(--muted);font-size:14px;line-height:1.8}
+
+    .card-body{padding:18px 24px 24px 24px}
+
+    /* steps indicator */
+    .steps{display:flex;align-items:center;gap:6px;margin:14px 0 14px}
+    .steps .dot{
+      flex:1;height:6px;border-radius:6px;background:#eee5d2;
+      transition:background .2s ease;
+    }
+    .steps .dot.is-on{background:var(--gold)}
+    .steps .dot.is-done{background:var(--ink)}
+
+    label{display:block;margin:10px 0 6px;font-size:12px;font-weight:800;color:var(--muted)}
+    .input{
+      position:relative;display:flex;align-items:center;
+      background:var(--cream-2);border:1.5px solid #d8d0c1;border-radius:12px;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    .input:focus-within{border-color:var(--ink);box-shadow:0 0 0 4px rgba(244,186,42,.18)}
+    .input i.fa-solid{padding:0 12px;color:var(--muted)}
+    .input input{
+      flex:1;border:0;background:transparent;
+      padding:13px 8px 13px 0;font:inherit;font-weight:700;color:var(--ink);
+      outline:none;
+    }
+    .input input::placeholder{color:#b8ad99;font-weight:600}
+
+    .row{display:grid;grid-template-columns:1fr;gap:0}
+    @media (min-width:520px){ .row.two{grid-template-columns:1fr 1fr;gap:12px} }
+
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      border:0;border-radius:12px;padding:13px 16px;font:inherit;
+      font-weight:900;cursor:pointer;width:100%;
+      transition:transform .06s ease, background .15s ease, color .15s ease;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn--primary{background:var(--ink);color:#fff}
+    .btn--primary:hover{background:#000}
+    .btn--ghost{
+      background:#fff;color:var(--ink);border:1.5px solid var(--line);
+    }
+    .btn--ghost:hover{background:var(--cream-2)}
+    .btn--gold{background:var(--gold);color:var(--ink)}
+    .btn--gold:hover{background:#e9ad17}
+
+    .actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:14px}
+    .actions.two{grid-template-columns:120px 1fr}
+
+    .msg{
+      display:none;margin-top:12px;border-radius:12px;padding:11px 14px;
+      font-size:13px;font-weight:800;border:1px solid transparent;
+    }
+    .msg.show{display:flex;align-items:center;gap:8px}
+    .msg.ok{background:var(--ok-bg);color:var(--ok);border-color:#bce5cb}
+    .msg.err{background:var(--err-bg);color:var(--err);border-color:#fbc2c2}
+    .msg.warn{background:var(--warn-bg);color:var(--warn);border-color:#fde68a}
+    .msg.info{background:#eef4ff;color:#1d4ed8;border-color:#c7d8ff}
+
+    .identity{
+      display:flex;align-items:center;gap:10px;
+      background:var(--cream-2);border:1px solid var(--line);border-radius:12px;
+      padding:10px 12px;margin-bottom:6px;
+    }
+    .identity .avatar{
+      width:36px;height:36px;border-radius:50%;
+      background:var(--ink);color:var(--gold);display:grid;place-items:center;
+      font-weight:900;
+    }
+    .identity .meta{flex:1;min-width:0}
+    .identity .meta b{display:block;font-size:14px;font-weight:900}
+    .identity .meta small{color:var(--muted);font-weight:700}
+    .identity button{
+      background:transparent;border:0;color:var(--muted);font-weight:800;
+      cursor:pointer;font-size:12px;text-decoration:underline;text-underline-offset:3px;
+    }
+
+    .footer{
+      margin-top:14px;text-align:center;font-size:12px;color:var(--muted);font-weight:700
+    }
+    .footer a{color:var(--ink);font-weight:900;text-decoration:none}
+    .footer a:hover{text-decoration:underline}
+
+    .hidden{display:none !important}
+
+    /* spinner */
+    .spin{
+      width:16px;height:16px;border-radius:50%;
+      border:2px solid rgba(255,255,255,.4);border-top-color:#fff;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .pwd-wrap{position:relative}
+    .pwd-toggle{
+      position:absolute;left:8px;top:50%;transform:translateY(-50%);
+      border:0;background:transparent;color:var(--muted);cursor:pointer;
+      padding:6px 8px;font-size:14px;
+    }
+    .pwd-toggle:hover{color:var(--ink)}
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="brand">
+    <span class="brand-mark">H</span>
+    <div>
+      <b>Hobe Hub</b>
+      <small>دخول موحّد ذكي</small>
+    </div>
+  </div>
+
+  <main class="card">
+    <header class="card-head">
+      <span class="eyebrow" id="eyebrow">
+        <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+        <span id="eyebrow-text">سجّل دخولك</span>
+      </span>
+      <h1 id="title">تسجيل الدخول</h1>
+      <p class="lede" id="lede">أدخل رقم الجوال أو اسم المستخدم، وسنحوّلك إلى بوابتك المناسبة تلقائيًا.</p>
+      <div class="steps" aria-hidden="true">
+        <span class="dot is-on" id="dot1"></span>
+        <span class="dot" id="dot2"></span>
+        <span class="dot" id="dot3"></span>
+      </div>
+    </header>
+
+    <div class="card-body">
+
+      {# ─── STEP 1: identifier ───────────────────────────── #}
+      <section id="step1">
+        <form id="form-check" autocomplete="on">
+          {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+          <label for="identifier">رقم الجوال أو اسم المستخدم</label>
+          <div class="input">
+            <i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i>
+            <input id="identifier" name="identifier" type="text"
+                   inputmode="tel" autocomplete="username"
+                   placeholder="05xxxxxxxx" required>
+          </div>
+          <div class="actions">
+            <button class="btn btn--primary" type="submit" id="btn-check">
+              <span>متابعة</span>
+              <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {# ─── STEP 2: password (active accounts) ──────────── #}
+      <section id="step2-password" class="hidden">
+        <div class="identity">
+          <div class="avatar"><i class="fa-solid fa-user"></i></div>
+          <div class="meta">
+            <b id="ident-label-1">—</b>
+            <small id="ident-sub-1">دخول بكلمة المرور</small>
+          </div>
+          <button type="button" onclick="goBack()">تغيير</button>
+        </div>
+        <form id="form-password">
+          {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+          <label for="password">كلمة المرور</label>
+          <div class="input pwd-wrap">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+            <input id="password" name="password" type="password"
+                   autocomplete="current-password" placeholder="••••••••" required>
+            <button type="button" class="pwd-toggle" onclick="togglePwd('password', this)"
+                    aria-label="إظهار/إخفاء"><i class="fa-solid fa-eye"></i></button>
+          </div>
+          <div class="actions two">
+            <button class="btn btn--ghost" type="button" onclick="goBack()">رجوع</button>
+            <button class="btn btn--primary" type="submit" id="btn-login">
+              <span>تسجيل الدخول</span>
+              <i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {# ─── STEP 2: reset (activation code + new password) ─ #}
+      <section id="step2-reset" class="hidden">
+        <div class="identity">
+          <div class="avatar" style="background:var(--gold);color:var(--ink)">
+            <i class="fa-solid fa-rotate"></i>
+          </div>
+          <div class="meta">
+            <b id="ident-label-2">—</b>
+            <small>حسابك مصفّر — أدخل كود التفعيل واختر كلمة مرور جديدة</small>
+          </div>
+          <button type="button" onclick="goBack()">تغيير</button>
+        </div>
+        <form id="form-activate">
+          {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+          <label for="activation_code">رمز التفعيل (من الإدارة)</label>
+          <div class="input">
+            <i class="fa-solid fa-key" aria-hidden="true"></i>
+            <input id="activation_code" name="activation_code" type="text"
+                   inputmode="text" placeholder="رمز التفعيل" required>
+          </div>
+          <label for="new_password">كلمة مرور جديدة</label>
+          <div class="input pwd-wrap">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+            <input id="new_password" name="new_password" type="password"
+                   autocomplete="new-password" placeholder="6 أحرف على الأقل" required minlength="6">
+            <button type="button" class="pwd-toggle" onclick="togglePwd('new_password', this)"
+                    aria-label="إظهار/إخفاء"><i class="fa-solid fa-eye"></i></button>
+          </div>
+          <div class="actions two">
+            <button class="btn btn--ghost" type="button" onclick="goBack()">رجوع</button>
+            <button class="btn btn--gold" type="submit" id="btn-activate">
+              <span>تفعيل ودخول</span>
+              <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {# ─── STEP 2: no_account (request activation) ──────── #}
+      <section id="step2-noaccount" class="hidden">
+        <div class="identity">
+          <div class="avatar" style="background:var(--warn-bg);color:var(--warn)">
+            <i class="fa-solid fa-exclamation"></i>
+          </div>
+          <div class="meta">
+            <b id="ident-label-3">—</b>
+            <small>أنت مسجّل لدينا لكن حسابك غير مفعّل</small>
+          </div>
+          <button type="button" onclick="goBack()">تغيير</button>
+        </div>
+        <p class="lede" style="margin-top:10px">
+          تواصل مع الإدارة للحصول على <b>رمز التفعيل</b> ثم عُد إلى هذه الصفحة وأدخل الرمز.
+        </p>
+        <div class="actions two">
+          <button class="btn btn--ghost" type="button" onclick="goBack()">رجوع</button>
+          <button class="btn btn--gold" type="button" onclick="showActivateFromNoAccount()">
+            <span>عندي رمز تفعيل</span>
+            <i class="fa-solid fa-key" aria-hidden="true"></i>
+          </button>
+        </div>
+      </section>
+
+      {# ─── STEP 2: not_found (register link) ────────────── #}
+      <section id="step2-notfound" class="hidden">
+        <div class="identity">
+          <div class="avatar" style="background:var(--err-bg);color:var(--err)">
+            <i class="fa-solid fa-question"></i>
+          </div>
+          <div class="meta">
+            <b>لم نجد هذا الرقم</b>
+            <small>تحقّق من الإدخال أو سجّل اشتراك جديد</small>
+          </div>
+          <button type="button" onclick="goBack()">تغيير</button>
+        </div>
+        <div class="actions two">
+          <button class="btn btn--ghost" type="button" onclick="goBack()">رجوع</button>
+          <a class="btn btn--gold" href="{{ url_for('user_register') }}">
+            <span>تسجيل اشتراك جديد</span>
+            <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+          </a>
+        </div>
+      </section>
+
+      <div id="msg" class="msg" role="status" aria-live="polite"></div>
+
+    </div>
+  </main>
+
+  <p class="footer">
+    منصة Hobe Hub — للاستفسارات تواصل مع إدارة الموقع.
+  </p>
+</div>
+
+<script>
+(function(){
+  var ST = { ident:'', label:'', state:'', type:'' };
+
+  var msg = document.getElementById('msg');
+  function showMsg(kind, text){
+    msg.className = 'msg show ' + kind;
+    msg.innerHTML = '<i class="fa-solid '+(
+      kind==='ok'?'fa-circle-check':
+      kind==='err'?'fa-circle-exclamation':
+      kind==='warn'?'fa-triangle-exclamation':'fa-circle-info'
+    )+'"></i><span>'+text+'</span>';
+  }
+  function hideMsg(){ msg.className='msg'; msg.innerHTML=''; }
+
+  function setStep(n){
+    document.getElementById('dot1').className = 'dot ' + (n>=1?'is-done':'');
+    document.getElementById('dot2').className = 'dot ' + (n===2?'is-on':(n>2?'is-done':''));
+    document.getElementById('dot3').className = 'dot ' + (n===3?'is-on':'');
+  }
+
+  function show(id){
+    ['step1','step2-password','step2-reset','step2-noaccount','step2-notfound'].forEach(function(s){
+      document.getElementById(s).classList.add('hidden');
+    });
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function setHeader(state){
+    var t = document.getElementById('title');
+    var l = document.getElementById('lede');
+    var eb = document.getElementById('eyebrow-text');
+    if(state==='active'){ t.textContent='كلمة المرور'; l.textContent='أدخل كلمة المرور لإكمال تسجيل الدخول.'; eb.textContent='الخطوة الثانية'; }
+    else if(state==='reset'){ t.textContent='تفعيل الحساب'; l.textContent='حسابك مصفّر — أدخل رمز التفعيل واختر كلمة مرور جديدة.'; eb.textContent='تفعيل وتسجيل دخول'; }
+    else if(state==='no_account'){ t.textContent='حساب غير مفعّل'; l.textContent='حسابك موجود لكن يحتاج كود تفعيل من الإدارة.'; eb.textContent='يلزم تفعيل'; }
+    else if(state==='unknown'){ t.textContent='غير مسجّل'; l.textContent='لم نجد هذا الرقم لدينا.'; eb.textContent='اشتراك جديد'; }
+    else{ t.textContent='تسجيل الدخول'; l.textContent='أدخل رقم الجوال أو اسم المستخدم، وسنحوّلك إلى بوابتك المناسبة تلقائيًا.'; eb.textContent='سجّل دخولك'; }
+  }
+
+  window.goBack = function(){
+    hideMsg();
+    show('step1');
+    setStep(1);
+    setHeader('');
+    document.getElementById('identifier').focus();
+  };
+
+  window.togglePwd = function(id, btn){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var ic = btn.querySelector('i');
+    if(el.type === 'password'){ el.type='text'; if(ic){ic.className='fa-solid fa-eye-slash';} }
+    else{ el.type='password'; if(ic){ic.className='fa-solid fa-eye';} }
+  };
+
+  window.showActivateFromNoAccount = function(){
+    document.getElementById('ident-label-2').textContent = ST.label || ST.ident;
+    show('step2-reset');
+    setStep(3);
+    setHeader('reset');
+    hideMsg();
+    document.getElementById('activation_code').focus();
+  };
+
+  function setLoading(btn, on){
+    if(!btn) return;
+    if(on){
+      btn.dataset.orig = btn.innerHTML;
+      btn.innerHTML = '<span class="spin"></span><span>جارٍ التحقق…</span>';
+      btn.disabled = true;
+    }else{
+      if(btn.dataset.orig){ btn.innerHTML = btn.dataset.orig; }
+      btn.disabled = false;
+    }
+  }
+
+  function postForm(url, formEl){
+    var fd = formEl instanceof FormData ? formEl : new FormData(formEl);
+    if(ST.ident){ fd.set('identifier', ST.ident); }
+    return fetch(url, {
+      method:'POST', body:fd, credentials:'same-origin',
+      headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}
+    }).then(function(r){
+      return r.json().then(function(d){ d.__status = r.status; return d; }).catch(function(){
+        return { ok:false, message:'تعذّر قراءة الردّ.', __status:r.status };
+      });
+    });
+  }
+
+  // STEP 1 — submit identifier
+  document.getElementById('form-check').addEventListener('submit', function(e){
+    e.preventDefault();
+    hideMsg();
+    var btn = document.getElementById('btn-check');
+    var ident = document.getElementById('identifier').value.trim();
+    if(!ident){ showMsg('err','أدخل رقم الجوال أو اسم المستخدم.'); return; }
+    ST.ident = ident;
+    setLoading(btn, true);
+
+    postForm('/login/check', this).then(function(d){
+      setLoading(btn, false);
+      if(!d.ok){ showMsg('err', d.message || 'تعذّر التحقق.'); return; }
+
+      ST.state = d.state || '';
+      ST.type = d.type || '';
+      ST.label = d.label || ident;
+
+      if(d.next === 'password'){
+        document.getElementById('ident-label-1').textContent = ST.label;
+        document.getElementById('ident-sub-1').textContent =
+          (ST.type === 'admin' ? 'حساب إدارة' : 'حساب مشترك');
+        setHeader('active');
+        show('step2-password');
+        setStep(2);
+        setTimeout(function(){ document.getElementById('password').focus(); }, 50);
+      }
+      else if(d.next === 'activation_code'){
+        document.getElementById('ident-label-2').textContent = ST.label;
+        setHeader('reset');
+        show('step2-reset');
+        setStep(3);
+        setTimeout(function(){ document.getElementById('activation_code').focus(); }, 50);
+      }
+      else if(d.next === 'request_activation'){
+        document.getElementById('ident-label-3').textContent = ST.label;
+        setHeader('no_account');
+        show('step2-noaccount');
+        setStep(2);
+      }
+      else if(d.next === 'not_found'){
+        setHeader('unknown');
+        show('step2-notfound');
+        setStep(2);
+      }
+      else{
+        showMsg('err', d.message || 'حالة الحساب غير مدعومة.');
+      }
+    }).catch(function(){
+      setLoading(btn, false);
+      showMsg('err','تعذّر الاتصال بالخادم.');
+    });
+  });
+
+  // STEP 2A — password
+  document.getElementById('form-password').addEventListener('submit', function(e){
+    e.preventDefault();
+    hideMsg();
+    var btn = document.getElementById('btn-login');
+    var pwd = document.getElementById('password').value;
+    if(!pwd){ showMsg('err','أدخل كلمة المرور.'); return; }
+    setLoading(btn, true);
+    postForm('/login/submit', this).then(function(d){
+      setLoading(btn, false);
+      if(d.ok && d.redirect){
+        showMsg('ok', 'تم التحقق — جارٍ تحويلك…');
+        setTimeout(function(){ location.href = d.redirect; }, 400);
+        return;
+      }
+      if(d.state === 'reset'){
+        // backend told us this account must reset
+        document.getElementById('ident-label-2').textContent = ST.label || ST.ident;
+        setHeader('reset');
+        show('step2-reset');
+        setStep(3);
+        showMsg('warn', d.message || 'الحساب يحتاج تفعيل.');
+        return;
+      }
+      showMsg('err', d.message || 'تعذّر تسجيل الدخول.');
+    }).catch(function(){
+      setLoading(btn, false);
+      showMsg('err','تعذّر الاتصال بالخادم.');
+    });
+  });
+
+  // STEP 2B — activation
+  document.getElementById('form-activate').addEventListener('submit', function(e){
+    e.preventDefault();
+    hideMsg();
+    var btn = document.getElementById('btn-activate');
+    var code = document.getElementById('activation_code').value.trim();
+    var np   = document.getElementById('new_password').value;
+    if(!code){ showMsg('err','أدخل رمز التفعيل.'); return; }
+    if(!np || np.length < 6){ showMsg('err','كلمة المرور قصيرة جدًا (6 أحرف على الأقل).'); return; }
+    setLoading(btn, true);
+    postForm('/login/activate', this).then(function(d){
+      setLoading(btn, false);
+      if(d.ok && d.redirect){
+        showMsg('ok', d.message || 'تم تفعيل حسابك — جارٍ تحويلك…');
+        setTimeout(function(){ location.href = d.redirect; }, 500);
+        return;
+      }
+      showMsg('err', d.message || 'تعذّر تفعيل الحساب.');
+    }).catch(function(){
+      setLoading(btn, false);
+      showMsg('err','تعذّر الاتصال بالخادم.');
+    });
+  });
+
+  // Auto-focus identifier on load
+  document.getElementById('identifier').focus();
+})();
+</script>
+</body>
+</html>

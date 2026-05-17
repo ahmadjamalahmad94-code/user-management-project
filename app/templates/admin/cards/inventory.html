@@ -1,0 +1,273 @@
+{% extends "admin/cards/_cards_layout.html" %}
+{% block title %}مخزون البطاقات{% endblock %}
+{% block page_title %}مخزون البطاقات{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.inventory-toolbar{display:grid;grid-template-columns:1.2fr .75fr .75fr auto;gap:10px;align-items:end}
+.inventory-password,.mono{font-family:monospace;color:#1E1E1E}
+.d-pill-btn--danger{background:#b91c1c;color:#fff;border-color:#b91c1c}
+.d-pill-btn--danger:hover{background:#991b1b;color:#fff}
+.inv-muted{display:block;color:var(--d-text-muted);font-size:11px;margin-top:3px}
+.inv-state{white-space:nowrap}
+.inv-state--issued{background:#eef7ff;color:#0f4c81;border-color:#cfe8ff}
+.inv-state--available{background:#ecfdf3;color:#166534;border-color:#bbf7d0}
+.inv-table{table-layout:auto;width:100%}
+.inv-table th,.inv-table td{vertical-align:middle;padding:10px 12px;font-size:13px}
+.inv-table th{font-size:11.5px;color:var(--d-text-soft);font-weight:800;text-transform:uppercase;letter-spacing:.3px}
+.inv-table tbody tr{transition:background .12s ease}
+.inv-table tbody tr:hover{background:#fbfaf7}
+.inv-check{width:18px;height:18px;accent-color:var(--d-black)}
+.inv-now{font-size:11px;color:var(--d-text-soft);line-height:1.5}
+
+/* خلية الاتصال المضغوطة: pills صغيرة */
+.inv-conn{display:flex;flex-direction:column;gap:4px;min-width:170px}
+.inv-conn-row{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--d-text-soft);font-weight:700}
+.inv-conn-row i{width:13px;text-align:center;color:var(--d-text-muted)}
+.inv-conn-row b{color:var(--d-black);font-weight:800}
+.inv-conn-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.inv-conn-dot.on{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+.inv-conn-dot.off{background:#cbd5e1}
+
+/* خلية المصدر/الإصدار */
+.inv-meta{display:flex;flex-direction:column;gap:3px;min-width:140px}
+.inv-meta b{font-size:12.5px;font-weight:800;color:var(--d-black)}
+.inv-meta small{font-size:11px;color:var(--d-text-muted);font-weight:700}
+
+/* خلية البطاقة */
+.inv-card-cell{display:flex;flex-direction:column;gap:3px;min-width:130px}
+.inv-card-cell .u{font-family:monospace;font-size:13px;font-weight:800;color:var(--d-black)}
+.inv-card-cell .p{font-family:monospace;font-size:11.5px;color:var(--d-text-soft)}
+
+/* زر حذف صغير في الإجراء */
+.inv-del-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:8px;
+  background:#fff5f5;color:#b91c1c;border:1px solid #fbc2c2;
+  font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;
+}
+.inv-del-btn:hover{background:#fde2e2}
+
+@media (max-width:980px){.inventory-toolbar{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block cards_content %}
+
+<!-- ─── Unified Control Hub ─── -->
+<section class="hub">
+  <div class="hub-stats">
+    {% for cat in categories[:6] %}
+    <a class="hub-stat" href="{{ url_for('admin_cards_inventory_page', category=cat.code) }}" style="text-decoration:none;color:inherit">
+      <span class="hub-stat-ico{% if loop.index == 1 %}{% elif loop.index == 2 %} warn{% elif loop.index == 3 %} ok{% elif loop.index == 4 %} muted{% elif loop.index == 5 %} cyan{% else %} danger{% endif %}"><i class="fa-solid {{ cat.icon or 'fa-clock' }}"></i></span>
+      <div>
+        <span class="lbl">{{ cat.label_ar }} • {{ cat.duration_minutes }}د</span>
+        <span class="val">{{ cat.available }}<small>متاحة</small></span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="hub-pills">
+    <a class="hub-pill" href="{{ url_for('admin_cards_import_page') }}"><i class="fa-solid fa-cloud-arrow-up"></i>رفع بطاقات جديدة</a>
+    <a class="hub-pill{% if (filters.state or 'all') != 'available' %} is-zero{% endif %}" href="?state=available"><i class="fa-solid fa-circle-check"></i>المتاحة فقط</a>
+    <a class="hub-pill{% if (filters.state or 'all') != 'issued' %} is-zero{% endif %}" href="?state=issued"><i class="fa-solid fa-paper-plane"></i>الصادرة فقط</a>
+    <a class="hub-pill{% if filters.state and filters.state != 'all' %} is-zero{% endif %}" href="?"><i class="fa-solid fa-grip"></i>الكل</a>
+  </div>
+
+  <form class="hub-search" id="inv-filter-form" method="GET" autocomplete="off">
+    <div class="hub-search-input">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" name="q" id="inv-q" value="{{ filters.q or '' }}" placeholder="اسم البطاقة، كلمة المرور، المستفيد، الجوال، أو المصدر…">
+      <span class="hub-search-spinner" id="inv-search-status" aria-hidden="true"></span>
+    </div>
+    <select name="category" id="inv-category" class="hub-search-select">
+      <option value="">كل الفئات</option>
+      {% for cat in active_categories %}
+      <option value="{{ cat.code }}" {% if filters.category == cat.code %}selected{% endif %}>{{ cat.label_ar }} • {{ cat.duration_minutes }}د</option>
+      {% endfor %}
+    </select>
+    <select name="state" id="inv-state" class="hub-search-select">
+      <option value="all" {% if filters.state == 'all' %}selected{% endif %}>الكل</option>
+      <option value="available" {% if filters.state == 'available' %}selected{% endif %}>متاحة فقط</option>
+      <option value="issued" {% if filters.state == 'issued' %}selected{% endif %}>صادرة فقط</option>
+    </select>
+    <select name="limit" id="inv-limit" class="hub-search-select" title="عدد النتائج">
+      {% for n in [25, 50, 100, 200, 500] %}
+      <option value="{{ n }}" {% if filters.limit == n %}selected{% endif %}>{{ n }}</option>
+      {% endfor %}
+    </select>
+    <button type="button" class="hub-search-clear" id="inv-clear-btn" title="مسح"><i class="fa-solid fa-xmark"></i></button>
+  </form>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list"></i>جدول البطاقات</h3>
+    <span style="font-size:12px;color:var(--d-text-muted)">
+      يعرض <span id="inv-results-count">{{ recent_cards|length }}</span> من أصل {{ filtered_total }} بطاقة
+      · متاحة {{ available_count }} · صادرة {{ issued_count }}
+    </span>
+  </div>
+  <form method="POST" action="{{ url_for('admin_cards_inventory_delete_selected') }}">
+    {{ csrf_token_input() | safe }}
+    <div class="d-card-body" style="padding-top:6px;padding-bottom:6px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <button class="d-pill-btn d-pill-btn--danger" type="submit"
+              onclick="return confirm('حذف البطاقات المتاحة المحددة؟ البطاقات الصادرة لن تُحذف.')">
+        <i class="fa-solid fa-trash-can"></i>حذف المحدد
+      </button>
+      <span class="inv-muted" style="margin:0">التحديد والحذف يعملان على البطاقات المتاحة فقط. الصادرة تبقى محفوظة كسجل.</span>
+    </div>
+
+    <div class="d-card-body--flush d-table-wrap">
+      <table class="d-table inv-table" id="inv-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="cards-inventory">
+        <thead>
+          <tr>
+            <th style="width:36px"><input class="inv-check" type="checkbox" id="select-all-cards"></th>
+            <th style="width:70px">#</th>
+            <th>الحالة</th>
+            <th>الفئة</th>
+            <th>البطاقة</th>
+            <th>المستفيد</th>
+            <th>الاتصال</th>
+            <th>المصدر</th>
+            <th style="width:90px">إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="inv-tbody">
+          {% for c in recent_cards %}
+          {% set st = c.status %}
+          <tr data-inventory-row="{{ c.row_key }}">
+            <td>
+              {% if c.is_available %}
+              <input class="inv-check card-row-check" type="checkbox" name="card_ids" value="{{ c.source_id }}">
+              {% else %}
+              <span class="inv-muted" style="margin:0">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <b>#{{ c.source_id }}</b>
+              <span class="inv-muted">{{ 'مخزون' if c.is_available else 'إصدار' }}</span>
+            </td>
+            <td>
+              <span class="d-badge inv-state {% if c.is_available %}inv-state--available{% else %}inv-state--issued{% endif %}">
+                {{ c.inventory_state_label }}
+              </span>
+              <span class="inv-muted">{{ st.status_label }}</span>
+            </td>
+            <td><span class="d-badge">{{ c.category_label or (c.duration_minutes ~ ' دقيقة') }}</span></td>
+            <td>
+              <div class="inv-card-cell">
+                <span class="u">{{ c.card_username }}</span>
+                <span class="p">{{ c.card_password }}</span>
+              </div>
+            </td>
+            <td>
+              {% if c.is_available %}
+              <span class="inv-muted" style="margin:0">لم تُصرف بعد</span>
+              {% else %}
+              <b>{{ c.beneficiary_name or 'مشترك غير محدد' }}</b>
+              <span class="inv-muted">{{ c.beneficiary_phone or '—' }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if c.is_available %}
+              <span class="inv-muted" style="margin:0">—</span>
+              {% else %}
+              <div class="inv-conn">
+                <span class="inv-conn-row">
+                  <span class="inv-conn-dot {% if st.is_online %}on{% else %}off{% endif %}"></span>
+                  <b>{{ 'متصلة' if st.is_online else 'غير متصلة' }}</b>
+                </span>
+                <span class="inv-conn-row" title="مستخدم / متبقي">
+                  <i class="fa-regular fa-clock"></i>
+                  <b>{{ st.used_label }}</b> / <span>متبقي:</span> {{ st.remaining_label }}
+                </span>
+                <span class="inv-conn-row" title="تحميل / رفع">
+                  <i class="fa-solid fa-arrow-down"></i>
+                  <span>تحميل:</span>
+                  <b>{{ st.download_label }}</b>
+                  <i class="fa-solid fa-arrow-up" style="margin-inline-start:4px"></i>
+                  <span>رفع:</span>
+                  {{ st.upload_label }}
+                </span>
+                <span class="inv-conn-row">
+                  <i class="fa-solid fa-globe"></i>
+                  <span class="mono">{{ st.framed_ip or '—' }}</span>
+                </span>
+              </div>
+              {% endif %}
+            </td>
+            <td>
+              <div class="inv-meta">
+                {% if c.is_available %}
+                <b>{{ 'ملف مستورد' if c.source_file else '—' }}</b>
+                <small>{{ c.created_at or '—' }}</small>
+                <small>بواسطة {{ c.imported_by_username or '—' }}</small>
+                {% else %}
+                <b>تم الإصدار</b>
+                <small>{{ c.issued_at or '—' }}</small>
+                <small>بواسطة {{ c.issued_by or '—' }}</small>
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              {% if c.is_available %}
+              <button class="inv-del-btn" type="submit"
+                      formaction="{{ url_for('admin_cards_inventory_delete_one', card_id=c.source_id) }}"
+                      formmethod="POST"
+                      onclick="return confirm('حذف هذه البطاقة من المخزون المتاح؟')">
+                <i class="fa-solid fa-trash-can"></i>حذف
+              </button>
+              {% else %}
+              <span class="inv-muted" style="margin:0">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr class="no-paginate"><td colspan="9" style="text-align:center;color:var(--d-text-muted);padding:28px">لا توجد بطاقات مطابقة.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+</section>
+
+<script>
+(function(){
+  function bindSelectAll(){
+    var all = document.getElementById('select-all-cards');
+    if(!all) return;
+    if(all.__bound) return; all.__bound = true;
+    all.addEventListener('change', function(){
+      document.querySelectorAll('.card-row-check').forEach(function(item){
+        item.checked = all.checked;
+      });
+    });
+  }
+  bindSelectAll();
+  window.__invBindAfterRerender = bindSelectAll;
+})();
+</script>
+
+<script src="{{ url_for('static', filename='js/dashboard_hub_search.js') }}"></script>
+<script>
+(function(){
+  if(!window.HubSearch) return;
+  window.HubSearch.attach({
+    formId: 'inv-filter-form',
+    tbodyId: 'inv-tbody',
+    tableId: 'inv-table',
+    statusId: 'inv-search-status',
+    countId: 'inv-results-count',
+    clearBtnId: 'inv-clear-btn',
+    afterRender: function(){
+      if(typeof window.__invBindAfterRerender === 'function') window.__invBindAfterRerender();
+    }
+  });
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}اختبار AdvRadius App API{% endblock %}
+{% block page_title %}اختبار AdvRadius App API{% endblock %}
+{% block crumbs %}<span>الإدارة</span><i class="fa-solid fa-chevron-left"></i><span>RADIUS</span><i class="fa-solid fa-chevron-left"></i><span>اختبار التطبيق</span>{% endblock %}
+
+{% block head_extra %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.payload-box{padding:14px;border-radius:11px;background:#1E1E1E;color:#FFD96A;font-family:monospace;font-size:12.5px;line-height:1.7;overflow:auto;max-height:340px;white-space:pre-wrap;word-break:break-all}
+</style>{% endblock %}
+
+{% block content %}
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for cat,msg in msgs %}<div style="padding:11px 14px;border-radius:11px;margin-bottom:12px;font-weight:700;{% if cat=='success' %}background:#e8f6ee;color:#1f8f51{% else %}background:#fde2e2;color:#b91c1c{% endif %}">{{ msg }}</div>{% endfor %}{% endwith %}
+
+<section class="d-hero">
+  <div><h2>🧪 اختبار AdvRadius App API</h2><p>تجريب /login ثم /details باستخدام بيانات البيئة الحالية. مفيد للتحقق من الاتصال.</p></div>
+  <div class="d-hero-actions"><a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('radius_settings_page') }}"><i class="fa-solid fa-arrow-right"></i>العودة لإعدادات RADIUS</a></div>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-play"></i>تشغيل الاختبار</h3></div>
+  <div class="d-card-body">
+    <p style="margin:0 0 12px;font-size:13.5px;color:var(--d-text-soft)">سيتم استدعاء <code>/login</code> ثم <code>/details</code> باستخدام رؤوس <code>adv_auth</code> من متغيرات البيئة.</p>
+    <form method="POST">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <button type="submit" class="d-pill-btn"><i class="fa-solid fa-flask"></i>تشغيل الاختبار الآن</button>
+    </form>
+  </div>
+</section>
+
+{% if result %}
+<div class="d-grid-2" style="margin-top:14px">
+  <section class="d-card">
+    <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-id-card"></i>بيانات الحساب</h3></div>
+    <div class="d-card-body"><div class="payload-box">{{ account_json }}</div></div>
+  </section>
+  <section class="d-card">
+    <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-list"></i>استجابة /details</h3></div>
+    <div class="d-card-body"><div class="payload-box">{{ details_json }}</div></div>
+  </section>
+</div>
+{% endif %}
+{% endblock %}

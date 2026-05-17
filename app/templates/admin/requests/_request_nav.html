@@ -1,0 +1,32 @@
+{% set p = request.path %}
+{% set t = request.args.get('type', 'all') %}
+<style>
+.request-subnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.request-subnav a{
+  display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;
+  border:1px solid var(--d-border-strong);background:#fff;color:var(--d-text-soft);
+  font-size:12.5px;font-weight:800;text-decoration:none;transition:var(--d-transition)
+}
+.request-subnav a:hover{border-color:var(--d-gold);color:var(--d-black)}
+.request-subnav a.is-active{background:var(--d-black);border-color:var(--d-black);color:#fff}
+.request-subnav a.is-secondary{border-style:dashed}
+</style>
+<nav class="request-subnav" aria-label="تنقل مركز الطلبات">
+  <a class="{% if p == '/admin/requests' and t in ['all', ''] %}is-active{% endif %}" href="{{ url_for('admin_request_center') }}">
+    <i class="fa-solid fa-inbox"></i>كل الطلبات
+  </a>
+  <a class="{% if p == '/admin/requests' and t == 'internet' %}is-active{% endif %}" href="{{ url_for('admin_request_center', type='internet') }}">
+    <i class="fa-solid fa-bolt"></i>الإنترنت
+  </a>
+  <a class="{% if p == '/admin/requests' and t == 'user' %}is-active{% endif %}" href="{{ url_for('admin_request_center', type='user') }}">
+    <i class="fa-solid fa-circle-user"></i>حسابات الإنترنت
+  </a>
+  <a class="{% if p == '/admin/requests' and t == 'card' %}is-active{% endif %}" href="{{ url_for('admin_request_center', type='card') }}">
+    <i class="fa-solid fa-ticket"></i>البطاقات
+  </a>
+  {% if p.startswith('/admin/internet-requests') or p.startswith('/admin/users-account/requests') or p == '/admin/cards/pending' %}
+  <a class="is-active is-secondary" href="{{ request.full_path.rstrip('?') }}">
+    <i class="fa-solid fa-screwdriver-wrench"></i>صفحة تنفيذ فنية
+  </a>
+  {% endif %}
+</nav>

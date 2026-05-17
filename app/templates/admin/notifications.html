@@ -1,0 +1,87 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}مركز إشعارات الإدارة{% endblock %}
+{% block page_title %}مركز إشعارات الإدارة{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>الإشعارات</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<style>
+.notice-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.notice-stats{display:flex;gap:8px;flex-wrap:wrap}
+.notice-list{display:grid;gap:10px}
+.notice-item{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:14px 16px;border:1px solid var(--d-border);border-radius:12px;background:#fff}
+.notice-item.is-read{background:#fbfaf7;opacity:.84}
+.notice-main{min-width:0}
+.notice-title{font-size:13.5px;font-weight:900;color:var(--d-black);display:flex;align-items:center;gap:7px}
+.notice-title i{color:var(--d-gold)}
+.notice-meta{margin-top:4px;font-size:11.5px;color:var(--d-text-muted)}
+.notice-text{margin-top:5px;font-size:12.5px;color:var(--d-text-soft);line-height:1.6}
+.notice-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.notice-badge{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;border-radius:999px;padding:4px 10px;background:var(--d-gold-faint);color:#7c2d12;font-size:11px;font-weight:900}
+.notice-empty{padding:28px;text-align:center;color:var(--d-text-muted);background:#fff;border:1px dashed var(--d-border-strong);border-radius:12px}
+.notice-form{margin:0}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="d-hero">
+  <div>
+    <h2>مركز إشعارات الإدارة</h2>
+    <p>آخر تنبيهات النظام وطلبات المشتركين في مكان واحد، مع حالة قراءة واضحة لكل إشعار.</p>
+  </div>
+  <div class="d-hero-actions">
+    <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_request_center') }}"><i class="fa-solid fa-inbox"></i>مركز الطلبات</a>
+    <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('audit_log_page') }}"><i class="fa-solid fa-clock-rotate-left"></i>سجل العمليات</a>
+  </div>
+</section>
+
+<section class="d-card notice-grid">
+  <div class="d-card-body">
+    <div class="notice-toolbar">
+      <div class="notice-stats">
+        <span class="notice-badge">{{ unread_count }} غير مقروء</span>
+        <span class="notice-badge">{{ read_count }} مقروء</span>
+      </div>
+      <form class="notice-form" method="POST" action="{{ url_for('admin_notifications_mark_all_read') }}">
+        <button class="d-pill-btn d-pill-btn--ghost" type="submit"><i class="fa-solid fa-check-double"></i>تعليم الكل كمقروء</button>
+      </form>
+    </div>
+
+    <div class="notice-list">
+      {% for item in rows %}
+      <div class="notice-item {% if item.read_at %}is-read{% endif %}">
+        <div class="notice-main">
+          <div class="notice-title">
+            <i class="fa-solid {% if item.read_at %}fa-circle-check{% else %}fa-circle-dot{% endif %}"></i>
+            {{ item.title }}
+          </div>
+          <div class="notice-meta">#{{ item.id }} · {{ item.created_at or '—' }}{% if item.actor_name %} · {{ item.actor_name }}{% endif %}</div>
+          <div class="notice-text">{{ item.body or 'تحديث في النظام' }}</div>
+        </div>
+        <div class="notice-actions">
+          <span class="notice-badge">{{ status_label(item.status) }}</span>
+          {% if item.action_url %}
+          <a class="d-card-action" href="{{ item.action_url }}"><i class="fa-solid fa-arrow-up-left-from-circle"></i>فتح</a>
+          {% endif %}
+          {% if item.read_at %}
+          <form class="notice-form" method="POST" action="{{ url_for('admin_notification_mark_unread', notification_id=item.id) }}">
+            <button class="d-card-action" type="submit"><i class="fa-regular fa-envelope"></i>غير مقروء</button>
+          </form>
+          {% else %}
+          <form class="notice-form" method="POST" action="{{ url_for('admin_notification_mark_read', notification_id=item.id) }}">
+            <button class="d-card-action" type="submit"><i class="fa-regular fa-envelope-open"></i>مقروء</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="notice-empty">لا توجد إشعارات بعد.</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

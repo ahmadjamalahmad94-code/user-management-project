@@ -1,0 +1,172 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}إعدادات RADIUS{% endblock %}
+{% block page_title %}إعدادات RADIUS{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>RADIUS</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>الإعدادات</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.rad-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.rad-grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px}
+
+.env-pill{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+  border-radius:999px;font-size:11.5px;font-weight:700;
+}
+.env-ok{background:#e8f6ee;color:#1f8f51}
+.env-missing{background:#fde2e2;color:#b91c1c}
+.env-default{background:#FDF1CF;color:#7c2d12}
+
+.flash-box{
+  margin-bottom:14px;padding:12px 16px;border-radius:12px;
+  font-size:13px;font-weight:600;
+}
+.flash-success{background:#e8f6ee;color:#1f8f51;border:1px solid rgba(31,143,81,.3)}
+.flash-error{background:#fde2e2;color:#b91c1c;border:1px solid rgba(185,28,28,.3)}
+.flash-info{background:#e7f0fd;color:#1c52a8;border:1px solid rgba(28,82,168,.3)}
+
+.dev-note{
+  margin-top:8px;padding:10px 14px;border-radius:12px;
+  background:rgba(244,186,42,.10);border:1px dashed rgba(244,186,42,.45);
+  color:#7c2d12;font-size:12.5px;
+}
+
+.field-row{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field-row label{font-size:12.5px;font-weight:700;color:var(--d-text)}
+.field-row input, .field-row select{
+  padding:9px 12px;border-radius:10px;
+  border:1px solid var(--d-border-strong);
+  font-size:13px;font-family:inherit;
+}
+.field-row input:focus, .field-row select:focus{
+  outline:0;border-color:var(--d-gold);
+  box-shadow:0 0 0 3px rgba(244,186,42,.2);
+}
+
+.kv-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--d-border)}
+.kv-row:last-child{border-bottom:0}
+.kv-row .k{font-size:12px;color:var(--d-text-soft);font-weight:700}
+.kv-row .v{font-size:12px;color:var(--d-black);font-family:monospace}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# Hero #}
+<section class="d-hero">
+  <div>
+    <h2>إعدادات RADIUS API</h2>
+    <p>الإعدادات العامة محفوظة في قاعدة البيانات. أسرار الـ API تُقرأ فقط من متغيرات البيئة لا من هنا.</p>
+    <div class="dev-note">
+      <i class="fa-solid fa-circle-info"></i> الكتابة عبر الـ API <strong>قيد التطوير</strong> — حاليًا القراءة فقط مفعّلة.
+    </div>
+  </div>
+  <div class="d-hero-actions">
+    <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_radius_online') }}">
+      <i class="fa-solid fa-wifi"></i>المتصلون الآن
+    </a>
+    <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_api_test') }}">
+      <i class="fa-solid fa-plug"></i>اختبار الـ API
+    </a>
+  </div>
+</section>
+
+{% if test_message %}
+<div class="flash-box flash-{{ test_category }}">{{ test_message }}</div>
+{% endif %}
+
+<div class="rad-grid" style="margin-top:8px">
+  {# ─── Form: edit DB settings ─── #}
+  <section class="d-card">
+    <div class="d-card-head">
+      <h3 class="d-card-title"><i class="fa-solid fa-sliders"></i>الإعدادات المحلية</h3>
+    </div>
+    <div class="d-card-body">
+      <form method="POST">
+        {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+        <input type="hidden" name="action" value="save">
+        <div class="field-row">
+          <label>Base URL <small style="color:var(--d-text-muted);font-weight:400">(يجب أن ينتهي بـ /app_ad2)</small></label>
+          <input name="base_url" value="{{ settings.base_url or '' }}" placeholder="https://host/app_ad2">
+        </div>
+        <div class="field-row">
+          <label>اسم المستخدم الإداري</label>
+          <input name="admin_username" value="{{ settings.admin_username or '' }}" placeholder="sub-admin (تجنّب 'admin' المالك)">
+        </div>
+        <div class="field-row">
+          <label>اسم مستخدم الخدمة</label>
+          <input name="service_username" value="{{ settings.service_username or '' }}">
+        </div>
+        <div class="field-row">
+          <label>تفعيل التكامل</label>
+          <select name="api_enabled">
+            <option value="1" {% if settings.api_enabled %}selected{% endif %}>مفعَّل</option>
+            <option value="0" {% if not settings.api_enabled %}selected{% endif %}>متوقَّف</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="d-pill-btn" type="submit"><i class="fa-solid fa-floppy-disk"></i>حفظ</button>
+          <button class="d-pill-btn d-pill-btn--ghost" type="submit" name="action" value="test">
+            <i class="fa-solid fa-flask"></i>حفظ + اختبار
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  {# ─── Env vars status ─── #}
+  <section class="d-card">
+    <div class="d-card-head">
+      <h3 class="d-card-title"><i class="fa-solid fa-key"></i>حالة متغيرات البيئة</h3>
+    </div>
+    <div class="d-card-body">
+      <p style="font-size:12px;color:var(--d-text-muted);margin:0 0 14px">الأسرار لا تُحفظ في DB. تُقرأ فقط من متغيرات النظام للأمان.</p>
+
+      <div class="kv-row">
+        <span class="k">RADIUS_API_BASE_URL</span>
+        <span class="v">
+          {% if env_status.base %}<span class="env-pill env-ok">موجود</span>{% else %}<span class="env-pill env-missing">غير موجود</span>{% endif %}
+        </span>
+      </div>
+      <div class="kv-row">
+        <span class="k">RADIUS_API_MASTER_KEY</span>
+        <span class="v">
+          {% if env_status.master %}<span class="env-pill env-ok">موجود</span>{% else %}<span class="env-pill env-missing">غير موجود</span>{% endif %}
+        </span>
+      </div>
+      <div class="kv-row">
+        <span class="k">RADIUS_API_USERNAME</span>
+        <span class="v">
+          {% if env_status.user %}<span class="env-pill env-ok">موجود</span>{% else %}<span class="env-pill env-missing">غير موجود</span>{% endif %}
+        </span>
+      </div>
+      <div class="kv-row">
+        <span class="k">RADIUS_API_PASSWORD</span>
+        <span class="v">
+          {% if env_status.password %}<span class="env-pill env-ok">موجود</span>{% else %}<span class="env-pill env-missing">غير موجود</span>{% endif %}
+        </span>
+      </div>
+      <div class="kv-row">
+        <span class="k">RADIUS_MODE</span>
+        <span class="v">{{ env_mode or 'manual' }}</span>
+      </div>
+      <div class="kv-row">
+        <span class="k">RADIUS_API_READY</span>
+        <span class="v">{% if env_ready %}<span class="env-pill env-ok">1 (قراءة فعّالة)</span>{% else %}<span class="env-pill env-default">0 (موقَفة)</span>{% endif %}</span>
+      </div>
+      <div class="kv-row">
+        <span class="k">RADIUS_API_WRITES_ENABLED</span>
+        <span class="v">{% if env_writes %}<span class="env-pill env-ok">1</span>{% else %}<span class="env-pill env-default">0 (قيد التطوير)</span>{% endif %}</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %}

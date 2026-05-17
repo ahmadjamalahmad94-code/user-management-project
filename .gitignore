@@ -1,0 +1,42 @@
+# Local secrets and environment
+.env
+.env.*
+!.env.example
+
+# Runtime data
+instance/
+*.sqlite3
+*.db
+*.log
+tmp_*.html
+backups/
+
+# User uploads (private content)
+uploads/user_attachments/
+uploads/temp/
+uploads/imports/
+
+# Python cache and local tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build and coverage output
+build/
+dist/
+coverage/
+.coverage
+htmlcov/
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

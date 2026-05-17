@@ -1,0 +1,430 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}{{ form_title }}{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>النظام</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>{{ form_title }}</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+/* Hero بسيط مميّز لرأس الصفحة */
+.acc-hero{
+  background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 70%,#3a3633 100%);
+  color:#fff;border-radius:18px;padding:22px 26px;margin-bottom:20px;
+  display:flex;align-items:center;gap:16px;position:relative;overflow:hidden;
+  box-shadow:0 12px 32px rgba(30,30,30,.18);
+}
+.acc-hero::before{
+  content:"";position:absolute;top:-50px;inset-inline-end:-50px;width:180px;height:180px;
+  border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.25),transparent 70%);
+  pointer-events:none;
+}
+.acc-hero-ico{
+  width:54px;height:54px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--d-gold),#FFD96A);color:#1E1E1E;font-size:22px;
+  flex-shrink:0;
+}
+.acc-hero h2{margin:0 0 4px;font-size:18px;font-weight:900;letter-spacing:-.2px}
+.acc-hero p{margin:0;font-size:12.5px;color:rgba(255,255,255,.70);line-height:1.7}
+
+/* Form fields */
+.f-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.f-field{display:flex;flex-direction:column;gap:7px}
+.f-field.full{grid-column:1 / -1}
+.f-field label{font-size:13px;font-weight:800;color:var(--d-text)}
+.f-field label .req{color:#b91c1c;margin-inline-start:3px}
+.f-field label .hint{font-size:11px;color:var(--d-text-muted);font-weight:600;margin-inline-start:6px}
+.f-field input, .f-field select{
+  padding:13px 16px;border-radius:12px;
+  border:1.5px solid var(--d-border-strong);
+  font-size:14px;font-family:inherit;background:#fff;
+  transition:.18s ease;
+}
+.f-field input:focus, .f-field select:focus{
+  outline:0;border-color:var(--d-gold);background:#fff;
+  box-shadow:0 0 0 4px rgba(244,186,42,.20);
+}
+
+/* Section card with stronger visual identity */
+.section-card{
+  margin-bottom:18px;overflow:hidden;
+  background:#fff;border:1px solid var(--d-border);border-radius:16px;
+  box-shadow:0 1px 3px rgba(30,30,30,.04);
+}
+/* اختلاف لوني خفيف بين الأقسام */
+.section-card--info{background:#fff;border-color:#e8e2d5}
+.section-card--perms{background:#fcfbf7;border-color:#ead9b5}
+
+.section-head{
+  display:flex;align-items:center;gap:12px;
+  padding:16px 22px;border-bottom:1px solid var(--d-border);
+  background:linear-gradient(90deg,#fbfaf7,#fff);
+}
+.section-card--perms .section-head{
+  background:linear-gradient(90deg,#fff7df,#fffaef);
+  border-bottom-color:#ead9b5;
+}
+.section-head-ico{
+  width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  background:var(--d-gold-faint,#FDF1CF);color:var(--d-gold-deep,#D8A11C);
+  font-size:15px;flex-shrink:0;
+}
+.section-card--perms .section-head-ico{
+  background:linear-gradient(135deg,var(--d-gold),#FFD96A);color:#1E1E1E;
+}
+.section-head h3{margin:0;font-size:16px;font-weight:900;color:var(--d-black);letter-spacing:-.2px}
+.section-head p{margin:2px 0 0;font-size:12px;color:var(--d-text-soft);font-weight:700}
+.section-body{padding:20px 22px}
+
+.perm-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.perm-help{margin:0;color:var(--d-text-muted);font-size:12.5px;line-height:1.7}
+.perm-count{
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  padding:8px 11px;border-radius:999px;background:#fff8e6;
+  border:1px solid rgba(244,186,42,.45);font-size:12px;font-weight:800;color:#7c2d12;
+}
+.perm-toolbar{
+  display:grid;grid-template-columns:minmax(220px,1fr) auto;
+  gap:10px;align-items:center;margin-bottom:14px;
+  padding:10px;border-radius:8px;background:#fffaf0;
+  border:1px dashed rgba(244,186,42,.42);
+}
+.perm-search{
+  display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--d-border);
+  border-radius:8px;padding:0 10px;min-height:42px;
+}
+.perm-search i{color:var(--d-text-muted)}
+.perm-search input{
+  border:0;outline:0;width:100%;font-family:inherit;font-size:13px;background:transparent;color:var(--d-text);
+}
+.perm-bulk-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.perm-bulk-btn,.perm-group-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  min-height:38px;padding:8px 12px;border-radius:8px;
+  background:#fff;border:1px solid var(--d-border-strong);
+  color:var(--d-text);font-size:12.5px;font-weight:800;cursor:pointer;
+  font-family:inherit;transition:.18s ease;white-space:nowrap;
+}
+.perm-bulk-btn:hover,.perm-group-btn:hover{background:var(--d-black);color:#fff;border-color:var(--d-black)}
+.perm-groups{display:grid;gap:12px}
+.perm-group{
+  border:1px solid var(--d-border);border-radius:8px;background:#fff;
+  overflow:hidden;
+}
+.perm-group-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:12px 14px;background:#fbfaf7;border-bottom:1px solid var(--d-border);
+}
+.perm-group-title{display:flex;align-items:flex-start;gap:10px;min-width:220px}
+.perm-group-title i{
+  width:34px;height:34px;border-radius:8px;background:#fff4d6;color:#111;
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+}
+.perm-group-title strong{display:block;font-size:14px;color:var(--d-text);line-height:1.4}
+.perm-group-title small{display:block;color:var(--d-text-muted);font-size:11.8px;line-height:1.6;margin-top:2px}
+.perm-group-actions{display:flex;gap:7px;flex-wrap:wrap}
+.perm-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:9px;
+  padding:12px;background:#fff;
+}
+.perm-card{
+  min-height:74px;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:flex-start;
+  padding:11px;border-radius:8px;background:#FAFAF8;border:1px solid var(--d-border);
+  cursor:pointer;transition:.18s ease;position:relative;
+}
+.perm-card:hover{border-color:rgba(244,186,42,.8);box-shadow:0 6px 14px rgba(30,30,30,.06)}
+.perm-card.is-checked{
+  background:#fff;border-color:var(--d-gold);
+  box-shadow:inset 0 0 0 1px rgba(244,186,42,.55),0 6px 16px rgba(244,186,42,.12);
+}
+.perm-card input{
+  margin:2px 0 0;width:18px;height:18px;accent-color:var(--d-gold);flex-shrink:0;
+}
+.perm-card .perm-text{min-width:0}
+.perm-card .perm-title{
+  display:block;font-size:13.2px;font-weight:900;color:var(--d-text);line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.perm-card .perm-desc{
+  display:block;font-size:11.5px;color:var(--d-text-soft);line-height:1.55;margin-top:3px;
+  overflow-wrap:anywhere;
+}
+.perm-card.is-hidden{display:none}
+.perm-group.is-hidden{display:none}
+.perm-empty-search{
+  display:none;padding:16px;text-align:center;color:var(--d-text-muted);
+  border:1px dashed var(--d-border);border-radius:8px;background:#fff;
+}
+.perm-empty-search.is-visible{display:block}
+@media (max-width:780px){
+  .perm-toolbar{grid-template-columns:1fr}
+  .perm-bulk-bar{justify-content:flex-start}
+  .perm-grid{grid-template-columns:1fr}
+}
+
+.actions-bar{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.btn-primary-big{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 26px;border-radius:12px;
+  background:linear-gradient(135deg,#F4BA2A 0%,#FFD96A 100%);
+  color:#1E1E1E;font-size:15px;font-weight:800;
+  border:0;cursor:pointer;font-family:inherit;
+  box-shadow:0 6px 18px rgba(244,186,42,.30);transition:.18s ease;
+}
+.btn-primary-big:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(244,186,42,.40)}
+.btn-ghost-big{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 22px;border-radius:12px;
+  background:#FAFAF8;border:1px solid var(--d-border-strong);
+  color:var(--d-text);text-decoration:none;font-size:14px;font-weight:700;font-family:inherit;
+}
+.btn-ghost-big:hover{background:#F4F3EF}
+
+.flash-toast{padding:11px 14px;border-radius:11px;margin-bottom:14px;font-size:13.5px;font-weight:700}
+.flash-success{background:#e8f6ee;color:#1f8f51;border:1px solid rgba(31,143,81,.3)}
+.flash-error{background:#fde2e2;color:#b91c1c;border:1px solid rgba(185,28,28,.3)}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in msgs %}
+    <div class="flash-toast flash-{{ 'success' if cat=='success' else 'error' }}">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+<section class="acc-hero">
+  <span class="acc-hero-ico"><i class="fa-solid fa-user-shield"></i></span>
+  <div>
+    <h2>{{ form_title }}</h2>
+    <p>أنشئ حسابًا إداريًا جديدًا وحدّد له الصلاحيات المناسبة لمجال عمله داخل النظام.</p>
+  </div>
+</section>
+
+<form method="POST" id="acc-form">
+  {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+
+  <section class="section-card section-card--info">
+    <div class="section-head">
+      <span class="section-head-ico"><i class="fa-solid fa-id-badge"></i></span>
+      <div>
+        <h3>بيانات المدير</h3>
+        <p>اسم المستخدم وكلمة المرور المستعملان للدخول إلى لوحة الإدارة</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="f-grid">
+        <div class="f-field">
+          <label>اسم المستخدم <span class="req">*</span></label>
+          <input name="username" value="{{ data.username or '' }}" required placeholder="مثلاً: admin">
+        </div>
+        <div class="f-field">
+          <label>كلمة المرور {% if is_edit %}<span class="hint">(اتركها فارغة بدون تغيير)</span>{% else %}<span class="req">*</span>{% endif %}</label>
+          <input type="password" name="password" {% if not is_edit %}required{% endif %} autocomplete="new-password" placeholder="••••••••">
+        </div>
+        <div class="f-field full">
+          <label>الاسم الكامل</label>
+          <input name="full_name" value="{{ data.full_name or '' }}" placeholder="مثلاً: محمد سالم العبد">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-card section-card--perms">
+    <div class="section-head">
+      <span class="section-head-ico"><i class="fa-solid fa-shield-halved"></i></span>
+      <div>
+        <h3>الصلاحيات</h3>
+        <p>اختر ما يستطيع هذا المدير الوصول إليه أو تعديله داخل النظام</p>
+      </div>
+    </div>
+    <div class="section-body">
+
+    <div class="perm-topline">
+      <p class="perm-help">اختر الصلاحيات حسب مجال العمل. كل بطاقة تمثل قدرة واضحة داخل النظام، ويمكن تحديد مجموعة كاملة بضغطة واحدة.</p>
+      <span class="perm-count" id="perm-count"><i class="fa-solid fa-shield-halved"></i><span>0 صلاحية محددة</span></span>
+    </div>
+
+    <div class="perm-toolbar">
+      <label class="perm-search" for="perm-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="perm-search" type="search" placeholder="بحث في الصلاحيات...">
+      </label>
+      <div class="perm-bulk-bar">
+        <button type="button" class="perm-bulk-btn" data-action="select-all"><i class="fa-solid fa-check-double"></i>تحديد الكل</button>
+        <button type="button" class="perm-bulk-btn" data-action="clear-all"><i class="fa-solid fa-xmark"></i>إلغاء الكل</button>
+        <button type="button" class="perm-bulk-btn" data-action="view-only"><i class="fa-solid fa-eye"></i>عرض فقط</button>
+        <button type="button" class="perm-bulk-btn" data-action="card-supervisor"><i class="fa-solid fa-ticket"></i>مشرف بطاقات</button>
+      </div>
+    </div>
+
+    <div class="perm-groups" id="perm-grid">
+      {% set ns = namespace(grouped=[]) %}
+      {% for group in permission_groups %}
+        {% set ns.grouped = ns.grouped + group.permissions %}
+        <section class="perm-group" data-perm-group="{{ group.key }}">
+          <div class="perm-group-head">
+            <div class="perm-group-title">
+              <i class="fa-solid {{ group.icon }}"></i>
+              <span>
+                <strong>{{ group.title }}</strong>
+                <small>{{ group.description }}</small>
+              </span>
+            </div>
+            <div class="perm-group-actions">
+              <button type="button" class="perm-group-btn" data-group-action="select" data-group="{{ group.key }}"><i class="fa-solid fa-check"></i>تحديد المجموعة</button>
+              <button type="button" class="perm-group-btn" data-group-action="clear" data-group="{{ group.key }}"><i class="fa-solid fa-minus"></i>إلغاء المجموعة</button>
+            </div>
+          </div>
+          <div class="perm-grid">
+            {% for p in group.permissions if p in permissions %}
+            <label class="perm-card {% if p in assigned %}is-checked{% endif %}" data-group="{{ group.key }}" data-search="{{ (permission_label(p) ~ ' ' ~ permission_descriptions.get(p, '') ~ ' ' ~ p)|lower }}">
+              <input type="checkbox" name="permissions" value="{{ p }}" {% if p in assigned %}checked{% endif %}>
+              <span class="perm-text">
+                <span class="perm-title">{{ permission_label(p) }}</span>
+                <span class="perm-desc">{{ permission_descriptions.get(p, '') }}</span>
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+        </section>
+      {% endfor %}
+
+      {% set extra = namespace(items=[]) %}
+      {% for p in permissions if p not in ns.grouped %}
+        {% set extra.items = extra.items + [p] %}
+      {% endfor %}
+      {% if extra.items %}
+      <section class="perm-group" data-perm-group="other">
+        <div class="perm-group-head">
+          <div class="perm-group-title">
+            <i class="fa-solid fa-puzzle-piece"></i>
+            <span>
+              <strong>صلاحيات إضافية</strong>
+              <small>صلاحيات لم يتم تصنيفها بعد.</small>
+            </span>
+          </div>
+        </div>
+        <div class="perm-grid">
+          {% for p in extra.items %}
+          <label class="perm-card {% if p in assigned %}is-checked{% endif %}" data-group="other" data-search="{{ (permission_label(p) ~ ' ' ~ permission_descriptions.get(p, '') ~ ' ' ~ p)|lower }}">
+            <input type="checkbox" name="permissions" value="{{ p }}" {% if p in assigned %}checked{% endif %}>
+            <span class="perm-text">
+              <span class="perm-title">{{ permission_label(p) }}</span>
+              <span class="perm-desc">{{ permission_descriptions.get(p, '') }}</span>
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+    </div>
+    <div class="perm-empty-search" id="perm-empty-search">لا توجد صلاحيات مطابقة للبحث.</div>
+    </div>
+  </section>
+
+  <div class="actions-bar">
+    <a class="btn-ghost-big" href="/admin/accounts"><i class="fa-solid fa-arrow-right"></i> إلغاء</a>
+    <button type="submit" class="btn-primary-big">
+      <i class="fa-solid fa-floppy-disk"></i> {{ 'حفظ التعديلات' if is_edit else 'إنشاء المدير' }}
+    </button>
+  </div>
+</form>
+
+<script>
+(function(){
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.perm-card'));
+  var groups = Array.prototype.slice.call(document.querySelectorAll('.perm-group'));
+  var countBox = document.getElementById('perm-count');
+  var emptySearch = document.getElementById('perm-empty-search');
+  var searchInput = document.getElementById('perm-search');
+
+  function checkbox(card){ return card.querySelector('input[type=checkbox]'); }
+  function setCard(card, checked){
+    var cb = checkbox(card);
+    if(!cb) return;
+    cb.checked = checked;
+    card.classList.toggle('is-checked', checked);
+  }
+  function selectedValues(){
+    return cards.map(function(card){ return checkbox(card); }).filter(function(cb){ return cb && cb.checked; }).map(function(cb){ return cb.value; });
+  }
+  function updateCount(){
+    var count = selectedValues().length;
+    var label = count === 0 ? 'لا توجد صلاحيات محددة' : (count === 1 ? 'صلاحية واحدة محددة' : count + ' صلاحية محددة');
+    if(countBox){ countBox.querySelector('span').textContent = label; }
+  }
+  function applyPreset(values){
+    var lookup = {};
+    values.forEach(function(v){ lookup[v] = true; });
+    cards.forEach(function(card){
+      var cb = checkbox(card);
+      setCard(card, !!(cb && lookup[cb.value]));
+    });
+    updateCount();
+  }
+  function filterCards(){
+    var term = (searchInput && searchInput.value || '').trim().toLowerCase();
+    var visibleCards = 0;
+    cards.forEach(function(card){
+      var haystack = (card.dataset.search || '').toLowerCase();
+      var visible = !term || haystack.indexOf(term) !== -1;
+      card.classList.toggle('is-hidden', !visible);
+      if(visible){ visibleCards++; }
+    });
+    groups.forEach(function(group){
+      var visibleInGroup = group.querySelectorAll('.perm-card:not(.is-hidden)').length;
+      group.classList.toggle('is-hidden', visibleInGroup === 0);
+    });
+    if(emptySearch){ emptySearch.classList.toggle('is-visible', visibleCards === 0); }
+  }
+
+  cards.forEach(function(card){
+    var cb = checkbox(card);
+    if(!cb) return;
+    cb.addEventListener('change', function(){
+      card.classList.toggle('is-checked', cb.checked);
+      updateCount();
+    });
+  });
+
+  var bulkBtns = document.querySelectorAll('.perm-bulk-btn');
+  var presets = {
+    'view-only': ['view','view_portal_accounts','view_user_accounts','view_cards','view_internet_requests','view_radius_status','view_notifications','view_audit_log','view_archive'],
+    'card-supervisor': ['view','view_cards','manage_card_inventory','import_cards','manage_card_requests','manage_card_categories','manage_card_policies','manage_quota_groups','usage_counter','reset_weekly_usage']
+  };
+  bulkBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var a = btn.dataset.action;
+      if(a === 'select-all'){ cards.forEach(function(card){ setCard(card, true); }); }
+      else if(a === 'clear-all'){ cards.forEach(function(card){ setCard(card, false); }); }
+      else if(presets[a]){ applyPreset(presets[a]); return; }
+      updateCount();
+    });
+  });
+
+  document.querySelectorAll('.perm-group-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var group = btn.dataset.group;
+      var checked = btn.dataset.groupAction === 'select';
+      cards.forEach(function(card){
+        if(card.dataset.group === group){ setCard(card, checked); }
+      });
+      updateCount();
+    });
+  });
+
+  if(searchInput){ searchInput.addEventListener('input', filterCards); }
+  updateCount();
+  filterCards();
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,274 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}{{ form_title }}{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span><i class="fa-solid fa-chevron-left"></i>
+  <span>المستفيدون</span><i class="fa-solid fa-chevron-left"></i>
+  <span>{{ form_title }}</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+/* الفورم — تصميم متماسك مع breathing room */
+.adv-form{max-width:980px;margin:0 auto;padding:8px 4px 18px}
+@media (max-width:720px){.adv-form{padding:4px 0 14px}}
+
+/* Section cards — compact, with subtle accent strip */
+.section-card{
+  margin-bottom:14px;padding:18px 22px;border-radius:16px;
+  background:#fff;border:1px solid var(--d-border);
+  box-shadow:0 1px 3px rgba(30,30,30,.04);
+}
+.section-card h3{
+  display:flex;align-items:center;gap:10px;
+  margin:0 0 14px;font-size:14.5px;font-weight:800;color:var(--d-text);
+  padding-bottom:10px;border-bottom:1px dashed var(--d-border);
+}
+.section-card h3 i{
+  width:30px;height:30px;border-radius:8px;
+  background:var(--d-gold-faint);color:var(--d-gold-deep,#D8A11C);
+  display:inline-flex;align-items:center;justify-content:center;font-size:13px;
+}
+
+/* Form grid */
+.f-grid{display:grid;gap:12px;grid-template-columns:repeat(4,1fr)}
+@media (max-width:920px){.f-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.f-grid{grid-template-columns:1fr}}
+.f-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.f-field.full{grid-column:1 / -1}
+.f-field label{font-size:12.5px;font-weight:700;color:var(--d-text)}
+.f-field label .req{color:#b91c1c;margin-inline-start:3px}
+.f-field label .hint{font-size:11px;color:var(--d-text-muted);font-weight:600;margin-inline-start:6px}
+.f-field input, .f-field select, .f-field textarea{
+  padding:10px 14px;border-radius:10px;
+  border:1.5px solid var(--d-border-strong);
+  font-size:13.5px;font-family:inherit;background:#FAFAF8;
+  transition:.18s ease;width:100%;box-sizing:border-box;color:var(--d-text);
+}
+.f-field input:focus, .f-field select:focus, .f-field textarea:focus{
+  outline:0;border-color:var(--d-gold);background:#fff;
+  box-shadow:0 0 0 3px rgba(244,186,42,.20);
+}
+.f-field input[readonly]{background:#F4F3EF;color:var(--d-text-soft);cursor:not-allowed}
+.f-field textarea{min-height:72px;resize:vertical}
+
+/* Type tabs — 3 elegant cards (max 720px wide grid, not stretched) */
+.type-tabs{
+  display:grid;gap:10px;
+  grid-template-columns:repeat(3, minmax(0,1fr));
+  max-width:720px;margin:0 auto 8px;
+}
+@media (max-width:560px){.type-tabs{grid-template-columns:1fr}}
+.type-tab{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border-radius:14px;
+  background:#FAFAF8;border:1.5px solid var(--d-border);
+  color:var(--d-text);text-decoration:none;font-family:inherit;cursor:pointer;
+  transition:all .22s ease;text-align:start;position:relative;overflow:hidden;
+}
+.type-tab::before{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(135deg, var(--tt-from,rgba(244,186,42,.10)) 0%, var(--tt-to,rgba(244,186,42,.22)) 100%);
+  opacity:0;transition:opacity .22s ease;pointer-events:none;
+}
+.type-tab:hover{transform:translateY(-1px);border-color:var(--tt-accent,var(--d-gold));box-shadow:0 6px 14px rgba(30,30,30,.06)}
+.type-tab:hover::before{opacity:.5}
+.type-tab.is-active{
+  border-color:var(--tt-accent,var(--d-black));background:#fff;
+  box-shadow:0 8px 20px rgba(30,30,30,.10);
+}
+.type-tab.is-active::before{opacity:1}
+.type-tab > *{position:relative;z-index:1}
+.type-tab .tt-ico{
+  width:40px;height:40px;border-radius:11px;flex-shrink:0;
+  background:rgba(255,255,255,.65);color:var(--tt-accent,#7c2d12);
+  display:inline-flex;align-items:center;justify-content:center;font-size:16px;
+  transition:.22s ease;
+}
+.type-tab.is-active .tt-ico{background:var(--tt-accent,var(--d-black));color:#fff;box-shadow:0 4px 10px rgba(30,30,30,.20)}
+.type-tab .tt-text{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.type-tab .tt-label{font-size:13.5px;font-weight:800;color:var(--d-text);line-height:1.2}
+.type-tab .tt-sub{font-size:11px;color:var(--d-text-muted);font-weight:600;line-height:1.3}
+
+/* Per-type accent colors */
+.type-tab[data-type="tawjihi"]   {--tt-accent:#16a34a;--tt-from:rgba(22,163,74,.08); --tt-to:rgba(22,163,74,.22)}
+.type-tab[data-type="university"]{--tt-accent:#d97706;--tt-from:rgba(217,119,6,.08); --tt-to:rgba(217,119,6,.22)}
+.type-tab[data-type="freelancer"]{--tt-accent:#7c3aed;--tt-from:rgba(124,58,237,.08);--tt-to:rgba(124,58,237,.22)}
+
+.actions-bar{
+  display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px;
+  padding:0 4px;
+}
+.btn-primary-big{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:12px 24px;border-radius:11px;
+  background:linear-gradient(135deg,#F4BA2A 0%,#FFD96A 100%);
+  color:#1E1E1E;font-size:14px;font-weight:800;
+  border:0;cursor:pointer;font-family:inherit;
+  box-shadow:0 6px 16px rgba(244,186,42,.30);transition:.18s ease;
+}
+.btn-primary-big:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(244,186,42,.40)}
+.btn-ghost-big{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:12px 20px;border-radius:11px;
+  background:#fff;border:1px solid var(--d-border-strong);
+  color:var(--d-text);text-decoration:none;font-size:13.5px;font-weight:700;font-family:inherit;
+  transition:.18s ease;
+}
+.btn-ghost-big:hover{border-color:var(--d-gold);background:#FAFAF8}
+
+.type-fields{display:none}
+.type-fields.is-active{display:block}
+.flash-toast{padding:10px 14px;border-radius:11px;margin-bottom:12px;font-size:13px;font-weight:700;max-width:980px;margin-inline:auto}
+.flash-success{background:#e8f6ee;color:#1f8f51;border:1px solid rgba(31,143,81,.3)}
+.flash-error{background:#fde2e2;color:#b91c1c;border:1px solid rgba(185,28,28,.3)}
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "admin/beneficiaries/_beneficiary_nav.html" %}
+
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in msgs %}
+    <div class="flash-toast flash-{{ 'success' if cat=='success' else 'error' }}">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+<div class="adv-form">
+<form method="POST" id="ben-form">
+  {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+
+  {% if not is_edit %}
+  <section class="section-card">
+    <h3><i class="fa-solid fa-user-tag"></i>نوع المشترك</h3>
+    <p style="margin:-6px 0 14px;font-size:12.5px;color:var(--d-text-soft)">اختر نوع المشترك ليظهر النموذج المناسب له.</p>
+    <div class="type-tabs">
+      <label class="type-tab {% if data.user_type == 'tawjihi' %}is-active{% endif %}" data-type="tawjihi">
+        <input type="radio" name="user_type" value="tawjihi" {% if data.user_type == 'tawjihi' %}checked{% endif %} style="display:none">
+        <span class="tt-ico"><i class="fa-solid fa-user-graduate"></i></span>
+        <span class="tt-text"><span class="tt-label">طالب توجيهي</span><span class="tt-sub">سنة + فرع</span></span>
+      </label>
+      <label class="type-tab {% if data.user_type == 'university' %}is-active{% endif %}" data-type="university">
+        <input type="radio" name="user_type" value="university" {% if data.user_type == 'university' %}checked{% endif %} style="display:none">
+        <span class="tt-ico"><i class="fa-solid fa-building-columns"></i></span>
+        <span class="tt-text"><span class="tt-label">طالب جامعي</span><span class="tt-sub">جامعة + تخصص</span></span>
+      </label>
+      <label class="type-tab {% if data.user_type == 'freelancer' %}is-active{% endif %}" data-type="freelancer">
+        <input type="radio" name="user_type" value="freelancer" {% if data.user_type == 'freelancer' %}checked{% endif %} style="display:none">
+        <span class="tt-ico"><i class="fa-solid fa-laptop-code"></i></span>
+        <span class="tt-text"><span class="tt-label">عامل حر</span><span class="tt-sub">شركة + تخصص</span></span>
+      </label>
+    </div>
+  </section>
+  {% else %}
+  <input type="hidden" name="user_type" value="{{ data.user_type }}">
+  {% endif %}
+
+  <section class="section-card">
+    <h3><i class="fa-solid fa-id-card"></i>البيانات الأساسية</h3>
+    <div class="f-grid">
+      <div class="f-field"><label>الاسم الأول <span class="req">*</span></label><input name="first_name" value="{{ data.first_name or '' }}" required></div>
+      <div class="f-field"><label>اسم الأب <span class="req">*</span></label><input name="second_name" value="{{ data.second_name or '' }}" required></div>
+      <div class="f-field"><label>اسم الجد <span class="req">*</span></label><input name="third_name" value="{{ data.third_name or '' }}" required></div>
+      <div class="f-field"><label>اسم العائلة <span class="req">*</span></label><input name="fourth_name" value="{{ data.fourth_name or '' }}" required></div>
+      <div class="f-field full"><label>رقم الجوال <span class="req">*</span><span class="hint">(10 أرقام يبدأ بـ 0)</span></label><input name="phone" value="{{ data.phone or '' }}" inputmode="numeric" pattern="0[0-9]{9}" maxlength="10" required></div>
+    </div>
+  </section>
+
+  <section class="section-card type-fields {% if data.user_type == 'tawjihi' %}is-active{% endif %}" data-type-for="tawjihi">
+    <h3><i class="fa-solid fa-user-graduate"></i>بيانات التوجيهي</h3>
+    <div class="f-grid">
+      <div class="f-field"><label>السنة</label>
+        <select name="tawjihi_year">
+          <option value="">— اختر السنة —</option>
+          {% for y in ['2026','2025','2024','2023','2022','2021','2020'] %}
+          <option value="{{ y }}" {% if data.tawjihi_year == y %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="f-field"><label>الفرع</label>
+        <select name="tawjihi_branch">
+          <option value="">— اختر الفرع —</option>
+          {% for b in ['علمي','أدبي','شرعي','صناعي','تجاري','زراعي','فندقي','ريادة'] %}
+          <option value="{{ b }}" {% if data.tawjihi_branch == b %}selected{% endif %}>{{ b }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-card type-fields {% if data.user_type == 'university' %}is-active{% endif %}" data-type-for="university">
+    <h3><i class="fa-solid fa-building-columns"></i>بيانات الجامعة</h3>
+    <div class="f-grid">
+      <div class="f-field"><label>اسم الجامعة</label><input name="university_name" value="{{ data.university_name or '' }}"></div>
+      <div class="f-field"><label>الرقم الجامعي</label><input name="university_number" value="{{ data.university_number or '' }}"></div>
+      <div class="f-field"><label>الكلية</label><input name="university_college" value="{{ data.university_college or '' }}"></div>
+      <div class="f-field"><label>التخصص</label><input name="university_specialization" value="{{ data.university_specialization or '' }}"></div>
+      <div class="f-field"><label>أيام الدوام</label><input name="university_days" value="{{ data.university_days or '' }}"></div>
+      <div class="f-field"><label>طريقة الاتصال</label>
+        <select name="university_internet_method">
+          <option value="نظام البطاقات" {% if not data.university_internet_method or data.university_internet_method == 'نظام البطاقات' %}selected{% endif %}>نظام البطاقات</option>
+          <option value="يوزر إنترنت" {% if data.university_internet_method == 'يوزر إنترنت' %}selected{% endif %}>حساب إنترنت</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-card type-fields {% if data.user_type == 'freelancer' %}is-active{% endif %}" data-type-for="freelancer">
+    <h3><i class="fa-solid fa-laptop-code"></i>بيانات العمل الحر</h3>
+    <div class="f-grid">
+      <div class="f-field"><label>التخصص</label><input name="freelancer_specialization" value="{{ data.freelancer_specialization or '' }}"></div>
+      <div class="f-field"><label>الشركة / الجهة</label><input name="freelancer_company" value="{{ data.freelancer_company or '' }}"></div>
+      <div class="f-field"><label>نوع الجدول الزمني</label>
+        <select name="freelancer_schedule_type">
+          <option value="">— اختر —</option>
+          <option value="مرن" {% if data.freelancer_schedule_type == 'مرن' %}selected{% endif %}>مرن</option>
+          <option value="ثابت" {% if data.freelancer_schedule_type == 'ثابت' %}selected{% endif %}>ثابت</option>
+        </select>
+      </div>
+      <div class="f-field"><label>طريقة الاتصال</label>
+        <select name="freelancer_internet_method">
+          <option value="نظام البطاقات" {% if not data.freelancer_internet_method or data.freelancer_internet_method == 'نظام البطاقات' %}selected{% endif %}>نظام البطاقات</option>
+          <option value="يوزر إنترنت" {% if data.freelancer_internet_method == 'يوزر إنترنت' %}selected{% endif %}>حساب إنترنت</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <h3><i class="fa-solid fa-comment"></i>ملاحظات</h3>
+    <div class="f-grid">
+      <div class="f-field full">
+        <textarea name="notes" placeholder="أي ملاحظات تخص المشترك (اختياري)">{{ data.notes or '' }}</textarea>
+      </div>
+    </div>
+  </section>
+
+  <div class="actions-bar">
+    <a class="btn-ghost-big" href="/admin/beneficiaries"><i class="fa-solid fa-arrow-right"></i> إلغاء</a>
+    <button type="submit" class="btn-primary-big">
+      <i class="fa-solid fa-floppy-disk"></i> {{ 'حفظ التعديلات' if is_edit else 'حفظ المشترك' }}
+    </button>
+  </div>
+</form>
+</div>
+
+<script>
+(function(){
+  var tabs = document.querySelectorAll('.type-tab');
+  var sections = document.querySelectorAll('.type-fields');
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      var t = tab.dataset.type;
+      tabs.forEach(function(x){ x.classList.toggle('is-active', x.dataset.type === t); });
+      var r = tab.querySelector('input[type=radio]');
+      if(r) r.checked = true;
+      sections.forEach(function(s){ s.classList.toggle('is-active', s.dataset.typeFor === t); });
+    });
+  });
+})();
+</script>
+
+{% endblock %}

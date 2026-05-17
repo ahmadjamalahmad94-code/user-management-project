@@ -1,0 +1,65 @@
+{% extends "admin/sms/_layout.html" %}
+{% block title %}خدمات SMS{% endblock %}
+{% block page_title %}خدمات SMS{% endblock %}
+{% block crumbs %}<a href="{{ url_for('admin_sms_dashboard') }}">الرسائل القصيرة</a><i class="fa-solid fa-chevron-left"></i><span>الخدمات</span>{% endblock %}
+
+{% block sms_content %}
+<section class="sms-hero">
+  <span class="sms-hero-ico"><i class="fa-solid fa-toggle-on"></i></span>
+  <div><h2>إدارة خدمات الإرسال التلقائي</h2>
+    <p>لكل خدمة في النظام يمكنك تفعيل أو إلغاء إرسال SMS لها. الإيقاف العام في الإعدادات يطغى على كل الخدمات.</p>
+  </div>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-list-check"></i>الخدمات المتاحة</h3>
+    <small style="color:var(--d-text-muted)">{{ services|length }} خدمة</small>
+  </div>
+  <div class="d-card-body" style="padding:0">
+    <div style="display:grid;grid-template-columns:1fr;gap:0">
+      {% for s in services %}
+      <div class="svc-row" style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--d-border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14.5px;font-weight:900;color:var(--d-black)">{{ s.label }}</div>
+          <div style="font-size:12px;color:var(--d-text-soft);margin-top:3px;line-height:1.6">{{ s.description }}</div>
+          <code style="font-size:10.5px;color:var(--d-text-muted);font-family:monospace">{{ s.service_code }}</code>
+        </div>
+        <label class="svc-toggle">
+          <input type="checkbox" data-service-code="{{ s.service_code }}" {% if s.enabled %}checked{% endif %}>
+          <span class="svc-slider"></span>
+        </label>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<style>
+.svc-toggle{position:relative;display:inline-block;width:54px;height:28px;flex-shrink:0;cursor:pointer}
+.svc-toggle input{opacity:0;width:0;height:0}
+.svc-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:999px;transition:.2s;cursor:pointer}
+.svc-slider::before{content:"";position:absolute;height:22px;width:22px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.svc-toggle input:checked + .svc-slider{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.svc-toggle input:checked + .svc-slider::before{transform:translateX(-26px)}
+.svc-row:hover{background:#fbfaf7}
+</style>
+
+<script>
+document.querySelectorAll('.svc-toggle input').forEach(function(cb){
+  cb.addEventListener('change', function(){
+    var code = cb.getAttribute('data-service-code');
+    var fd = new FormData();
+    fd.append('service_code', code);
+    {% if csrf_token is defined %}fd.append('csrf_token', '{{ csrf_token() }}');{% endif %}
+    cb.disabled = true;
+    fetch('/admin/sms/services/toggle', {method:'POST', body:fd, credentials:'same-origin',
+      headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      cb.disabled = false;
+      if(!j.ok){ cb.checked = !cb.checked; alert(j.message || 'تعذّر تنفيذ التبديل.'); }
+    }).catch(function(){ cb.disabled = false; cb.checked = !cb.checked; alert('تعذّر الاتصال.'); });
+  });
+});
+</script>
+{% endblock %}

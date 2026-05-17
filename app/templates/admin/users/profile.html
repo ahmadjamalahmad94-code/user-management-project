@@ -1,0 +1,1206 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}{{ bio.full_name or 'الصفحة الشخصية' }}{% endblock %}
+{% block page_title %}الصفحة الشخصية{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span><i class="fa-solid fa-chevron-left"></i>
+  <span>المشتركون</span><i class="fa-solid fa-chevron-left"></i>
+  <span>{{ bio.full_name }}</span>
+{% endblock %}
+
+{% block head_extra %}{{ super() }}
+<style>
+.up-hero{display:flex;gap:18px;align-items:center;padding:24px 26px;border-radius:18px;background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 100%);color:#fff;margin-bottom:18px;flex-wrap:wrap}
+.up-avatar{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,#F4BA2A 0%,#FFD96A 100%);color:#1E1E1E;display:inline-flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;flex-shrink:0;box-shadow:0 10px 28px rgba(244,186,42,.30)}
+.up-bio{flex:1;min-width:240px}
+.up-bio h2{margin:0 0 4px;font-size:22px;font-weight:800;color:#fff}
+.up-bio .phone{font-family:monospace;font-size:14px;color:rgba(255,255,255,.65)}
+.up-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.up-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:11.5px;font-weight:700;background:rgba(255,255,255,.10);color:#fff;border:1px solid rgba(255,255,255,.18)}
+.up-badge.tier-basic{background:rgba(255,255,255,.08);color:rgba(255,255,255,.85)}
+.up-badge.tier-standard{background:rgba(28,82,168,.18);color:#7eb1f3;border-color:rgba(126,177,243,.30)}
+.up-badge.tier-complete{background:rgba(31,143,81,.18);color:#85e0ad;border-color:rgba(133,224,173,.30)}
+.up-badge.tier-super{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;border-color:transparent}
+.up-badge.v-verified{background:rgba(31,143,81,.18);color:#85e0ad}
+.up-badge.v-reviewed{background:rgba(217,119,6,.18);color:#fbbf24}
+.up-badge.v-super{background:rgba(124,58,237,.18);color:#c4b5fd}
+.up-badge.v-unverified{background:rgba(185,28,28,.18);color:#fca5a5}
+
+.up-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;width:100%}
+.up-act-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:10px;font-size:12.5px;font-weight:700;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;cursor:pointer;font-family:inherit;transition:.18s ease;text-decoration:none}
+.up-act-btn:hover{background:rgba(244,186,42,.20);border-color:rgba(244,186,42,.50)}
+.up-act-btn.gold{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;border-color:transparent}
+.up-act-btn.gold:hover{transform:translateY(-1px)}
+
+/* Sections grid */
+.up-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media (max-width:920px){.up-grid{grid-template-columns:1fr}}
+.up-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:18px 20px;box-shadow:0 1px 3px rgba(30,30,30,.04)}
+.up-card h3{margin:0 0 12px;font-size:14px;font-weight:800;color:var(--d-black);display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px dashed var(--d-border)}
+.up-card h3 i{color:var(--d-gold);font-size:13px}
+.up-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13px;border-bottom:1px solid #FAFAF8}
+.up-row:last-child{border-bottom:0}
+.up-row .lbl{color:var(--d-text-muted);font-weight:600;font-size:11.5px}
+.up-row .val{color:var(--d-black);font-weight:700;font-family:monospace;font-size:12.5px;text-align:end}
+.up-row .val.text{font-family:inherit}
+
+.up-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.up-total{background:#FAFAF8;border-radius:12px;padding:14px;text-align:center}
+.up-total .n{font-size:24px;font-weight:900;color:var(--d-black);line-height:1;font-feature-settings:"tnum" 1}
+.up-total .l{font-size:10.5px;font-weight:700;color:var(--d-text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:.3px}
+
+/* Mini info cards (grid) — for compact key/value display */
+.up-mini-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.up-mini{background:#FAFAF8;border:1px solid var(--d-border);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.up-mini .lbl{font-size:10.5px;font-weight:700;color:var(--d-text-muted);text-transform:uppercase;letter-spacing:.3px}
+.up-mini .val{font-size:13px;font-weight:700;color:var(--d-black);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.up-mini .val.mono{font-family:monospace}
+
+/* Tables in sections */
+.up-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.up-table th,.up-table td{padding:8px 10px;text-align:start;border-bottom:1px solid #FAFAF8}
+.up-table th{font-size:11px;color:var(--d-text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:800;background:#FAFAF8}
+.up-table tbody tr:last-child td{border-bottom:0}
+
+.empty-row{text-align:center;color:var(--d-text-muted);padding:22px;font-size:12.5px}
+.empty-row i{display:block;font-size:24px;color:var(--d-border-strong);margin-bottom:6px}
+
+/* Modal */
+.up-backdrop{position:fixed;inset:0;background:rgba(30,30,30,.65);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;backdrop-filter:blur(3px)}
+.up-backdrop.is-open{display:flex}
+.up-modal{background:#fff;border-radius:18px;max-width:520px;width:100%;padding:22px 26px;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.up-modal h3{margin:0 0 14px;font-size:17px;font-weight:800;color:var(--d-black);display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px dashed var(--d-border)}
+.up-modal h3 i{color:var(--d-gold)}
+.up-modal label{font-size:12px;font-weight:700;color:var(--d-text);display:block;margin-bottom:5px}
+.up-modal input, .up-modal select{width:100%;padding:9px 13px;border-radius:10px;border:1.5px solid var(--d-border-strong);font-family:inherit;font-size:13px;background:#FAFAF8;box-sizing:border-box}
+.up-modal input:focus, .up-modal select:focus{outline:0;border-color:var(--d-gold);background:#fff}
+.up-modal .row{margin-bottom:12px}
+.up-modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px dashed var(--d-border)}
+.up-modal .btn{padding:10px 18px;border-radius:10px;font-weight:800;font-size:13px;border:0;cursor:pointer;font-family:inherit}
+.up-modal .btn-save{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E}
+.up-modal .btn-cancel{background:#F4F3EF;color:var(--d-text-soft)}
+
+/* ── Quick-edit modal (same look as /admin/beneficiaries) ── */
+.qe-backdrop{position:fixed;inset:0;background:rgba(30,30,30,.65);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;backdrop-filter:blur(3px)}
+.qe-backdrop.is-open{display:flex;animation:qeFade .2s ease}
+@keyframes qeFade{from{opacity:0}to{opacity:1}}
+.qe-modal{background:#fff;border-radius:18px;max-width:860px;width:100%;padding:22px 26px;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:qeSlide .25s ease;max-height:92vh;overflow-y:auto}
+@keyframes qeSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.qe-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--d-border)}
+.qe-head h3{margin:0;font-size:17px;font-weight:800;color:var(--d-black);display:flex;align-items:center;gap:8px}
+.qe-head h3 i{color:var(--d-gold)}
+.qe-close{background:none;border:0;color:var(--d-text-muted);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px}
+.qe-section{margin-bottom:14px}
+.qe-section-title{font-size:11.5px;font-weight:800;color:var(--d-text-muted);text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px dashed var(--d-border);display:flex;align-items:center;gap:6px}
+.qe-section-title i{color:var(--d-gold);font-size:13px}
+.qe-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.qe-field{display:flex;flex-direction:column;gap:4px}
+.qe-field.full{grid-column:1/-1}
+.qe-field label{font-size:11.5px;font-weight:700;color:var(--d-text)}
+.qe-field label .hint{font-size:10px;color:var(--d-text-muted);font-weight:600;margin-inline-start:6px}
+.qe-field input,.qe-field select,.qe-field textarea{padding:8px 11px;border-radius:10px;border:1.5px solid var(--d-border-strong);font-size:13px;font-family:inherit;background:#FAFAF8;transition:.18s ease;width:100%;box-sizing:border-box}
+.qe-field input:focus,.qe-field select:focus,.qe-field textarea:focus{outline:0;border-color:var(--d-gold);background:#fff;box-shadow:0 0 0 3px rgba(244,186,42,.20)}
+.qe-field textarea{min-height:60px;resize:vertical;font-family:inherit}
+.qe-msg{padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;margin-bottom:10px;display:none}
+.qe-msg.is-show{display:block}
+.qe-msg.error{background:#fde2e2;color:#b91c1c}
+.qe-msg.success{background:#e8f6ee;color:#1f8f51}
+.qe-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px;padding-top:10px;border-top:1px dashed var(--d-border)}
+.qe-btn{padding:10px 20px;border-radius:11px;font-size:13px;font-weight:800;cursor:pointer;border:0;font-family:inherit;transition:.18s ease}
+.qe-btn-save{background:linear-gradient(135deg,#F4BA2A 0%,#FFD96A 100%);color:#1E1E1E}
+.qe-btn-save:disabled{opacity:.5;cursor:not-allowed}
+.qe-btn-cancel{background:#F4F3EF;color:var(--d-text-soft)}
+.qe-type-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:11.5px;font-weight:800;background:var(--d-gold-faint,#FDF1CF);color:var(--d-black);margin-inline-start:8px}
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(95px, 1fr));gap:6px}
+.pick-card{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px;border-radius:10px;background:#FAFAF8;border:1.5px solid var(--d-border);cursor:pointer;transition:.18s ease;font-family:inherit;font-size:inherit;text-align:center;position:relative;overflow:hidden}
+.pick-card:hover{transform:translateY(-1px);border-color:var(--pick-accent,var(--d-gold))}
+.pick-card.is-selected{border-color:var(--pick-accent,var(--d-gold));background:linear-gradient(135deg,var(--pick-bg-from,rgba(244,186,42,.10)) 0%,var(--pick-bg-to,rgba(244,186,42,.25)) 100%);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.pick-card .pc-ico{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;color:var(--pick-accent,#7c2d12);background:rgba(255,255,255,.7)}
+.pick-card.is-selected .pc-ico{background:var(--pick-accent,var(--d-gold));color:#fff}
+.pick-card .pc-label{font-size:11.5px;font-weight:800;color:var(--d-black);line-height:1.15}
+.pick-card .pc-sub{font-size:9.5px;font-weight:600;color:var(--d-text-muted);line-height:1.3}
+</style>{% endblock %}
+
+{% block content %}
+{% include "admin/users_account/_user_nav.html" %}
+
+{% set initial = (bio.full_name or '?')[0] if bio.full_name else '?' %}
+{% set tier = bio.tier or 'basic' %}
+{% set vstat = bio.verification_status or 'unverified' %}
+{% set tier_label = {'basic':'أساسي','standard':'موسّع','complete':'متقدم','super':'خاص'}.get(tier, tier) %}
+{% set v_label = {'unverified':'غير موثّق','reviewed':'مراجَع','verified':'موثّق','super':'توثيق خاص'}.get(vstat, vstat) %}
+{% set t_label = {'tawjihi':'طالب توجيهي','university':'طالب جامعي','freelancer':'عامل حر'}.get(bio.user_type, bio.user_type) %}
+
+<section class="up-hero">
+  <span class="up-avatar">{{ initial }}</span>
+  <div class="up-bio">
+    <h2>{{ bio.full_name or '—' }}</h2>
+    <div class="phone">{{ bio.phone or '—' }}</div>
+    <div class="up-meta">
+      <span class="up-badge"><i class="fa-solid fa-user"></i>{{ t_label }}</span>
+      <span class="up-badge tier-{{ tier }}"><i class="fa-solid fa-medal"></i>{{ tier_label }}</span>
+      <span class="up-badge v-{{ vstat }}"><i class="fa-solid fa-shield-halved"></i>{{ v_label }}{% if bio.verified_until %} · حتى {{ bio.verified_until }}{% endif %}</span>
+      {% if portal %}
+        {% if portal.must_set_password %}
+        <span class="up-badge" style="background:rgba(217,119,6,.18);color:#fbbf24"><i class="fa-solid fa-key"></i>الحساب مصفّر</span>
+        {% elif portal.is_active %}
+        <span class="up-badge" style="background:rgba(31,143,81,.18);color:#85e0ad"><i class="fa-solid fa-circle-check"></i>بوابة نشطة</span>
+        {% else %}
+        <span class="up-badge" style="background:rgba(185,28,28,.18);color:#fca5a5"><i class="fa-solid fa-circle-pause"></i>بوابة معطّلة</span>
+        {% endif %}
+      {% else %}
+        <span class="up-badge" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6)"><i class="fa-solid fa-user-clock"></i>خارج البوابة</span>
+      {% endif %}
+    </div>
+    <div class="up-actions">
+      <button type="button" class="up-act-btn gold" id="profile-edit-btn"><i class="fa-solid fa-pen"></i>تعديل البيانات</button>
+      <button type="button" class="up-act-btn" id="set-tier-btn"><i class="fa-solid fa-medal"></i>تغيير صلاحية البطاقات</button>
+      <button type="button" class="up-act-btn" id="set-verify-btn"><i class="fa-solid fa-shield-halved"></i>تعديل التوثيق</button>
+      {% if portal %}
+      <button type="button" class="up-act-btn" id="issue-code-btn" data-pa-id="{{ portal.id }}" data-name="{{ bio.full_name or '' }}" data-phone="{{ bio.phone or '' }}"><i class="fa-solid fa-key"></i>إنشاء رمز تفعيل</button>
+      {% endif %}
+      <a class="up-act-btn" href="/admin/portal-accounts"><i class="fa-solid fa-id-card-clip"></i>إدارة البوابة</a>
+    </div>
+  </div>
+</section>
+
+<div class="up-grid">
+  <!-- المعلومات الأساسية -->
+  <div class="up-card">
+    <h3><i class="fa-solid fa-id-card"></i>المعلومات الأساسية</h3>
+    <div class="up-row"><span class="lbl">الاسم الأول</span><span class="val text">{{ bio.first_name or '—' }}</span></div>
+    <div class="up-row"><span class="lbl">اسم الأب</span><span class="val text">{{ bio.second_name or '—' }}</span></div>
+    <div class="up-row"><span class="lbl">اسم الجد</span><span class="val text">{{ bio.third_name or '—' }}</span></div>
+    <div class="up-row"><span class="lbl">اسم العائلة</span><span class="val text">{{ bio.fourth_name or '—' }}</span></div>
+    <div class="up-row"><span class="lbl">الجوال</span><span class="val">{{ bio.phone or '—' }}</span></div>
+    <div class="up-row"><span class="lbl">عدد البطاقات/أسبوع</span><span class="val">{{ bio.weekly_usage_count or 0 }}</span></div>
+    <div class="up-row"><span class="lbl">أضافه</span><span class="val text">{{ bio.added_by_username or '—' }}</span></div>
+    <div class="up-row"><span class="lbl">تاريخ التسجيل</span><span class="val">{{ format_dt_short(bio.created_at) or '—' }}</span></div>
+  </div>
+
+  <!-- الحساب (البوابة) -->
+  <div class="up-card">
+    <h3><i class="fa-solid fa-id-card-clip"></i>حساب البوابة</h3>
+    {% if portal %}
+    <div class="up-row"><span class="lbl">اسم المستخدم</span><span class="val">{{ portal.username }}</span></div>
+    <div class="up-row">
+      <span class="lbl">كلمة المرور</span>
+      <span class="val" style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+        {% if portal.password_plain %}
+        <span id="pwd-display" data-plain="{{ portal.password_plain }}" data-masked="1" style="font-family:monospace;letter-spacing:2px">{{ '●' * portal.password_plain|length }}</span>
+        <button type="button" id="pwd-toggle" title="إظهار/إخفاء" style="background:none;border:1px solid var(--d-border);border-radius:6px;cursor:pointer;padding:3px 7px;color:#0891b2"><i class="fa-solid fa-eye"></i></button>
+        {% else %}
+        <span id="pwd-display" style="color:var(--d-text-muted);font-family:inherit">— (غير متاحة)</span>
+        {% endif %}
+        <button type="button" id="pwd-edit-btn" title="تعديل كلمة المرور" data-pa-id="{{ portal.id }}" style="background:none;border:1px solid var(--d-border);border-radius:6px;cursor:pointer;padding:3px 7px;color:var(--d-gold-deep,#D8A11C)"><i class="fa-solid fa-pen"></i></button>
+      </span>
+    </div>
+    <div class="up-row"><span class="lbl">الحالة</span><span class="val text">{% if portal.must_set_password %}مصفّر{% elif portal.is_active %}نشط{% else %}معطّل{% endif %}</span></div>
+    <div class="up-row"><span class="lbl">آخر دخول</span><span class="val">{{ format_dt_short(portal.last_login_at) or 'لم يدخل بعد' }}</span></div>
+    <div class="up-row"><span class="lbl">المحاولات الفاشلة</span><span class="val">{{ portal.failed_login_attempts or 0 }}</span></div>
+    <div class="up-row"><span class="lbl">تاريخ التفعيل</span><span class="val">{{ format_dt_short(portal.activated_at) or '—' }}</span></div>
+    {% else %}
+    <div class="empty-row">
+      <i class="fa-solid fa-user-clock"></i>
+      هذا المستفيد لا يملك حساب بوابة بعد.<br>
+      <button type="button" id="movein-btn" data-bid="{{ bio.id }}" data-name="{{ bio.full_name or '' }}" data-phone="{{ bio.phone or '' }}"
+              style="margin-top:8px;background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;padding:8px 16px;border-radius:10px;font-weight:800;font-size:12.5px;border:0;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px">
+        <i class="fa-solid fa-right-to-bracket"></i>نقله للبوابة وتوليد كود تفعيل
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- البيانات الأكاديمية / المهنية حسب النوع -->
+  <div class="up-card" style="grid-column:1 / -1">
+    <h3><i class="fa-solid fa-user-tag"></i>البيانات حسب النوع — {{ t_label }}</h3>
+    <div class="up-mini-grid">
+    {% if bio.user_type == 'tawjihi' %}
+      <div class="up-mini"><span class="lbl">السنة</span><span class="val mono">{{ bio.tawjihi_year or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">الفرع</span><span class="val">{{ bio.tawjihi_branch or '—' }}</span></div>
+    {% elif bio.user_type == 'university' %}
+      <div class="up-mini"><span class="lbl">الجامعة</span><span class="val">{{ bio.university_name or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">الرقم الجامعي</span><span class="val mono">{{ bio.university_number or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">الكلية</span><span class="val">{{ bio.university_college or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">التخصص</span><span class="val">{{ bio.university_specialization or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">أيام الدوام</span><span class="val">{{ bio.university_days or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">طريقة الاتصال</span><span class="val">{{ bio.university_internet_method or '—' }}</span></div>
+    {% elif bio.user_type == 'freelancer' %}
+      <div class="up-mini"><span class="lbl">التخصص</span><span class="val">{{ bio.freelancer_specialization or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">الشركة/الجهة</span><span class="val">{{ bio.freelancer_company or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">نوع الجدول</span><span class="val">{{ bio.freelancer_schedule_type or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">طريقة الاتصال</span><span class="val">{{ bio.freelancer_internet_method or '—' }}</span></div>
+    {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- إحصاء الاستخدام -->
+<div class="up-card" style="margin-bottom:14px">
+  <h3><i class="fa-solid fa-chart-column"></i>إحصاءات الاستخدام</h3>
+  <div class="up-totals">
+    <div class="up-total"><div class="n">{{ totals.total }}</div><div class="l">إجمالي البطاقات</div></div>
+    <div class="up-total"><div class="n">{{ totals.week }}</div><div class="l">آخر 7 أيام</div></div>
+    <div class="up-total"><div class="n">{{ totals.month }}</div><div class="l">آخر 30 يوم</div></div>
+  </div>
+  <h3 style="margin-top:6px;font-size:12.5px"><i class="fa-solid fa-clock-rotate-left"></i>آخر البطاقات الصادرة</h3>
+  <div class="d-table-wrap" style="overflow-x:auto">
+    <table class="up-table" data-paginated="1" data-page-size="10" data-page-sizes="10,20,50,100" data-persist-key="profile-usage">
+      <thead><tr><th>#</th><th>السبب</th><th>الفئة</th><th>التاريخ</th><th>أصدرها</th><th>ملاحظات</th></tr></thead>
+      <tbody>
+        {% for u in usage %}
+        <tr>
+          <td>#{{ u.id }}</td>
+          <td>{{ u.usage_reason or '—' }}</td>
+          <td>{{ u.card_type or '—' }}</td>
+          <td>{{ u.usage_date or '—' }}</td>
+          <td>{{ u.added_by_username or '—' }}</td>
+          <td style="color:var(--d-text-muted)">{{ u.notes or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="6" class="empty-row"><i class="fa-regular fa-folder-open"></i>لم تُصدر بطاقات بعد</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="up-grid">
+  <div class="up-card">
+    <h3><i class="fa-solid fa-inbox"></i>طلبات المشترك</h3>
+    <div class="d-table-wrap" style="overflow-x:auto">
+      <table class="up-table" data-paginated="1" data-page-size="8" data-page-sizes="8,20,50" data-persist-key="profile-requests">
+        <thead><tr><th>#</th><th>القسم</th><th>الطلب</th><th>الحالة</th><th>وقت</th><th>فتح</th></tr></thead>
+        <tbody>
+          {% for r in requests %}
+          <tr>
+            <td>#{{ r.id }}</td>
+            <td>{{ r.source_label }}</td>
+            <td><strong>{{ r.action_label }}</strong>{% if r.detail %}<div style="color:var(--d-text-muted);font-size:11px">{{ r.detail }}</div>{% endif %}</td>
+            <td>{{ r.status_label }}</td>
+            <td>{{ format_dt_short(r.created_at) or '—' }}</td>
+            <td><a class="d-card-action" href="{{ r.href }}">عرض</a></td>
+          </tr>
+          {% else %}
+          <tr class="no-paginate"><td colspan="6" class="empty-row"><i class="fa-regular fa-folder-open"></i>لا توجد طلبات لهذا المشترك</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {# تحديد وضع وصول المشترك (cards / username) لتمييز الواجهة #}
+  {% set _uni_method = (bio.university_internet_method or '') %}
+  {% set _free_method = (bio.freelancer_internet_method or '') %}
+  {% set _username_methods = ['يوزر إنترنت','يمتلك اسم مستخدم','username'] %}
+  {% set access_mode = 'cards' %}
+  {% if bio.user_type == 'university' and _uni_method in _username_methods %}{% set access_mode = 'username' %}{% endif %}
+  {% if bio.user_type == 'freelancer' and _free_method in _username_methods %}{% set access_mode = 'username' %}{% endif %}
+
+  {# ─── قسم البطاقات (يظهر فقط لمشتركي البطاقات) ─── #}
+  {% if access_mode == 'cards' %}
+  <div class="up-card up-card--cards">
+    <h3>
+      <i class="fa-solid fa-ticket"></i>بطاقات المشترك
+      <span class="up-card-tag up-card-tag--cards">نظام البطاقات</span>
+    </h3>
+    <div class="d-table-wrap" style="overflow-x:auto">
+      <table class="up-table" data-paginated="1" data-page-size="8" data-page-sizes="8,20,50" data-persist-key="profile-issued-cards">
+        <thead><tr><th>#</th><th>الفئة</th><th>البطاقة</th><th>الحالة</th><th>المتبقي</th><th>تحميل</th></tr></thead>
+        <tbody>
+          {% for c in issued_cards %}
+          {% set st = c.status or {} %}
+          <tr>
+            <td>#{{ c.id }}</td>
+            <td>{{ c.category_label or (c.duration_minutes ~ ' دقيقة') }}</td>
+            <td><strong style="font-family:monospace">{{ c.card_username }}</strong><div style="color:var(--d-text-muted);font-size:11px">{{ format_dt_short(c.issued_at) or '—' }}</div></td>
+            <td>{{ st.status_label or 'تم الإصدار' }}{% if st.is_online %}<div style="color:#166534;font-size:11px">متصلة الآن</div>{% endif %}</td>
+            <td>{{ st.remaining_label or 'لم تصل قراءة بعد' }}</td>
+            <td>{{ st.total_data_label or 'لم تصل قراءة بعد' }}</td>
+          </tr>
+          {% else %}
+          <tr class="no-paginate"><td colspan="6" class="empty-row"><i class="fa-regular fa-folder-open"></i>لا توجد بطاقات صادرة لهذا المشترك</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  {# ─── قسم حساب الإنترنت (يظهر فقط لمشتركي اليوزر) ─── #}
+  <div class="up-card up-card--username">
+    <h3>
+      <i class="fa-solid fa-circle-user"></i>حساب الإنترنت (يوزر)
+      <span class="up-card-tag up-card-tag--username">يوزر إنترنت</span>
+    </h3>
+    <div class="up-mini-grid">
+      <div class="up-mini">
+        <span class="lbl">طريقة الإنترنت</span>
+        <span class="val">{{ _uni_method if bio.user_type == 'university' else _free_method or 'يوزر إنترنت' }}</span>
+      </div>
+      {% if bio.user_type == 'university' %}
+      <div class="up-mini"><span class="lbl">أيام الجامعة</span><span class="val">{{ bio.university_days or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">من</span><span class="val mono">{{ bio.university_time_from or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">إلى</span><span class="val mono">{{ bio.university_time_to or '—' }}</span></div>
+      {% else %}
+      <div class="up-mini"><span class="lbl">نمط الدوام</span><span class="val">{{ bio.freelancer_schedule_type or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">من</span><span class="val mono">{{ bio.freelancer_time_from or '—' }}</span></div>
+      <div class="up-mini"><span class="lbl">إلى</span><span class="val mono">{{ bio.freelancer_time_to or '—' }}</span></div>
+      {% endif %}
+    </div>
+    <p style="margin:14px 0 0;font-size:12.5px;color:var(--d-text-soft);line-height:1.7;padding:10px 12px;background:#eef4ff;border:1px dashed #c7d8ff;border-radius:10px">
+      <i class="fa-solid fa-info-circle" style="color:#1d4ed8"></i>
+      هذا المشترك يستخدم <b>حسابًا دائمًا</b> لا يحتاج بطاقات. لإدارة طلبات الإنترنت/كلمة المرور استخدم <b>مركز الطلبات</b>.
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+.up-card-tag{
+  margin-inline-start:auto;display:inline-flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.2px;
+}
+.up-card-tag--cards{background:#fff7df;color:#7c2d12;border:1px solid #f1d993}
+.up-card-tag--username{background:#eef4ff;color:#1d4ed8;border:1px solid #c7d8ff}
+.up-card--cards{border-color:#f1d993;background:linear-gradient(180deg,#fffbf0,#fff)}
+.up-card--username{border-color:#c7d8ff;background:linear-gradient(180deg,#f5f9ff,#fff)}
+.up-card--cards h3{border-bottom-color:#f1d993}
+.up-card--username h3{border-bottom-color:#c7d8ff}
+</style>
+
+<!-- المرفقات -->
+<div class="up-card" style="margin-bottom:14px">
+  <h3>
+    <i class="fa-solid fa-paperclip"></i>
+    المرفقات
+    <span style="margin-inline-start:auto;display:flex;gap:6px">
+      <label class="up-act-btn gold" style="cursor:pointer;color:#1E1E1E;padding:7px 12px;font-size:11.5px">
+        <input type="file" id="att-file" style="display:none">
+        <i class="fa-solid fa-plus"></i>رفع ملف
+      </label>
+    </span>
+  </h3>
+  <div id="att-list">
+    <div class="empty-row"><i class="fa-regular fa-folder-open"></i>جارٍ التحميل...</div>
+  </div>
+</div>
+
+<!-- الملاحظات والشكاوي -->
+<div class="up-card" style="margin-bottom:14px">
+  <h3><i class="fa-solid fa-comment"></i>الملاحظات والشكاوي</h3>
+  <form id="msg-form" style="display:flex;gap:8px;margin-bottom:12px">
+    {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+    <select name="kind" style="padding:8px;border-radius:8px;border:1.5px solid var(--d-border-strong);background:#FAFAF8;font-family:inherit;font-size:12px">
+      <option value="note">ملاحظة</option>
+      <option value="complaint">شكوى</option>
+      <option value="reminder">تذكير</option>
+    </select>
+    <input name="body" placeholder="أكتب ملاحظة، شكوى، أو تذكير..." style="flex:1;padding:8px 12px;border-radius:8px;border:1.5px solid var(--d-border-strong);background:#FAFAF8;font-family:inherit;font-size:13px">
+    <button type="submit" class="up-act-btn gold" style="padding:8px 14px;font-size:12px"><i class="fa-solid fa-plus"></i>إضافة</button>
+  </form>
+  <div id="msg-list">
+    <div class="empty-row"><i class="fa-regular fa-folder-open"></i>جارٍ التحميل...</div>
+  </div>
+</div>
+
+<!-- سجل العمليات (آخر قسم) -->
+<div class="up-card" style="margin-bottom:14px">
+  <h3><i class="fa-solid fa-shield-halved"></i>سجل العمليات على هذا المشترك</h3>
+  <div class="d-table-wrap" style="overflow-x:auto">
+    <table class="up-table" data-paginated="1" data-page-size="10" data-page-sizes="10,20,50,100" data-persist-key="profile-audit">
+      <thead><tr><th>#</th><th>الإجراء</th><th>الوصف</th><th>بواسطة</th><th>وقت</th></tr></thead>
+      <tbody>
+        {% for a in audit %}
+        <tr>
+          <td>#{{ a.id }}</td>
+          <td><strong>{{ action_type_label(a.action_type) }}</strong></td>
+          <td style="color:var(--d-text-soft)">{{ (a.description or '—')|arabize_audit }}</td>
+          <td>{{ a.actor_username or '—' }}</td>
+          <td>{{ format_dt_short(a.created_at) or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="5" class="empty-row"><i class="fa-regular fa-folder-open"></i>لا توجد عمليات مسجلة</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Move-in modal (نقل للبوابة) ── -->
+<div class="up-backdrop" id="movein-modal">
+  <div class="up-modal" style="max-width:460px">
+    <h3><i class="fa-solid fa-right-to-bracket"></i>نقل المشترك للبوابة</h3>
+    <div style="background:#FDF6E3;border:1px dashed rgba(217,119,6,.4);border-radius:12px;padding:12px 14px;margin-bottom:14px;color:#7c2d12;font-size:12.5px;line-height:1.8">
+      سيتم إنشاء حساب بوابة بـ <strong>اسم المستخدم = رقم الجوال</strong> + توليد رمز تفعيل صالح <strong>72 ساعة</strong>.
+    </div>
+    <form id="movein-form">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" name="beneficiary_id" id="movein-bid" value="{{ bio.id }}">
+      <div class="row">
+        <label>اسم المستخدم</label>
+        <input name="username" id="movein-username" value="{{ bio.phone or '' }}" required>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-cancel" onclick="document.getElementById('movein-modal').classList.remove('is-open')">إلغاء</button>
+        <button type="submit" class="btn btn-save"><i class="fa-solid fa-right-to-bracket"></i>نقل وتوليد كود</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Image lightbox ── -->
+<div class="up-backdrop" id="img-lightbox" style="background:rgba(0,0,0,.85)">
+  <div style="position:relative;max-width:95vw;max-height:95vh;display:flex;flex-direction:column;align-items:center;gap:10px">
+    <img id="lightbox-img" src="" alt="" style="max-width:95vw;max-height:85vh;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div id="lightbox-caption" style="color:#fff;font-size:13px;font-weight:600;text-align:center;background:rgba(0,0,0,.4);padding:6px 14px;border-radius:8px;direction:ltr"></div>
+    <button type="button" id="lightbox-close" title="إغلاق" style="position:absolute;top:-10px;inset-inline-end:-10px;width:38px;height:38px;border-radius:50%;border:0;background:#fff;color:#1E1E1E;cursor:pointer;font-size:18px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.3)">✕</button>
+  </div>
+</div>
+
+<!-- ── Password edit modal ── -->
+{% if portal %}
+<div class="up-backdrop" id="pwd-modal">
+  <div class="up-modal" style="max-width:440px">
+    <h3><i class="fa-solid fa-key"></i>تعديل كلمة المرور</h3>
+    <form id="pwd-form">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" name="username" value="{{ portal.username }}">
+      <input type="hidden" name="is_active" value="{{ '1' if portal.is_active else '0' }}">
+      <div class="row">
+        <label>كلمة المرور الجديدة</label>
+        <div style="position:relative;display:flex;align-items:center">
+          <input type="password" name="password" id="pwd-new" required minlength="4" style="padding-inline-end:38px" autocomplete="new-password">
+          <button type="button" id="pwd-new-eye" title="إظهار/إخفاء" style="position:absolute;inset-inline-end:6px;background:none;border:0;cursor:pointer;color:var(--d-text-muted);padding:6px"><i class="fa-solid fa-eye"></i></button>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-cancel" onclick="document.getElementById('pwd-modal').classList.remove('is-open')">إلغاء</button>
+        <button type="submit" class="btn btn-save"><i class="fa-solid fa-floppy-disk"></i> حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Quick-edit Modal (نفس مودال /admin/beneficiaries — يعمل في الصفحة دون تنقل) ── -->
+<div class="qe-backdrop" id="qe-modal">
+  <div class="qe-modal">
+    <div class="qe-head">
+      <h3><i class="fa-solid fa-pen"></i> تعديل المستفيد <span class="qe-type-badge" id="qe-type-badge">—</span></h3>
+      <button type="button" class="qe-close" id="qe-close">✕</button>
+    </div>
+    <div class="qe-msg" id="qe-msg"></div>
+    <form id="qe-form" autocomplete="off">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" id="qe-bid" value="{{ bio.id }}">
+
+      <div class="qe-section">
+        <div class="qe-section-title"><i class="fa-solid fa-user-tag"></i> نوع المشترك <span style="font-weight:600;color:var(--d-text-muted);font-size:10.5px;margin-inline-start:6px">(يمكنك تغيير النوع إذا انتقل المشترك من مرحلة لأخرى)</span></div>
+        <div class="pick-grid" style="grid-template-columns:repeat(3,1fr)" id="qe-type-picker">
+          <button type="button" class="pick-card qe-type-card" data-type="tawjihi" style="--pick-accent:#16a34a;--pick-bg-from:rgba(22,163,74,.10);--pick-bg-to:rgba(22,163,74,.22)">
+            <span class="pc-ico"><i class="fa-solid fa-user-graduate"></i></span><span class="pc-label">توجيهي</span><span class="pc-sub">سنة + فرع</span>
+          </button>
+          <button type="button" class="pick-card qe-type-card" data-type="university" style="--pick-accent:#d97706;--pick-bg-from:rgba(217,119,6,.10);--pick-bg-to:rgba(217,119,6,.22)">
+            <span class="pc-ico"><i class="fa-solid fa-building-columns"></i></span><span class="pc-label">جامعي</span><span class="pc-sub">جامعة + تخصص</span>
+          </button>
+          <button type="button" class="pick-card qe-type-card" data-type="freelancer" style="--pick-accent:#7c3aed;--pick-bg-from:rgba(124,58,237,.10);--pick-bg-to:rgba(124,58,237,.22)">
+            <span class="pc-ico"><i class="fa-solid fa-laptop-code"></i></span><span class="pc-label">عمل حر</span><span class="pc-sub">شركة + تخصص</span>
+          </button>
+        </div>
+        <input type="hidden" name="user_type" id="qe-user-type" value="">
+      </div>
+
+      <div class="qe-section">
+        <div class="qe-section-title"><i class="fa-solid fa-id-card"></i> الاسم الرباعي والجوال</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>الاسم الأول</label><input name="first_name" id="qe-first" required></div>
+          <div class="qe-field"><label>اسم الأب</label><input name="second_name" id="qe-second" required></div>
+          <div class="qe-field"><label>اسم الجد</label><input name="third_name" id="qe-third" required></div>
+          <div class="qe-field"><label>اسم العائلة</label><input name="fourth_name" id="qe-fourth" required></div>
+          <div class="qe-field full"><label>رقم الجوال <span class="hint">(10 أرقام يبدأ بـ 0)</span></label><input name="phone" id="qe-phone" inputmode="numeric" pattern="0[0-9]{9}" maxlength="10" required></div>
+        </div>
+      </div>
+
+      <div class="qe-section" id="qe-tawjihi-section" style="display:none">
+        <div class="qe-section-title"><i class="fa-solid fa-user-graduate"></i> بيانات التوجيهي</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>السنة</label>
+            <select name="tawjihi_year" id="qe-tawjihi-year">
+              <option value="">— اختر —</option>
+              {% for y in ['2026','2025','2024','2023','2022','2021','2020'] %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="qe-field"><label>الفرع</label>
+            <select name="tawjihi_branch" id="qe-tawjihi-branch">
+              <option value="">— اختر —</option>
+              {% for b in ['علمي','أدبي','شرعي','صناعي','تجاري','زراعي','فندقي','ريادة'] %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="qe-section" id="qe-university-section" style="display:none">
+        <div class="qe-section-title"><i class="fa-solid fa-building-columns"></i> بيانات الجامعة</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>الجامعة</label><input name="university_name" id="qe-uni-name"></div>
+          <div class="qe-field"><label>الرقم الجامعي</label><input name="university_number" id="qe-uni-number"></div>
+          <div class="qe-field"><label>الكلية</label><input name="university_college" id="qe-uni-college"></div>
+          <div class="qe-field"><label>التخصص</label><input name="university_specialization" id="qe-uni-spec"></div>
+          <div class="qe-field"><label>أيام الدوام</label><input name="university_days" id="qe-uni-days"></div>
+          <div class="qe-field"><label>طريقة الاتصال</label>
+            <select name="university_internet_method" id="qe-uni-method">
+              <option value="نظام البطاقات">نظام البطاقات</option>
+              <option value="يوزر إنترنت">حساب إنترنت</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="qe-section" id="qe-freelancer-section" style="display:none">
+        <div class="qe-section-title"><i class="fa-solid fa-laptop-code"></i> بيانات العمل الحر</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>التخصص</label><input name="freelancer_specialization" id="qe-free-spec"></div>
+          <div class="qe-field"><label>الشركة/الجهة</label><input name="freelancer_company" id="qe-free-company"></div>
+          <div class="qe-field"><label>نوع الجدول</label>
+            <select name="freelancer_schedule_type" id="qe-free-sched">
+              <option value="">—</option><option value="مرن">مرن</option><option value="ثابت">ثابت</option>
+            </select>
+          </div>
+          <div class="qe-field"><label>طريقة الاتصال</label>
+            <select name="freelancer_internet_method" id="qe-free-method">
+              <option value="نظام البطاقات">نظام البطاقات</option>
+              <option value="يوزر إنترنت">حساب إنترنت</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="qe-section">
+        <div class="qe-section-title"><i class="fa-solid fa-comment"></i> ملاحظات</div>
+        <div class="qe-grid">
+          <div class="qe-field full"><textarea name="notes" id="qe-notes" placeholder="أي ملاحظات تخص المشترك (اختياري)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="qe-actions">
+        <button type="button" class="qe-btn qe-btn-cancel" id="qe-cancel">إلغاء</button>
+        <button type="submit" class="qe-btn qe-btn-save" id="qe-save"><i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: تأكيد إنشاء الرمز -->
+<div class="up-backdrop" id="confirm-code-modal">
+  <div class="up-modal" style="max-width:460px">
+    <h3 style="color:#d97706"><i class="fa-solid fa-circle-exclamation"></i>تأكيد إنشاء رمز تفعيل</h3>
+    <div style="background:#FDF6E3;border:1px dashed rgba(217,119,6,.4);border-radius:12px;padding:14px 16px;margin-bottom:14px;color:#7c2d12;font-size:13px;line-height:1.8">
+      <strong>سيتم:</strong>
+      <ul style="margin:6px 0 0;padding-inline-start:20px">
+        <li>إلغاء كلمة المرور الحالية للمشترك</li>
+        <li>توليد رمز تفعيل جديد من 6 أرقام صالح لـ <strong>72 ساعة</strong></li>
+        <li>تظهر لك نافذة فيها الكود + خياران: نقل شفهي للمشترك أو إرسال SMS</li>
+      </ul>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn btn-cancel" onclick="document.getElementById('confirm-code-modal').classList.remove('is-open')">إلغاء</button>
+      <button type="button" class="btn btn-save" id="confirm-issue-btn"><i class="fa-solid fa-key"></i>نعم، أنشئ الكود</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: عرض رمز التفعيل -->
+<div class="up-backdrop" id="code-modal">
+  <div class="up-modal" style="max-width:520px">
+    <h3><i class="fa-solid fa-key"></i>رمز تفعيل البوابة</h3>
+    <div style="background:#e8f6ee;border:1px solid rgba(31,143,81,.3);border-radius:10px;padding:10px 14px;margin-bottom:12px;color:#1f8f51;font-size:12.5px;font-weight:700"><i class="fa-solid fa-check-circle"></i> تم توليد الكود بنجاح. الكود القديم بطل.</div>
+    <div style="background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 100%);color:#fff;padding:22px 18px;border-radius:14px;text-align:center;margin-bottom:14px">
+      <div style="font-size:11.5px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">رمز التفعيل</div>
+      <div id="code-value" style="font-family:monospace;font-size:38px;font-weight:900;color:#F4BA2A;letter-spacing:10px;line-height:1">— — — — — —</div>
+      <button type="button" id="code-copy-btn" style="margin-top:14px;font-size:12px;font-weight:700;background:rgba(244,186,42,.15);color:#F4BA2A;padding:7px 16px;border-radius:8px;border:1px solid rgba(244,186,42,.3);cursor:pointer;font-family:inherit"><i class="fa-solid fa-copy"></i> نسخ الكود</button>
+      <div style="font-size:11.5px;color:rgba(255,255,255,.55);margin-top:10px">صالح <strong style="color:#F4BA2A">72 ساعة</strong> • للمشترك: <strong id="code-target">—</strong></div>
+    </div>
+    <div style="font-size:12.5px;color:var(--d-text-soft);margin-bottom:10px;text-align:center;font-weight:600">كيف تريد إيصال الرمز للمشترك؟</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+      <button type="button" class="btn" id="dictate-done-btn" style="background:#fff;border:2px solid #16a34a;color:#16a34a;padding:14px 12px;border-radius:11px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <i class="fa-solid fa-comment-dots" style="font-size:18px"></i>
+        <span>نقلته شفهياً</span>
+        <span style="font-size:10.5px;font-weight:600;color:var(--d-text-muted)">إغلاق النافذة</span>
+      </button>
+      <button type="button" class="btn" id="send-sms-btn" style="background:#F4F3EF;color:var(--d-text-soft);padding:14px 12px;border-radius:11px;font-weight:800;font-size:13px;border:1px dashed var(--d-border-strong);cursor:not-allowed;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px" title="إرسال SMS سيُفعَّل عند ربط مزوّد الرسائل" disabled>
+        <i class="fa-solid fa-paper-plane" style="font-size:18px;opacity:.5"></i>
+        <span>إرسال SMS</span>
+        <span style="font-size:10.5px;font-weight:600;opacity:.75">قيد التطوير — انقل الكود يدوياً</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: card allowance level -->
+<div class="up-backdrop" id="tier-modal">
+  <div class="up-modal">
+    <h3><i class="fa-solid fa-medal"></i>تغيير صلاحية البطاقات</h3>
+    <form id="tier-form">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <div class="row">
+        <label>اختر مستوى السماح</label>
+        <select name="tier">
+          <option value="basic" {% if tier=='basic' %}selected{% endif %}>أساسي — نصف ساعة فقط</option>
+          <option value="standard" {% if tier=='standard' %}selected{% endif %}>موسّع — نصف ساعة، ساعة، ساعتان</option>
+          <option value="complete" {% if tier=='complete' %}selected{% endif %}>متقدم — حتى 3 ساعات</option>
+          <option value="super" {% if tier=='super' %}selected{% endif %}>خاص — يشمل 4 ساعات للحالات الخاصة</option>
+        </select>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-cancel" onclick="document.getElementById('tier-modal').classList.remove('is-open')">إلغاء</button>
+        <button type="submit" class="btn btn-save">حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Verification -->
+<div class="up-backdrop" id="verify-modal">
+  <div class="up-modal">
+    <h3><i class="fa-solid fa-shield-halved"></i>تعديل التوثيق</h3>
+    <form id="verify-form">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <div class="row">
+        <label>الحالة</label>
+        <select name="status">
+          <option value="unverified" {% if vstat=='unverified' %}selected{% endif %}>غير موثّق</option>
+          <option value="reviewed" {% if vstat=='reviewed' %}selected{% endif %}>مراجَع (التحقق من الجوال)</option>
+          <option value="verified" {% if vstat=='verified' %}selected{% endif %}>موثّق (مكتمل البيانات)</option>
+          <option value="super" {% if vstat=='super' %}selected{% endif %}>توثيق خاص</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>صالح حتى <span style="color:var(--d-text-muted);font-weight:600;font-size:10.5px">(اختياري)</span></label>
+        <input type="date" name="until" value="{{ bio.verified_until or '' }}">
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-cancel" onclick="document.getElementById('verify-modal').classList.remove('is-open')">إلغاء</button>
+        <button type="submit" class="btn btn-save">حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  function showToast(text, type){
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:12px;font-weight:800;font-size:13.5px;z-index:10001;box-shadow:0 8px 24px rgba(0,0,0,.18);'+(type==='success'?'background:#1f8f51;color:#fff':'background:#b91c1c;color:#fff');
+    t.textContent = text; document.body.appendChild(t);
+    setTimeout(()=>{ try{ document.body.removeChild(t); }catch(e){} }, 2200);
+  }
+  document.getElementById('set-tier-btn').addEventListener('click', function(){ document.getElementById('tier-modal').classList.add('is-open'); });
+  document.getElementById('set-verify-btn').addEventListener('click', function(){ document.getElementById('verify-modal').classList.add('is-open'); });
+
+  // ── Issue activation code (two-step modal) ──
+  var lastPaIdForSms = null;
+  var issueBtn = document.getElementById('issue-code-btn');
+  var confirmModal = document.getElementById('confirm-code-modal');
+  var codeModal = document.getElementById('code-modal');
+
+  // Step 1: click → open confirmation modal
+  if(issueBtn){
+    issueBtn.addEventListener('click', function(){
+      if(confirmModal) confirmModal.classList.add('is-open');
+    });
+  }
+
+  // Step 2: confirm → fetch + open code modal
+  var confirmBtn = document.getElementById('confirm-issue-btn');
+  if(confirmBtn && issueBtn){
+    confirmBtn.addEventListener('click', function(){
+      var paId = issueBtn.dataset.paId;
+      var name = issueBtn.dataset.name;
+      var phone = issueBtn.dataset.phone;
+      confirmBtn.disabled = true;
+      confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ التوليد...';
+      fetch('/admin/portal-accounts/'+paId+'/reset', {
+        method:'POST',
+        credentials:'same-origin',
+        headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}
+      })
+        .then(function(r){
+          if(r.redirected){
+            throw new Error('تم التحويل إلى ' + r.url + ' — تحقق من تسجيل الدخول أو الصلاحيات');
+          }
+          // محاولة قراءة JSON حتى لو الـ status != 2xx (الـ server بيرجع JSON غالباً)
+          return r.text().then(function(text){
+            try{ return {status:r.status, ok:r.ok, json:JSON.parse(text)}; }
+            catch(e){ throw new Error('HTTP '+r.status+' — استجابة غير JSON: ' + text.slice(0,150)); }
+          });
+        })
+        .then(function(res){
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = '<i class="fa-solid fa-key"></i>نعم، أنشئ الكود';
+          var d = res.json;
+          if(!d.ok){ showToast(d.message || ('فشل HTTP '+res.status), 'error'); return; }
+          lastPaIdForSms = paId;
+          confirmModal.classList.remove('is-open');
+          var cv = document.getElementById('code-value');
+          var ct = document.getElementById('code-target');
+          var ctp = document.getElementById('code-target-phone');
+          if(cv) cv.textContent = d.code;
+          if(ct) ct.textContent = (phone || name);
+          if(ctp) ctp.textContent = phone || '—';
+          codeModal.classList.add('is-open');
+        })
+        .catch(function(err){
+          console.error('issue-code fetch failed:', err);
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = '<i class="fa-solid fa-key"></i>نعم، أنشئ الكود';
+          showToast(err && err.message ? err.message : 'فشل الاتصال', 'error');
+        });
+    });
+  }
+
+  // Copy code
+  var copyBtn = document.getElementById('code-copy-btn');
+  if(copyBtn){
+    copyBtn.addEventListener('click', function(){
+      var code = document.getElementById('code-value').textContent;
+      if(navigator.clipboard) navigator.clipboard.writeText(code);
+      this.innerHTML = '<i class="fa-solid fa-check"></i> تم النسخ';
+      this.style.background = '#16a34a'; this.style.color = '#fff';
+      setTimeout(()=>{
+        this.innerHTML = '<i class="fa-solid fa-copy"></i> نسخ الكود';
+        this.style.background = 'rgba(244,186,42,.15)';
+        this.style.color = '#F4BA2A';
+      }, 1800);
+    });
+  }
+
+  // Option A: dictate verbally → just close
+  var dictateBtn = document.getElementById('dictate-done-btn');
+  if(dictateBtn){
+    dictateBtn.addEventListener('click', function(){
+      codeModal.classList.remove('is-open');
+      showToast('تم. تأكد إن المشترك حفظ الكود.', 'success');
+    });
+  }
+
+  // Option B: send SMS
+  var smsBtn = document.getElementById('send-sms-btn');
+  if(smsBtn){
+    smsBtn.addEventListener('click', function(){
+      if(!lastPaIdForSms) return;
+      smsBtn.disabled = true;
+      var orig = smsBtn.innerHTML;
+      smsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:18px"></i><span>جارٍ الإرسال...</span>';
+      fetch('/admin/portal-accounts/'+lastPaIdForSms+'/send-sms', {method:'POST', credentials:'same-origin'})
+        .then(r=>r.json()).then(d=>{
+          showToast(d.message, d.ok ? 'success' : 'error');
+          if(d.ok) setTimeout(()=>{ codeModal.classList.remove('is-open'); }, 1000);
+        })
+        .finally(()=>{ smsBtn.disabled = false; smsBtn.innerHTML = orig; });
+    });
+  }
+  document.querySelectorAll('.up-backdrop').forEach(function(b){
+    b.addEventListener('click', function(e){ if(e.target === b) b.classList.remove('is-open'); });
+  });
+  document.getElementById('tier-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    fetch('/admin/users/{{ bio.id }}/set-tier', {method:'POST', credentials:'same-origin', body:new FormData(this)})
+      .then(r=>r.json()).then(d=>{
+        showToast(d.message, d.ok ? 'success' : 'error');
+        if(d.ok) setTimeout(()=>location.reload(), 600);
+      });
+  });
+  document.getElementById('verify-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    fetch('/admin/users/{{ bio.id }}/set-verification', {method:'POST', credentials:'same-origin', body:new FormData(this)})
+      .then(r=>r.json()).then(d=>{
+        showToast(d.message, d.ok ? 'success' : 'error');
+        if(d.ok) setTimeout(()=>location.reload(), 600);
+      });
+  });
+
+  // ─── Attachments ───
+  function fmtSize(n){ if(n>1048576) return (n/1048576).toFixed(1)+' MB'; if(n>1024) return (n/1024).toFixed(1)+' KB'; return n+' B'; }
+  function loadAttachments(){
+    var box = document.getElementById('att-list');
+    safeJson('/admin/users/{{ bio.id }}/attachments').then(function(d){
+        if(!d.ok || !d.items.length){
+          box.innerHTML = '<div class="empty-row"><i class="fa-regular fa-folder-open"></i>لم تُرفع ملفات بعد</div>';
+          return;
+        }
+        function isImg(name){ return /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(name||''); }
+        function iconFor(name){
+          var ext = ((name||'').split('.').pop() || '').toLowerCase();
+          if(/^(pdf)$/.test(ext)) return 'fa-file-pdf';
+          if(/^(doc|docx)$/.test(ext)) return 'fa-file-word';
+          if(/^(xls|xlsx|csv)$/.test(ext)) return 'fa-file-excel';
+          if(/^(zip|rar|7z)$/.test(ext)) return 'fa-file-zipper';
+          if(/^(txt)$/.test(ext)) return 'fa-file-lines';
+          return 'fa-file';
+        }
+        // عرض شبكي: صور تطلع thumbnails، ملفات بأيقونة + زر تنزيل
+        box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px">' +
+          d.items.map(function(i){
+            var thumb;
+            if(isImg(i.file_name)){
+              var viewUrl = i.url + '?inline=1';
+              thumb = '<button type="button" class="att-img-open" data-img-url="'+viewUrl+'" data-img-name="'+i.file_name+'" title="فتح بحجم أكبر" style="padding:0;border:0;background:transparent;cursor:zoom-in;display:block">' +
+                '<img src="'+viewUrl+'" alt="'+i.file_name+'" style="width:100%;height:120px;object-fit:cover;border-radius:8px;background:#FAFAF8;display:block">' +
+              '</button>';
+            } else {
+              thumb = '<div style="height:120px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#FAFAF8,#F4F3EF);border-radius:8px;color:var(--d-gold-deep,#D8A11C)">' +
+                '<i class="fa-solid '+iconFor(i.file_name)+'" style="font-size:42px"></i>' +
+              '</div>';
+            }
+            return '<div style="border:1px solid var(--d-border);border-radius:12px;padding:10px;background:#fff;display:flex;flex-direction:column;gap:6px">' +
+              thumb +
+              '<div style="font-size:12px;font-weight:700;color:var(--d-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:start" title="'+i.file_name+'">'+i.file_name+'</div>' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--d-text-muted)">' +
+                '<span style="font-family:monospace">'+fmtSize(i.size)+'</span>' +
+                '<span>'+(i.uploaded_at||'').slice(0,10)+'</span>' +
+              '</div>' +
+              '<div style="display:flex;gap:6px;margin-top:2px">' +
+                '<a href="'+i.url+'" download style="flex:1;text-align:center;background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;padding:6px;border-radius:8px;font-size:11.5px;font-weight:800;text-decoration:none">' +
+                  '<i class="fa-solid fa-download"></i> تنزيل</a>' +
+                '<button type="button" data-att-id="'+i.id+'" class="att-del" title="حذف" style="background:none;border:1px solid var(--d-border);cursor:pointer;color:#b91c1c;padding:6px 10px;border-radius:8px"><i class="fa-solid fa-trash"></i></button>' +
+              '</div>' +
+            '</div>';
+          }).join('') + '</div>';
+      }).catch(function(err){
+        console.error('loadAttachments failed:', err);
+        box.innerHTML = '<div class="empty-row" style="color:#b91c1c">فشل تحميل المرفقات: '+(err.message||'')+'</div>';
+      });
+  }
+  // Generic JSON-safe fetch — يطبع HTTP error واضح بدل صمت
+  function safeJson(url, opts){
+    opts = opts || {};
+    opts.credentials = 'same-origin';
+    opts.headers = Object.assign({'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}, opts.headers || {});
+    return fetch(url, opts).then(function(r){
+      if(r.redirected){
+        return r.text().then(function(){
+          throw new Error('تم التحويل إلى '+r.url+' — تحقق من تسجيل الدخول أو الصلاحيات');
+        });
+      }
+      return r.text().then(function(t){
+        try{ return JSON.parse(t); }
+        catch(e){
+          var snippet = t.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,140);
+          throw new Error('HTTP '+r.status+': '+(snippet || 'استجابة غير صالحة'));
+        }
+      });
+    });
+  }
+
+  document.getElementById('att-file').addEventListener('change', function(e){
+    var f = e.target.files[0]; if(!f) return;
+    var fd = new FormData(); fd.append('file', f); fd.append('kind', 'other');
+    safeJson('/admin/users/{{ bio.id }}/attachments', {method:'POST', body:fd})
+      .then(function(d){
+        showToast(d.message, d.ok ? 'success' : 'error');
+        if(d.ok){ loadAttachments(); }
+        e.target.value = '';
+      })
+      .catch(function(err){
+        console.error('attachment upload failed:', err);
+        showToast(err.message || 'فشل الرفع', 'error');
+        e.target.value = '';
+      });
+  });
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.att-del');
+    if(!b) return;
+    if(!confirm('حذف هذا المرفق؟')) return;
+    safeJson('/admin/users/{{ bio.id }}/attachments/'+b.dataset.attId+'/delete', {method:'POST'})
+      .then(function(d){ showToast(d.message, d.ok?'success':'error'); if(d.ok) loadAttachments(); })
+      .catch(function(err){
+        console.error('attachment delete failed:', err);
+        showToast(err.message || 'فشل الحذف', 'error');
+      });
+  });
+
+  // ─── Move-in (outside → portal) ───
+  var moveinBtn = document.getElementById('movein-btn');
+  var moveinModal = document.getElementById('movein-modal');
+  if(moveinBtn && moveinModal){
+    moveinBtn.addEventListener('click', function(){
+      moveinModal.classList.add('is-open');
+    });
+    moveinModal.addEventListener('click', function(e){ if(e.target === moveinModal) moveinModal.classList.remove('is-open'); });
+    document.getElementById('movein-form').addEventListener('submit', function(e){
+      e.preventDefault();
+      var phone = moveinBtn.dataset.phone;
+      var name = moveinBtn.dataset.name;
+      var fd = new FormData(this);
+      var saveBtn = this.querySelector('button[type="submit"]');
+      var orig = saveBtn.innerHTML;
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ الحفظ...';
+      safeJson('/admin/portal-accounts/move-in', {method:'POST', body:fd})
+        .then(function(d){
+          saveBtn.disabled = false; saveBtn.innerHTML = orig;
+          if(!d.ok){ showToast(d.message || 'فشل النقل', 'error'); return; }
+          moveinModal.classList.remove('is-open');
+          // عرض الكود في code-modal الموجود
+          lastPaIdForSms = d.portal_id;
+          var cv = document.getElementById('code-value');
+          var ct = document.getElementById('code-target');
+          if(cv) cv.textContent = d.code;
+          if(ct) ct.textContent = phone || name;
+          codeModal.classList.add('is-open');
+          // بعد ما يقفل المستخدم الـ code-modal → reload الصفحة لتظهر بطاقة "حساب البوابة"
+          var refreshAfterClose = function(){
+            if(!codeModal.classList.contains('is-open')){
+              codeModal.removeEventListener('transitionend', refreshAfterClose);
+              window.location.reload();
+            }
+          };
+          // استخدام MutationObserver لمراقبة إغلاق المودال
+          var obs = new MutationObserver(function(){
+            if(!codeModal.classList.contains('is-open')){
+              obs.disconnect();
+              setTimeout(function(){ window.location.reload(); }, 200);
+            }
+          });
+          obs.observe(codeModal, {attributes:true, attributeFilter:['class']});
+        })
+        .catch(function(err){
+          saveBtn.disabled = false; saveBtn.innerHTML = orig;
+          console.error('move-in failed:', err);
+          showToast(err.message || 'فشل النقل', 'error');
+        });
+    });
+  }
+
+  // ─── Image lightbox ───
+  var lightbox = document.getElementById('img-lightbox');
+  var lightboxImg = document.getElementById('lightbox-img');
+  var lightboxCaption = document.getElementById('lightbox-caption');
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.att-img-open');
+    if(!b) return;
+    e.preventDefault();
+    lightboxImg.src = b.dataset.imgUrl;
+    lightboxImg.alt = b.dataset.imgName || '';
+    lightboxCaption.textContent = b.dataset.imgName || '';
+    lightbox.classList.add('is-open');
+  });
+  function closeLightbox(){
+    lightbox.classList.remove('is-open');
+    lightboxImg.src = '';
+  }
+  document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', function(e){ if(e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && lightbox.classList.contains('is-open')) closeLightbox();
+  });
+
+  // ─── Messages ───
+  function loadMessages(){
+    var box = document.getElementById('msg-list');
+    safeJson('/admin/users/{{ bio.id }}/messages').then(function(d){
+        if(!d.ok || !d.items.length){
+          box.innerHTML = '<div class="empty-row"><i class="fa-regular fa-folder-open"></i>لا توجد ملاحظات بعد</div>';
+          return;
+        }
+        var kindLabel = {note:'ملاحظة', complaint:'شكوى', reminder:'تذكير'};
+        var kindColor = {note:'#1c52a8', complaint:'#b91c1c', reminder:'#d97706'};
+        box.innerHTML = d.items.map(function(m){
+          return '<div style="background:#FAFAF8;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">' +
+            '<div><div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">' +
+              '<span style="font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:'+(kindColor[m.kind]||'#6b7280')+'22;color:'+(kindColor[m.kind]||'#6b7280')+'">'+(kindLabel[m.kind]||m.kind)+'</span>' +
+              '<span style="font-size:11px;color:var(--d-text-muted)">'+(m.by_username||'—')+' • '+(m.created_at||'').slice(0,16)+'</span></div>' +
+              '<div style="font-size:13px;color:var(--d-text)">'+m.body.replace(/</g,'&lt;')+'</div></div>' +
+            '<button type="button" data-msg-id="'+m.id+'" class="msg-del" style="background:none;border:0;cursor:pointer;color:#b91c1c;flex-shrink:0"><i class="fa-solid fa-trash"></i></button></div>';
+        }).join('');
+      }).catch(function(err){
+        console.error('loadMessages failed:', err);
+        box.innerHTML = '<div class="empty-row" style="color:#b91c1c">فشل تحميل الملاحظات: '+(err.message||'')+'</div>';
+      });
+  }
+  document.getElementById('msg-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var form = this;
+    var fd = new FormData(form);
+    safeJson('/admin/users/{{ bio.id }}/messages', {method:'POST', body:fd})
+      .then(function(d){
+        if(d.ok){ form.reset(); loadMessages(); showToast(d.message,'success'); }
+        else showToast(d.message||'فشل','error');
+      })
+      .catch(function(err){
+        console.error('message add failed:', err);
+        showToast(err.message || 'فشل الإضافة', 'error');
+      });
+  });
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.msg-del');
+    if(!b) return;
+    if(!confirm('حذف هذه الملاحظة؟')) return;
+    fetch('/admin/users/{{ bio.id }}/messages/'+b.dataset.msgId+'/delete', {method:'POST', credentials:'same-origin'})
+      .then(r=>r.json()).then(d=>{ showToast(d.message, d.ok?'success':'error'); if(d.ok) loadMessages(); });
+  });
+
+  loadAttachments();
+  loadMessages();
+
+  // ─── Quick-edit Modal — inline على الصفحة الشخصية ───
+  var qeModal = document.getElementById('qe-modal');
+  var qeForm = document.getElementById('qe-form');
+  var qeMsg = document.getElementById('qe-msg');
+  var qeSave = document.getElementById('qe-save');
+  var qeTypeBadge = document.getElementById('qe-type-badge');
+  var qeTawjihi = document.getElementById('qe-tawjihi-section');
+  var qeUniversity = document.getElementById('qe-university-section');
+  var qeFreelancer = document.getElementById('qe-freelancer-section');
+  var BID = '{{ bio.id }}';
+
+  function qeShowMsg(t, txt){ qeMsg.className = 'qe-msg is-show '+t; qeMsg.textContent = txt; }
+  function qeClear(){ qeMsg.className = 'qe-msg'; qeMsg.textContent = ''; }
+  function setSelectValue(elId, val){ var el = document.getElementById(elId); if(el) el.value = val || ''; }
+  function qeApplyType(ut){
+    ut = (ut || '').toLowerCase();
+    var label = {tawjihi:'توجيهي', university:'جامعي', freelancer:'عمل حر'}[ut] || ut;
+    qeTypeBadge.textContent = label;
+    document.getElementById('qe-user-type').value = ut;
+    qeTawjihi.style.display = (ut === 'tawjihi') ? '' : 'none';
+    qeUniversity.style.display = (ut === 'university') ? '' : 'none';
+    qeFreelancer.style.display = (ut === 'freelancer') ? '' : 'none';
+    document.querySelectorAll('.qe-type-card').forEach(function(c){
+      c.classList.toggle('is-selected', c.dataset.type === ut);
+    });
+  }
+  document.querySelectorAll('.qe-type-card').forEach(function(card){
+    card.addEventListener('click', function(){ qeApplyType(card.dataset.type); });
+  });
+
+  function qeOpen(){
+    qeClear(); qeSave.disabled = true;
+    fetch('/admin/beneficiaries/'+BID+'/quick-edit', {credentials:'same-origin'})
+      .then(r => r.json()).then(d => {
+        if(!d || !d.ok){ qeShowMsg('error', d && d.message || 'تعذّر التحميل'); return; }
+        var x = d.data;
+        document.getElementById('qe-first').value = x.first_name || '';
+        document.getElementById('qe-second').value = x.second_name || '';
+        document.getElementById('qe-third').value = x.third_name || '';
+        document.getElementById('qe-fourth').value = x.fourth_name || '';
+        document.getElementById('qe-phone').value = x.phone || '';
+        document.getElementById('qe-notes').value = x.notes || '';
+        var ut = (x.user_type || '').toLowerCase();
+        qeApplyType(ut);
+        if(ut === 'tawjihi'){
+          setSelectValue('qe-tawjihi-year', x.tawjihi_year);
+          setSelectValue('qe-tawjihi-branch', x.tawjihi_branch);
+        } else if(ut === 'university'){
+          document.getElementById('qe-uni-name').value = x.university_name || '';
+          document.getElementById('qe-uni-number').value = x.university_number || '';
+          document.getElementById('qe-uni-college').value = x.university_college || '';
+          document.getElementById('qe-uni-spec').value = x.university_specialization || '';
+          document.getElementById('qe-uni-days').value = x.university_days || '';
+          setSelectValue('qe-uni-method', x.university_internet_method || 'نظام البطاقات');
+        } else if(ut === 'freelancer'){
+          document.getElementById('qe-free-spec').value = x.freelancer_specialization || '';
+          document.getElementById('qe-free-company').value = x.freelancer_company || '';
+          setSelectValue('qe-free-sched', x.freelancer_schedule_type);
+          setSelectValue('qe-free-method', x.freelancer_internet_method || 'نظام البطاقات');
+        }
+        qeSave.disabled = false;
+      }).catch(() => qeShowMsg('error', 'فشل الاتصال'));
+    qeModal.classList.add('is-open');
+  }
+  function qeClose(){ qeModal.classList.remove('is-open'); }
+
+  document.getElementById('profile-edit-btn').addEventListener('click', qeOpen);
+  document.getElementById('qe-close').addEventListener('click', qeClose);
+  document.getElementById('qe-cancel').addEventListener('click', qeClose);
+  qeModal.addEventListener('click', e => { if(e.target === qeModal) qeClose(); });
+
+  qeForm.addEventListener('submit', function(e){
+    e.preventDefault(); qeSave.disabled = true; qeClear();
+    fetch('/admin/beneficiaries/'+BID+'/quick-edit', {method:'POST', credentials:'same-origin', body:new FormData(qeForm)})
+      .then(r => r.json()).then(d => {
+        if(d.ok){
+          qeShowMsg('success', d.message);
+          showToast(d.message, 'success');
+          // أعد تحميل الصفحة لتحديث الـ hero والـ cards
+          setTimeout(() => window.location.reload(), 700);
+        } else { qeShowMsg('error', d.message); qeSave.disabled = false; }
+      }).catch(() => { qeShowMsg('error', 'فشل الاتصال'); qeSave.disabled = false; });
+  });
+
+  // Esc يغلق المودال
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && qeModal.classList.contains('is-open')) qeClose();
+  });
+
+  // ─── Password toggle + inline edit ───
+  var pwdToggle = document.getElementById('pwd-toggle');
+  var pwdDisplay = document.getElementById('pwd-display');
+  if(pwdToggle && pwdDisplay){
+    pwdToggle.addEventListener('click', function(){
+      var masked = pwdDisplay.dataset.masked === '1';
+      if(masked){
+        pwdDisplay.textContent = pwdDisplay.dataset.plain;
+        pwdDisplay.dataset.masked = '0';
+        pwdToggle.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+      } else {
+        pwdDisplay.textContent = '●'.repeat(pwdDisplay.dataset.plain.length);
+        pwdDisplay.dataset.masked = '1';
+        pwdToggle.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      }
+    });
+  }
+
+  var pwdEditBtn = document.getElementById('pwd-edit-btn');
+  var pwdModal = document.getElementById('pwd-modal');
+  var pwdForm = document.getElementById('pwd-form');
+  var pwdNewInput = document.getElementById('pwd-new');
+  var pwdNewEye = document.getElementById('pwd-new-eye');
+  if(pwdEditBtn && pwdModal){
+    pwdEditBtn.addEventListener('click', function(){
+      pwdNewInput.value = '';
+      pwdNewInput.type = 'password';
+      pwdNewEye.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      pwdModal.classList.add('is-open');
+      setTimeout(function(){ pwdNewInput.focus(); }, 100);
+    });
+    pwdNewEye.addEventListener('click', function(){
+      if(pwdNewInput.type === 'password'){
+        pwdNewInput.type = 'text';
+        pwdNewEye.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+      } else {
+        pwdNewInput.type = 'password';
+        pwdNewEye.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      }
+    });
+    pwdModal.addEventListener('click', function(e){ if(e.target === pwdModal) pwdModal.classList.remove('is-open'); });
+    pwdForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var paId = pwdEditBtn.dataset.paId;
+      var fd = new FormData(pwdForm);
+      fetch('/admin/portal-accounts/'+paId+'/set-credentials', {
+        method:'POST', credentials:'same-origin',
+        headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'},
+        body:fd,
+      })
+        .then(function(r){ return r.text().then(function(t){
+          try{ return {ok:r.ok, status:r.status, json:JSON.parse(t)}; }
+          catch(e){ throw new Error('HTTP '+r.status); }
+        });})
+        .then(function(res){
+          var d = res.json;
+          if(d.ok){
+            showToast(d.message || 'تم الحفظ', 'success');
+            pwdModal.classList.remove('is-open');
+            setTimeout(function(){ window.location.reload(); }, 600);
+          } else {
+            showToast(d.message || ('فشل HTTP '+res.status), 'error');
+          }
+        })
+        .catch(function(err){
+          console.error('pwd-edit failed:', err);
+          showToast(err.message || 'فشل الاتصال', 'error');
+        });
+    });
+  }
+})();
+</script>
+{% endblock %}

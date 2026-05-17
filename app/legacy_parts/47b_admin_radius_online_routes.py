@@ -1,0 +1,56 @@
+# صفحة "المتصلون الآن" — قراءة من /get_online_users
+
+from flask import flash, redirect, render_template, request, session, url_for
+
+
+@app.route("/admin/radius/online", methods=["GET"])
+@admin_login_required
+def admin_radius_online():
+    from app.services.radius_dashboard import (
+        get_radius_online_users,
+        get_radius_kpis,
+        get_radius_server_info,
+    )
+
+    sessions_result = get_radius_online_users(limit=100)
+    kpis_result = get_radius_kpis()
+    server_info = get_radius_server_info()
+
+    # نحضّر sessions مع تنسيق
+    sessions_raw = sessions_result.get("data") or [] if sessions_result.get("available") else []
+    sessions = []
+    for s in sessions_raw:
+        if not isinstance(s, dict):
+            continue
+        # هذا الـ shape غير معروف بعد — نحاول قراءة الحقول الشائعة
+        sessions.append({
+            "username":      s.get("username") or s.get("user_name") or s.get("user") or "—",
+            "framed_ip":     s.get("framed_ip") or s.get("framedipaddress") or s.get("ip") or "—",
+            "nas":           s.get("nasipaddress") or s.get("nas") or "—",
+            "running_sec":   s.get("running_sec") or s.get("acctsessiontime") or 0,
+            "calling_id":    s.get("callingstationid") or s.get("mac") or "—",
+            "bytes_in":      s.get("bytes_in") or s.get("acctinputoctets") or 0,
+            "bytes_out":     s.get("bytes_out") or s.get("acctoutputoctets") or 0,
+            "session_id":    s.get("acctsessionid") or s.get("session_id") or "",
+            "raw":           s,
+        })
+
+    return render_template(
+        "admin/radius/online.html",
+        sessions_result=sessions_result,
+        sessions=sessions,
+        kpis_result=kpis_result,
+        server_info=server_info,
+        online_count=len(sessions),
+    )
+
+
+@app.route("/admin/radius/online/refresh", methods=["POST"])
+@admin_login_required
+def admin_radius_online_refresh():
+    """يلغي الكاش ويعيد التوجيه — يضمن جلب طازج."""
+    from app.services.radius_dashboard import invalidate_cache
+    invalidate_cache("radius:online_users")
+    invalidate_cache("radius:quick_stats")
+    flash("تم تحديث البيانات.", "success")
+    return redirect(url_for("admin_radius_online"))

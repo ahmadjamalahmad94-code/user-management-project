@@ -1,0 +1,97 @@
+{% extends "admin/cards/_cards_layout.html" %}
+{% block title %}سجل تسليم البطاقات{% endblock %}
+{% block page_title %}سجل تسليم البطاقات{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+{% endblock %}
+
+{% block cards_content %}
+
+<!-- ─── Unified Control Hub ─── -->
+<section class="hub">
+  <div class="hub-stats">
+    <div class="hub-stat">
+      <span class="hub-stat-ico"><i class="fa-solid fa-clipboard-list"></i></span>
+      <div><span class="lbl">إجمالي التسليمات</span><span class="val">{{ deliveries | length }}</span></div>
+    </div>
+  </div>
+
+  <form class="hub-search" id="cd-filter-form" method="GET" autocomplete="off">
+    <div class="hub-search-input">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" name="q" id="cd-q" value="{{ filters.q or '' }}" placeholder="ابحث بالاسم أو اسم البطاقة أو رقم التسليم/المشترك…">
+      <span class="hub-search-spinner" id="cd-search-status" aria-hidden="true"></span>
+    </div>
+    <input class="hub-search-select" type="tel" name="phone" id="cd-phone" value="{{ filters.phone or '' }}" inputmode="numeric" placeholder="رقم الجوال" style="min-width:130px;direction:ltr;text-align:right">
+    <select name="category_code" id="cd-category" class="hub-search-select">
+      <option value="">كل الفئات</option>
+      {% for c in categories %}
+      <option value="{{ c.code }}" {% if filters.category_code == c.code %}selected{% endif %}>{{ c.label_ar }}</option>
+      {% endfor %}
+    </select>
+    <input class="hub-search-select" type="date" name="date_from" id="cd-date-from" value="{{ filters.date_from or '' }}" title="من تاريخ" style="min-width:130px">
+    <input class="hub-search-select" type="date" name="date_to" id="cd-date-to" value="{{ filters.date_to or '' }}" title="إلى تاريخ" style="min-width:130px">
+    <input type="hidden" name="beneficiary_id" id="cd-beneficiary-id" value="{{ filters.beneficiary_id or '' }}">
+    <button type="button" class="hub-search-clear" id="cd-clear-btn" title="مسح"><i class="fa-solid fa-xmark"></i></button>
+  </form>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-clipboard-list"></i>التسليمات</h3>
+    <span style="font-size:12px;color:var(--d-text-muted)"><span id="cd-results-count">{{ deliveries | length }}</span> نتيجة</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" id="cd-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="cards-deliveries">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>المشترك</th>
+          <th>الجوال</th>
+          <th>المدة</th>
+          <th>اسم البطاقة</th>
+          <th>كلمة المرور</th>
+          <th>المسلِّم</th>
+          <th>التاريخ</th>
+        </tr>
+      </thead>
+      <tbody id="cd-tbody">
+        {% for d in deliveries %}
+        <tr>
+          <td>#{{ d.id }}</td>
+          <td><strong>{{ d.full_name or '—' }}</strong></td>
+          <td>{{ d.phone or '—' }}</td>
+          <td><span class="d-badge">{{ d.duration_minutes }} دقيقة</span></td>
+          <td style="font-family:monospace">{{ d.card_username }}</td>
+          <td style="font-family:monospace;color:var(--d-text-muted)">••••••</td>
+          <td>{{ d.issued_by or '—' }}</td>
+          <td>{{ d.issued_at }}</td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="8" style="text-align:center;color:var(--d-text-muted);padding:32px">لا تسليمات مطابقة.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script src="{{ url_for('static', filename='js/dashboard_hub_search.js') }}"></script>
+<script>
+(function(){
+  if(!window.HubSearch) return;
+  window.HubSearch.attach({
+    formId: 'cd-filter-form',
+    tbodyId: 'cd-tbody',
+    tableId: 'cd-table',
+    statusId: 'cd-search-status',
+    countId: 'cd-results-count',
+    clearBtnId: 'cd-clear-btn'
+  });
+})();
+</script>
+
+{% endblock %}
+
+

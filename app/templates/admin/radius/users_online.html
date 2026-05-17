@@ -1,0 +1,69 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}مستخدمو RADIUS المتصلون{% endblock %}
+{% block page_title %}مستخدمو RADIUS المتصلون{% endblock %}
+{% block crumbs %}<span>الإدارة</span><i class="fa-solid fa-chevron-left"></i><span>RADIUS</span><i class="fa-solid fa-chevron-left"></i><span>المتصلون</span>{% endblock %}
+
+{% block head_extra %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.online-row td{vertical-align:middle;font-size:13px}
+.online-row td.col-user{font-weight:800;color:var(--d-black);font-family:monospace}
+.online-row td.col-ip{font-family:monospace;color:var(--d-text-soft)}
+.online-row td.col-mac{font-family:monospace;color:var(--d-text-muted);font-size:11.5px}
+.online-row td.col-when{font-family:monospace;font-size:11.5px;color:var(--d-text-muted)}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#1f8f51;margin-inline-end:6px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.disc-btn{padding:6px 12px;border-radius:8px;background:#fde2e2;color:#b91c1c;border:1px solid rgba(185,28,28,.3);font-size:12px;font-weight:800;cursor:pointer;font-family:inherit}
+.disc-btn:hover{background:#b91c1c;color:#fff}
+</style>{% endblock %}
+
+{% block content %}
+<section class="d-hero">
+  <div><h2><span class="live-dot"></span>مستخدمو RADIUS المتصلون الآن</h2><p>قائمة الجلسات النشطة المسحوبة من RADIUS API.</p></div>
+  <div class="d-hero-actions">
+    <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('radius_online_users_page') }}"><i class="fa-solid fa-rotate"></i>تحديث</a>
+  </div>
+</section>
+
+{% if error_text %}
+<div style="padding:12px 16px;border-radius:11px;background:#fde2e2;color:#b91c1c;border:1px solid rgba(185,28,28,.3);margin-bottom:14px">{{ error_text }}</div>
+{% endif %}
+
+<section class="d-kpi-grid">
+  <div class="d-kpi">
+    <div class="d-kpi-head"><span class="d-kpi-label">إجمالي المتصلين</span><span class="d-kpi-icon d-kpi-icon--success"><i class="fa-solid fa-wifi"></i></span></div>
+    <div class="d-kpi-value">{{ rows|length }}</div>
+  </div>
+</section>
+
+<section class="d-card" style="margin-top:14px">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-list"></i>الجلسات النشطة</h3></div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="radius-online">
+      <thead><tr><th>#</th><th>اسم المستخدم</th><th>IP</th><th>MAC</th><th>بدء الجلسة</th><th>الاستهلاك</th><th>إجراءات</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr class="online-row">
+          <td>{{ loop.index }}</td>
+          <td class="col-user">{{ r.username or '—' }}</td>
+          <td class="col-ip">{{ r.framed_ip or r.ip or '—' }}</td>
+          <td class="col-mac">{{ r.mac or '—' }}</td>
+          <td class="col-when">{{ r.start_time or '—' }}</td>
+          <td>{{ r.usage_mb }} MB</td>
+          <td>
+            {% if has_permission('disconnect_radius_user') %}
+            <form method="POST" action="{{ url_for('radius_disconnect_user_route') }}" onsubmit="return confirm('فصل {{ r.username }}؟')" style="display:inline">
+              {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+              <input type="hidden" name="username" value="{{ r.username }}">
+              <button class="disc-btn" type="submit"><i class="fa-solid fa-power-off"></i>فصل</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="7" style="text-align:center;padding:28px;color:var(--d-text-muted)">لا يوجد مستخدمون متصلون حاليًا.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

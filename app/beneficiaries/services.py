@@ -1,0 +1,9 @@
+from app import legacy
+
+
+beneficiary_form_html = legacy.beneficiary_form_html
+build_beneficiary_filters = legacy.build_beneficiary_filters
+build_beneficiary_row_html = legacy.build_beneficiary_row_html
+build_add_beneficiary_modal = legacy.build_add_beneficiary_modal
+collect_beneficiary_form = legacy.collect_beneficiary_form
+find_duplicate_phone = legacy.find_duplicate_phone

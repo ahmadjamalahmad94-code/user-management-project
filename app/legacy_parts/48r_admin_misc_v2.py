@@ -1,0 +1,300 @@
+# 48p_admin_misc_v2.py — إعادة تصميم 7 صفحات admin متبقية:
+#   /profile, /admin/internet-requests/<id>, /usage-archive,
+#   /timer, /admin-control,
+#   /admin/radius/users-online, /admin/radius/user-lookup, /admin/radius/app-test
+
+import json as _json
+from flask import render_template, request, redirect, url_for, flash, session
+
+
+# ════════════════════════════════════════════════════
+# /profile (admin self-edit)
+# ════════════════════════════════════════════════════
+def _profile_v2():
+    account = query_one("SELECT * FROM app_accounts WHERE id=%s", [session.get("account_id")])
+    if not account:
+        flash("الحساب غير موجود.", "error")
+        return redirect(url_for("dashboard"))
+
+    perms_rows = query_all(
+        """SELECT p.name FROM account_permissions ap
+           JOIN permissions p ON p.id=ap.permission_id
+           WHERE ap.account_id=%s ORDER BY p.name""",
+        [session.get("account_id")],
+    )
+    permissions = [r["name"] for r in (perms_rows or [])]
+
+    if request.method == "POST":
+        current_password = clean_csv_value(request.form.get("current_password"))
+        new_password = clean_csv_value(request.form.get("new_password"))
+        full_name = clean_csv_value(request.form.get("full_name"))
+        if not verify_admin_password(account.get("password_hash"), current_password):
+            flash("كلمة المرور الحالية غير صحيحة.", "error")
+            return redirect(url_for("profile_page"))
+        if not new_password or len(new_password) < 6:
+            flash("كلمة المرور الجديدة قصيرة (6 أحرف على الأقل).", "error")
+            return redirect(url_for("profile_page"))
+        execute_sql(
+            "UPDATE app_accounts SET full_name=%s, password_hash=%s WHERE id=%s",
+            [full_name, admin_password_hash(new_password), session.get("account_id")],
+        )
+        session["full_name"] = full_name
+        log_action("change_password", "account", session.get("account_id"), "تغيير من الصفحة الشخصية")
+        flash("تم تحديث بياناتك ✓", "success")
+        return redirect(url_for("profile_page"))
+
+    return render_template(
+        "admin/profile/profile.html",
+        account=account, permissions=permissions,
+        permission_label=permission_label,
+    )
+
+
+if "profile_page" in app.view_functions:
+    @login_required
+    def _new_profile():
+        return _profile_v2()
+    app.view_functions["profile_page"] = _new_profile
+
+
+# ════════════════════════════════════════════════════
+# /admin/internet-requests/<id> detail
+# ════════════════════════════════════════════════════
+def _admin_internet_request_detail_v2(request_id):
+    try:
+        process_due_speed_restores()
+    except Exception:
+        pass
+    req = get_internet_request_row(request_id)
+    if not req:
+        flash("الطلب غير موجود.", "error")
+        return redirect(url_for("admin_internet_requests_page"))
+
+    requested_payload = json_safe_dict(req.get("requested_payload"))
+    admin_payload = json_safe_dict(req.get("admin_payload"))
+    api_response = json_safe_dict(req.get("api_response"))
+    linked_account = get_radius_account(req["beneficiary_id"]) or {}
+    merged_username = get_request_external_username(req, linked_account)
+
+    return render_template(
+        "admin/internet_requests/detail.html",
+        req=req,
+        requested_payload=requested_payload,
+        admin_payload=admin_payload,
+        linked_account=linked_account,
+        merged_username=merged_username,
+        requested_payload_json=_json.dumps(requested_payload, ensure_ascii=False, indent=2) if requested_payload else "",
+        admin_payload_json=_json.dumps(admin_payload, ensure_ascii=False, indent=2) if admin_payload else "",
+        api_response_json=_json.dumps(api_response, ensure_ascii=False, indent=2) if api_response else "",
+        internet_request_type_label=internet_request_type_label,
+        format_dt_short=format_dt_short,
+    )
+
+
+if "admin_internet_request_detail_page" in app.view_functions:
+    @login_required
+    @permission_required("manage_internet_requests")
+    def _new_admin_inet_req_detail(request_id):
+        return _admin_internet_request_detail_v2(request_id)
+    app.view_functions["admin_internet_request_detail_page"] = _new_admin_inet_req_detail
+
+
+# ════════════════════════════════════════════════════
+# /usage-archive
+# ════════════════════════════════════════════════════
+def _usage_archive_v2():
+    before_date = parse_date_or_none(request.args.get("date_to"))
+    where = ""
+    params = []
+    if before_date:
+        where = "WHERE l.usage_date <= %s"
+        params = [before_date]
+
+    rows = query_all(
+        f"""
+        SELECT l.*, b.full_name, b.phone, b.user_type
+        FROM beneficiary_usage_logs_archive l
+        LEFT JOIN beneficiaries b ON b.id = l.beneficiary_id
+        {where}
+        ORDER BY l.usage_time DESC, l.archive_id DESC
+        LIMIT 1000
+        """,
+        params,
+    )
+
+    total_row = query_one("SELECT COUNT(*) AS c FROM beneficiary_usage_logs_archive") or {}
+    total = int(total_row.get("c") or 0)
+    oldest_row = query_one("SELECT MIN(usage_date) AS d FROM beneficiary_usage_logs_archive") or {}
+    oldest = oldest_row.get("d")
+
+    return render_template(
+        "admin/usage_archive/list.html",
+        rows=rows,
+        total=total,
+        oldest=oldest,
+        filters={"date_to": request.args.get("date_to") or ""},
+        can_export=has_permission("export_archive"),
+        can_restore=has_permission("restore_archive"),
+        can_delete=has_permission("delete_archive"),
+        can_clear=has_permission("delete_archive") or has_permission("restore_archive"),
+        format_dt_short=format_dt_short,
+    )
+
+
+if "usage_archive_page" in app.view_functions:
+    @login_required
+    @permission_required("view_archive")
+    def _new_usage_archive():
+        return _usage_archive_v2()
+    app.view_functions["usage_archive_page"] = _new_usage_archive
+
+
+# ════════════════════════════════════════════════════
+# /timer
+# ════════════════════════════════════════════════════
+def _timer_v2():
+    return render_template("admin/timer/timer.html")
+
+
+if "power_timer_page" in app.view_functions:
+    @login_required
+    def _new_timer():
+        return _timer_v2()
+    app.view_functions["power_timer_page"] = _new_timer
+
+
+# ════════════════════════════════════════════════════
+# /admin-control
+# ════════════════════════════════════════════════════
+def _admin_control_v2():
+    if not (has_permission("manage_bulk_ops") or has_permission("manage_system_cleanup")):
+        flash("غير مصرح لك بهذه الصفحة.", "error")
+        return redirect(url_for("dashboard"))
+
+    return render_template(
+        "admin/control/panel.html",
+        can_bulk=has_permission("manage_bulk_ops"),
+        can_cleanup=has_permission("manage_system_cleanup"),
+    )
+
+
+if "admin_control_panel" in app.view_functions:
+    @login_required
+    def _new_admin_control():
+        return _admin_control_v2()
+    app.view_functions["admin_control_panel"] = _new_admin_control
+
+
+# ════════════════════════════════════════════════════
+# /admin/radius/users-online
+# ════════════════════════════════════════════════════
+def _radius_online_users_v2():
+    rows = []
+    error_text = ""
+    try:
+        client = get_radius_client()
+        raw = client.get_online_users() or []
+        for s in raw:
+            rows.append({
+                "username": getattr(s, "username", "") or "",
+                "framed_ip": getattr(s, "framed_ip_address", "") or "",
+                "ip": getattr(s, "ip", "") or "",
+                "mac": getattr(s, "mac_address", "") or "",
+                "start_time": getattr(s, "start_time", "") or "",
+                "usage_mb": getattr(s, "usage_mb", "") or "0",
+            })
+    except Exception as exc:
+        error_text = str(exc)
+
+    return render_template(
+        "admin/radius/users_online.html",
+        rows=rows,
+        error_text=error_text,
+    )
+
+
+if "radius_online_users_page" in app.view_functions:
+    @login_required
+    @permission_required("view_radius_status")
+    def _new_radius_online():
+        return _radius_online_users_v2()
+    app.view_functions["radius_online_users_page"] = _new_radius_online
+
+
+# ════════════════════════════════════════════════════
+# /admin/radius/user-lookup
+# ════════════════════════════════════════════════════
+def _radius_user_lookup_v2():
+    username = clean_csv_value(
+        request.form.get("username") if request.method == "POST" else request.args.get("username")
+    )
+    sessions_json = usage_json = bandwidth_json = devices_cards_json = ""
+    error_text = ""
+    if username:
+        try:
+            client = get_radius_client()
+            sd = mask_sensitive_data(client.get_user_sessions({"username": username}))
+            ud = mask_sensitive_data(client.get_user_usage({"username": username}))
+            bd = mask_sensitive_data(client.get_user_bandwidth({"username": username}))
+            dd = mask_sensitive_data(client.get_user_devices({"username": username}))
+            cd = mask_sensitive_data(client.get_user_cards({"username": username}))
+            sessions_json = _json.dumps(sd, ensure_ascii=False, indent=2) if sd else ""
+            usage_json = _json.dumps(ud, ensure_ascii=False, indent=2) if ud else ""
+            bandwidth_json = _json.dumps(bd, ensure_ascii=False, indent=2) if bd else ""
+            devices_cards_json = _json.dumps({"devices": dd, "cards": cd}, ensure_ascii=False, indent=2) if (dd or cd) else ""
+        except Exception as exc:
+            error_text = str(exc)
+
+    return render_template(
+        "admin/radius/user_lookup.html",
+        username=username,
+        sessions_json=sessions_json,
+        usage_json=usage_json,
+        bandwidth_json=bandwidth_json,
+        devices_cards_json=devices_cards_json,
+        error_text=error_text,
+    )
+
+
+if "radius_user_lookup_page" in app.view_functions:
+    @login_required
+    @permission_required("view_radius_status")
+    def _new_radius_user_lookup():
+        return _radius_user_lookup_v2()
+    app.view_functions["radius_user_lookup_page"] = _new_radius_user_lookup
+
+
+# ════════════════════════════════════════════════════
+# /admin/radius/app-test
+# ════════════════════════════════════════════════════
+def _radius_app_test_v2():
+    result = None
+    account_json = details_json = ""
+    if request.method == "POST":
+        try:
+            result = test_advradius_app_connection()
+            log_action(
+                "test_advradius_app_api", "radius_settings", None,
+                f"AdvRadius App API ok account={_json.dumps(result.get('account') or {}, ensure_ascii=False)}",
+            )
+            account_json = _json.dumps(result.get("account") or {}, ensure_ascii=False, indent=2)
+            details_json = _json.dumps(result.get("details") or {}, ensure_ascii=False, indent=2)
+            flash("تم تنفيذ الاختبار بنجاح ✓", "success")
+        except Exception as exc:
+            log_action("test_advradius_app_api_failed", "radius_settings", None, str(exc))
+            flash(f"فشل الاختبار: {exc}", "error")
+
+    return render_template(
+        "admin/radius/app_test.html",
+        result=result,
+        account_json=account_json,
+        details_json=details_json,
+    )
+
+
+if "advradius_app_test_route" in app.view_functions:
+    @login_required
+    @permission_required("manage_radius_settings")
+    def _new_radius_app_test():
+        return _radius_app_test_v2()
+    app.view_functions["advradius_app_test_route"] = _new_radius_app_test

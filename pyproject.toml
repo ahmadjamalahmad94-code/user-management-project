@@ -1,0 +1,19 @@
+[tool.ruff]
+target-version = "py314"
+line-length = 120
+extend-exclude = [
+  ".git",
+  ".venv",
+  "venv",
+  "__pycache__",
+  "instance",
+  "app/legacy_parts",
+]
+
+[tool.ruff.lint]
+# Start with correctness-only rules so verify catches real breakage in the
+# current legacy code without blocking on style debt we have not tackled yet.
+select = ["E9", "F"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

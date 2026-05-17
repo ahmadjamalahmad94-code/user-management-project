@@ -1,0 +1,1019 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}المستفيدون{% endblock %}
+{% block page_title %}جميع المستفيدين{% endblock %}
+{% block crumbs %}<span>الإدارة</span><i class="fa-solid fa-chevron-left"></i><span>المستفيدون</span>{% endblock %}
+
+{% block head_extra %}{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_hub.css') }}">
+<style>
+.tabs-bar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.tabs-bar-cta{flex-shrink:0}
+.tab-pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tab-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:#fff;border:1px solid var(--d-border-strong);color:var(--d-text-soft);font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.18s ease}
+.tab-pill:hover{border-color:var(--d-gold);color:var(--d-black)}
+.tab-pill.active{background:var(--d-black);color:#fff;border-color:var(--d-black)}
+.tab-pill .pill-count{background:rgba(255,255,255,.15);padding:2px 8px;border-radius:999px;font-size:11px}
+.tab-pill:not(.active) .pill-count{background:var(--d-gold-faint);color:var(--d-black)}
+
+/* Override when tab-pill is inside the dark Hub */
+.hub-pill.tab-pill.active{
+  background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;border-color:transparent;
+  box-shadow:0 6px 14px rgba(244,186,42,.30);
+}
+.hub-pill.tab-pill.active .qa-count{background:#1E1E1E;color:#fff}
+.hub-pill--cta:hover{background:linear-gradient(135deg,#FFD96A,#F4BA2A)!important;transform:translateY(-1px);box-shadow:0 6px 14px rgba(244,186,42,.35)}
+.rows-busy{opacity:.5;transition:opacity .15s ease;pointer-events:none}
+.beneficiary-row td{vertical-align:middle}
+.user-type-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
+.utype-tawjihi{background:#e8f6ee;color:#1f8f51}
+.utype-university{background:#FDF1CF;color:#7c2d12}
+.utype-freelancer{background:#F4F3EF;color:var(--d-text-soft)}
+.registry-stack{display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.access-badge,.portal-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:900;white-space:nowrap}
+.access-username{background:#e8f6ee;color:#166534;border:1px solid rgba(22,101,52,.12)}
+.access-cards{background:#fff7df;color:#7c2d12;border:1px solid rgba(244,186,42,.35)}
+.portal-active{background:#e8f6ee;color:#166534}
+.portal-reset{background:#fef0c7;color:#92400e}
+.portal-disabled{background:#fde2e2;color:#b91c1c}
+.portal-none{background:#F4F3EF;color:var(--d-text-muted)}
+.last-login{font-family:monospace;font-size:11.5px;color:var(--d-text-muted);white-space:nowrap}
+.action-wrap{display:inline-flex;gap:3px;flex-wrap:nowrap;align-items:center;white-space:nowrap}
+.action-wrap .act-icon{padding:4px 7px;flex-shrink:0}
+.action-wrap .act-icon i{font-size:12px}
+.inline-action-form{display:inline;margin:0}
+.filter-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+
+/* Bulk actions bar */
+.bulk-bar{
+  position:sticky;top:8px;z-index:100;
+  display:none;margin-bottom:14px;padding:12px 18px;border-radius:14px;
+  background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 100%);color:#fff;
+  align-items:center;gap:12px;flex-wrap:wrap;
+  box-shadow:0 10px 24px rgba(30,30,30,.25);
+  animation:slideDown .25s ease;
+}
+.bulk-bar.is-show{display:flex}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.bulk-count{
+  background:var(--d-gold);color:#1E1E1E;padding:6px 12px;border-radius:999px;
+  font-size:13px;font-weight:800;font-family:monospace;
+}
+.bulk-bar .sep{flex:1}
+.bulk-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border-radius:10px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+  color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;
+  font-family:inherit;transition:.18s ease;
+}
+.bulk-btn:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)}
+.bulk-btn-danger{background:#b91c1c;border-color:#b91c1c}
+.bulk-btn-danger:hover{background:#dc2626;border-color:#dc2626}
+.bulk-btn-gold{background:var(--d-gold);color:#1E1E1E;border-color:var(--d-gold)}
+.bulk-btn-gold:hover{background:#FFD96A;border-color:#FFD96A}
+
+/* checkbox styling */
+.row-cb{width:18px;height:18px;cursor:pointer;accent-color:var(--d-gold)}
+.head-cb{width:18px;height:18px;cursor:pointer;accent-color:var(--d-gold)}
+
+/* generic modal */
+.qe-backdrop{position:fixed;inset:0;background:rgba(30,30,30,.65);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;backdrop-filter:blur(3px)}
+.qe-backdrop.is-open{display:flex;animation:qeFade .2s ease}
+@keyframes qeFade{from{opacity:0}to{opacity:1}}
+.qe-modal{background:#fff;border-radius:18px;max-width:860px;width:100%;padding:22px 26px;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:qeSlide .25s ease;max-height:92vh;overflow-y:auto}
+@keyframes qeSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.qe-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--d-border)}
+.qe-head h3{margin:0;font-size:17px;font-weight:800;color:var(--d-black);display:flex;align-items:center;gap:8px}
+.qe-head h3 i{color:var(--d-gold)}
+.qe-close{background:none;border:0;color:var(--d-text-muted);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px}
+.qe-section{margin-bottom:14px}
+.qe-section-title{font-size:11.5px;font-weight:800;color:var(--d-text-muted);text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px dashed var(--d-border);display:flex;align-items:center;gap:6px}
+.qe-section-title i{color:var(--d-gold);font-size:13px}
+.qe-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.qe-field{display:flex;flex-direction:column;gap:4px}
+.qe-field.full{grid-column:1/-1}
+.qe-field label{font-size:11.5px;font-weight:700;color:var(--d-text)}
+.qe-field label .hint{font-size:10px;color:var(--d-text-muted);font-weight:600;margin-inline-start:6px}
+.qe-field input,.qe-field select,.qe-field textarea{padding:8px 11px;border-radius:10px;border:1.5px solid var(--d-border-strong);font-size:13px;font-family:inherit;background:#FAFAF8;transition:.18s ease}
+.qe-field input:focus,.qe-field select:focus,.qe-field textarea:focus{outline:0;border-color:var(--d-gold);background:#fff;box-shadow:0 0 0 3px rgba(244,186,42,.20)}
+.qe-field textarea{min-height:60px;resize:vertical;font-family:inherit}
+.qe-msg{padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;margin-bottom:10px;display:none}
+.qe-msg.is-show{display:block}
+.qe-msg.error{background:#fde2e2;color:#b91c1c}
+.qe-msg.success{background:#e8f6ee;color:#1f8f51}
+.qe-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px;padding-top:10px;border-top:1px dashed var(--d-border)}
+.qe-btn{padding:10px 20px;border-radius:11px;font-size:13px;font-weight:800;cursor:pointer;border:0;font-family:inherit;transition:.18s ease}
+.qe-btn-save{background:linear-gradient(135deg,#F4BA2A 0%,#FFD96A 100%);color:#1E1E1E}
+.qe-btn-save:disabled{opacity:.5;cursor:not-allowed}
+.qe-btn-cancel{background:#F4F3EF;color:var(--d-text-soft)}
+
+/* type badge inside modal */
+.qe-type-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:11.5px;font-weight:800;background:var(--d-gold-faint);color:var(--d-black);margin-inline-start:8px}
+
+/* pick cards */
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(95px, 1fr));gap:6px}
+.pick-card{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px;border-radius:10px;background:#FAFAF8;border:1.5px solid var(--d-border);cursor:pointer;transition:.18s ease;font-family:inherit;font-size:inherit;text-align:center;position:relative;overflow:hidden}
+.pick-card:hover{transform:translateY(-1px);border-color:var(--pick-accent,var(--d-gold))}
+.pick-card.is-selected{border-color:var(--pick-accent,var(--d-gold));background:linear-gradient(135deg,var(--pick-bg-from,rgba(244,186,42,.10)) 0%,var(--pick-bg-to,rgba(244,186,42,.25)) 100%);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.pick-card .pc-ico{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;color:var(--pick-accent,#7c2d12);background:rgba(255,255,255,.7)}
+.pick-card.is-selected .pc-ico{background:var(--pick-accent,var(--d-gold));color:#fff}
+.pick-card .pc-label{font-size:11.5px;font-weight:800;color:var(--d-black);line-height:1.15}
+.pick-card .pc-sub{font-size:9.5px;font-weight:600;color:var(--d-text-muted);line-height:1.3}
+.delivery-toggle{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.delivery-opt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px;border-radius:10px;background:#FAFAF8;border:1.5px solid var(--d-border);cursor:pointer;text-align:center;transition:.18s ease}
+.delivery-opt:hover{border-color:var(--d-gold)}
+.delivery-opt.is-selected{background:linear-gradient(135deg,#F4BA2A 0%,#FFD96A 100%);border-color:var(--d-black);color:var(--d-black)}
+.delivery-opt i{font-size:15px}
+.delivery-opt .lbl{font-size:11.5px;font-weight:800}
+.delivery-opt .sub{font-size:9.5px;color:var(--d-text-muted)}
+.delivery-opt.is-selected .sub{color:#7c2d12}
+
+#ic-modal .qe-modal{padding:18px 22px;max-width:780px}
+
+.act-icon{padding:4px 10px;border:1px solid var(--d-border);background:#fff;cursor:pointer;border-radius:8px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.act-icon:hover{border-color:var(--d-gold)}
+.act-icon i{color:var(--d-gold)}
+.act-icon.act-issue i{color:#1f8f51}
+.act-icon.act-delete i{color:#b91c1c}
+.act-icon.act-delete:hover{border-color:#b91c1c}
+</style>{% endblock %}
+
+{% block content %}
+{% include "admin/beneficiaries/_beneficiary_nav.html" %}
+
+<section class="d-hero">
+  <div><h2>👥 إدارة المستفيدين</h2><p>كل المستفيدين في مكان واحد. اختر صفوفًا لعمليات جماعية، أو تعامل مع كل صف منفصلاً.</p></div>
+  <div class="d-hero-actions">
+    {% if has_permission('import') %}<a class="d-pill-btn d-pill-btn--ghost" href="/admin/import"><i class="fa-solid fa-file-arrow-up"></i>استيراد CSV</a>{% endif %}
+  </div>
+</section>
+
+<!-- ─── Unified Control Hub ─── -->
+<section class="hub">
+  <div class="hub-stats">
+    <div class="hub-stat">
+      <span class="hub-stat-ico"><i class="fa-solid fa-users"></i></span>
+      <div><span class="lbl">الإجمالي</span><span class="val">{{ kpi_total }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico cyan"><i class="fa-solid fa-user-graduate"></i></span>
+      <div><span class="lbl">توجيهي</span><span class="val">{{ kpi_tawjihi }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico muted"><i class="fa-solid fa-building-columns"></i></span>
+      <div><span class="lbl">جامعي</span><span class="val">{{ kpi_university }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico warn"><i class="fa-solid fa-laptop-code"></i></span>
+      <div><span class="lbl">عمل حر</span><span class="val">{{ kpi_freelancer }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico ok"><i class="fa-solid fa-user-check"></i></span>
+      <div><span class="lbl">حساب إنترنت</span><span class="val">{{ kpi_username }}</span></div>
+    </div>
+    <div class="hub-stat">
+      <span class="hub-stat-ico"><i class="fa-solid fa-ticket"></i></span>
+      <div><span class="lbl">نظام البطاقات</span><span class="val">{{ kpi_cards }}</span></div>
+    </div>
+  </div>
+
+  <!-- Pills row INSIDE the hub: زر إضافة عاليمين + الـ pills عاليسار -->
+  <div class="hub-pills" id="tab-pills" style="justify-content:space-between">
+    {% if has_permission('add') %}
+    <button type="button" class="hub-pill hub-pill--cta" id="open-add-modal" style="background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;border-color:transparent">
+      <i class="fa-solid fa-user-plus"></i>إضافة مستفيد
+    </button>
+    {% endif %}
+    <div style="display:inline-flex;gap:6px;flex-wrap:wrap">
+      <button type="button" class="hub-pill tab-pill {% if not filters.user_type %}active{% endif %}" data-type=""><i class="fa-solid fa-grip"></i>الكل<span class="qa-count pill-count" id="cnt-all">{{ kpi_total }}</span></button>
+      <button type="button" class="hub-pill tab-pill {% if filters.user_type == 'tawjihi' %}active{% endif %}" data-type="tawjihi"><i class="fa-solid fa-user-graduate"></i>توجيهي<span class="qa-count pill-count" id="cnt-tawjihi">{{ kpi_tawjihi }}</span></button>
+      <button type="button" class="hub-pill tab-pill {% if filters.user_type == 'university' %}active{% endif %}" data-type="university"><i class="fa-solid fa-building-columns"></i>جامعي<span class="qa-count pill-count" id="cnt-university">{{ kpi_university }}</span></button>
+      <button type="button" class="hub-pill tab-pill {% if filters.user_type == 'freelancer' %}active{% endif %}" data-type="freelancer"><i class="fa-solid fa-laptop-code"></i>عمل حر<span class="qa-count pill-count" id="cnt-freelancer">{{ kpi_freelancer }}</span></button>
+    </div>
+  </div>
+
+  <form class="hub-search filter-row" method="GET" autocomplete="off">
+    <div class="hub-search-input">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" name="q" value="{{ filters.q or '' }}" placeholder="ابحث بالاسم أو رقم الجوال…">
+      <span class="hub-search-spinner" id="bn-search-status" aria-hidden="true"></span>
+    </div>
+    <select name="tawjihi_year" class="hub-search-select" title="سنة التوجيهي">
+      <option value="">سنة التوجيهي</option>
+      {% for y in tawjihi_years %}<option value="{{ y }}" {% if filters.tawjihi_year == y %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+    <select name="tawjihi_branch" class="hub-search-select" title="الفرع">
+      <option value="">الفرع</option>
+      {% for b in tawjihi_branches %}<option value="{{ b }}" {% if filters.tawjihi_branch == b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+    </select>
+    <select name="university_name" class="hub-search-select" title="الجامعة">
+      <option value="">الجامعة</option>
+      {% for u in university_names %}<option value="{{ u }}" {% if filters.university_name == u %}selected{% endif %}>{{ u }}</option>{% endfor %}
+    </select>
+    <input type="hidden" name="user_type" value="{{ filters.user_type or '' }}">
+    <a class="hub-search-clear" href="/admin/beneficiaries" title="مسح"><i class="fa-solid fa-xmark"></i></a>
+  </form>
+</section>
+
+<!-- Bulk actions bar -->
+<div class="bulk-bar" id="bulk-bar">
+  <span class="bulk-count" id="bulk-count">0</span>
+  <span style="font-size:13px;font-weight:700">صف محدد</span>
+  <span class="sep"></span>
+  <button type="button" class="bulk-btn" data-action="reset_weekly"><i class="fa-solid fa-rotate-left"></i> تصفير عداد الأسبوع</button>
+  <button type="button" class="bulk-btn bulk-btn-gold" data-action="switch_to_cards"><i class="fa-solid fa-ticket"></i> تحويل لبطاقات</button>
+  <button type="button" class="bulk-btn" data-action="switch_to_username"><i class="fa-solid fa-id-card"></i> تحويل إلى حساب إنترنت</button>
+  {% if has_permission('delete') %}
+  <button type="button" class="bulk-btn bulk-btn-danger" data-action="delete"><i class="fa-solid fa-trash"></i> حذف المحدد</button>
+  {% endif %}
+  <button type="button" class="bulk-btn" id="bulk-clear" title="إلغاء التحديد"><i class="fa-solid fa-xmark"></i></button>
+</div>
+
+<section class="d-card">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-list"></i>النتائج</h3><span style="font-size:11.5px;color:var(--d-text-muted)"><span id="total-count">{{ total }}</span> نتيجة</span></div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="beneficiaries">
+      <thead><tr>
+        <th style="width:30px"><input type="checkbox" class="head-cb" id="head-cb" title="تحديد الكل في الصفحة"></th>
+        <th>الاسم</th><th>الجوال</th><th>النوع</th><th>الإنترنت</th><th>حساب البوابة</th><th>آخر دخول</th><th>التفاصيل</th><th>الاستخدام</th><th>إجراءات</th>
+      </tr></thead>
+      <tbody id="ben-rows">
+        {% include "admin/beneficiaries/_rows_partial.html" %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Quick-edit Modal (FULL fields) ── -->
+<div class="qe-backdrop" id="qe-modal">
+  <div class="qe-modal">
+    <div class="qe-head">
+      <h3><i class="fa-solid fa-pen"></i> تعديل المستفيد <span class="qe-type-badge" id="qe-type-badge">—</span></h3>
+      <button type="button" class="qe-close" id="qe-close">✕</button>
+    </div>
+    <div class="qe-msg" id="qe-msg"></div>
+    <form id="qe-form" autocomplete="off">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <input type="hidden" id="qe-bid">
+
+      <!-- Type switcher (allows changing user_type — e.g. توجيهي → جامعي) -->
+      <div class="qe-section">
+        <div class="qe-section-title"><i class="fa-solid fa-user-tag"></i> نوع المشترك <span style="font-weight:600;color:var(--d-text-muted);font-size:10.5px;margin-inline-start:6px">(يمكنك تغيير النوع إذا انتقل المشترك من مرحلة لأخرى)</span></div>
+        <div class="pick-grid" style="grid-template-columns:repeat(3,1fr)" id="qe-type-picker">
+          <button type="button" class="pick-card qe-type-card" data-type="tawjihi"
+                  style="--pick-accent:#16a34a;--pick-bg-from:rgba(22,163,74,.10);--pick-bg-to:rgba(22,163,74,.22)">
+            <span class="pc-ico"><i class="fa-solid fa-user-graduate"></i></span>
+            <span class="pc-label">توجيهي</span>
+            <span class="pc-sub">سنة + فرع</span>
+          </button>
+          <button type="button" class="pick-card qe-type-card" data-type="university"
+                  style="--pick-accent:#d97706;--pick-bg-from:rgba(217,119,6,.10);--pick-bg-to:rgba(217,119,6,.22)">
+            <span class="pc-ico"><i class="fa-solid fa-building-columns"></i></span>
+            <span class="pc-label">جامعي</span>
+            <span class="pc-sub">جامعة + تخصص</span>
+          </button>
+          <button type="button" class="pick-card qe-type-card" data-type="freelancer"
+                  style="--pick-accent:#7c3aed;--pick-bg-from:rgba(124,58,237,.10);--pick-bg-to:rgba(124,58,237,.22)">
+            <span class="pc-ico"><i class="fa-solid fa-laptop-code"></i></span>
+            <span class="pc-label">عمل حر</span>
+            <span class="pc-sub">شركة + تخصص</span>
+          </button>
+        </div>
+        <input type="hidden" name="user_type" id="qe-user-type" value="">
+      </div>
+
+
+      <div class="qe-section">
+        <div class="qe-section-title"><i class="fa-solid fa-id-card"></i> الاسم الرباعي والجوال</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>الاسم الأول</label><input name="first_name" id="qe-first" required></div>
+          <div class="qe-field"><label>اسم الأب</label><input name="second_name" id="qe-second" required></div>
+          <div class="qe-field"><label>اسم الجد</label><input name="third_name" id="qe-third" required></div>
+          <div class="qe-field"><label>اسم العائلة</label><input name="fourth_name" id="qe-fourth" required></div>
+          <div class="qe-field full"><label>رقم الجوال <span class="hint">(10 أرقام يبدأ بـ 0)</span></label><input name="phone" id="qe-phone" inputmode="numeric" pattern="0[0-9]{9}" maxlength="10" required></div>
+        </div>
+      </div>
+
+      <div class="qe-section" id="qe-tawjihi-section" style="display:none">
+        <div class="qe-section-title"><i class="fa-solid fa-user-graduate"></i> بيانات التوجيهي</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>السنة</label>
+            <select name="tawjihi_year" id="qe-tawjihi-year">
+              <option value="">— اختر —</option>
+              {% for y in ['2026','2025','2024','2023','2022','2021','2020'] %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="qe-field"><label>الفرع</label>
+            <select name="tawjihi_branch" id="qe-tawjihi-branch">
+              <option value="">— اختر —</option>
+              {% for b in ['علمي','أدبي','شرعي','صناعي','تجاري','زراعي','فندقي','ريادة'] %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="qe-section" id="qe-university-section" style="display:none">
+        <div class="qe-section-title"><i class="fa-solid fa-building-columns"></i> بيانات الجامعة</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>الجامعة</label><input name="university_name" id="qe-uni-name"></div>
+          <div class="qe-field"><label>الرقم الجامعي</label><input name="university_number" id="qe-uni-number"></div>
+          <div class="qe-field"><label>الكلية</label><input name="university_college" id="qe-uni-college"></div>
+          <div class="qe-field"><label>التخصص</label><input name="university_specialization" id="qe-uni-spec"></div>
+          <div class="qe-field"><label>أيام الدوام</label><input name="university_days" id="qe-uni-days"></div>
+          <div class="qe-field"><label>طريقة الاتصال</label>
+            <select name="university_internet_method" id="qe-uni-method">
+              <option value="نظام البطاقات">نظام البطاقات</option>
+              <option value="يوزر إنترنت">حساب إنترنت</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="qe-section" id="qe-freelancer-section" style="display:none">
+        <div class="qe-section-title"><i class="fa-solid fa-laptop-code"></i> بيانات العمل الحر</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>التخصص</label><input name="freelancer_specialization" id="qe-free-spec"></div>
+          <div class="qe-field"><label>الشركة/الجهة</label><input name="freelancer_company" id="qe-free-company"></div>
+          <div class="qe-field"><label>نوع الجدول</label>
+            <select name="freelancer_schedule_type" id="qe-free-sched">
+              <option value="">—</option><option value="مرن">مرن</option><option value="ثابت">ثابت</option>
+            </select>
+          </div>
+          <div class="qe-field"><label>طريقة الاتصال</label>
+            <select name="freelancer_internet_method" id="qe-free-method">
+              <option value="نظام البطاقات">نظام البطاقات</option>
+              <option value="يوزر إنترنت">حساب إنترنت</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="qe-section">
+        <div class="qe-section-title"><i class="fa-solid fa-comment"></i> ملاحظات</div>
+        <div class="qe-grid">
+          <div class="qe-field full"><textarea name="notes" id="qe-notes" placeholder="أي ملاحظات تخص المشترك (اختياري)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="qe-actions">
+        <button type="button" class="qe-btn qe-btn-cancel" id="qe-cancel">إلغاء</button>
+        <button type="submit" class="qe-btn qe-btn-save" id="qe-save"><i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Issue Card Modal ── -->
+<div class="qe-backdrop" id="ic-modal">
+  <div class="qe-modal">
+    <div class="qe-head"><h3><i class="fa-solid fa-ticket"></i> إصدار بطاقة لـ <span id="ic-name"></span></h3><button type="button" class="qe-close" id="ic-close">✕</button></div>
+    <div class="qe-msg" id="ic-msg"></div>
+    <form id="ic-form" autocomplete="off">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <div class="qe-field full"><label>سبب البطاقة</label><div class="pick-grid" id="ic-reasons"></div><input type="hidden" name="reason" id="ic-reason" required></div>
+      <div class="qe-field full"><label>فئة البطاقة (المدة)</label><div class="pick-grid" id="ic-categories"></div><input type="hidden" name="category_code" id="ic-category" required></div>
+      <div class="qe-field full"><label>طريقة التسليم</label>
+        <div class="delivery-toggle">
+          <div class="delivery-opt is-selected" data-mode="paper"><i class="fa-solid fa-print"></i><span class="lbl">بطاقة ورقية</span><span class="sub">طباعتها فورًا</span></div>
+          <div class="delivery-opt" data-mode="sms"><i class="fa-solid fa-message"></i><span class="lbl">إرسال SMS</span><span class="sub">يتفعّل لاحقًا</span></div>
+        </div>
+        <input type="hidden" name="delivery_mode" id="ic-delivery" value="paper">
+      </div>
+      <div class="qe-field full"><label>ملاحظات <span class="hint">(اختياري)</span></label><input name="notes" id="ic-notes" placeholder="مثلاً: تسليم باليد"></div>
+      <div class="qe-actions">
+        <button type="button" class="qe-btn qe-btn-cancel" id="ic-cancel">إلغاء</button>
+        <button type="submit" class="qe-btn qe-btn-save" id="ic-save"><i class="fa-solid fa-check"></i> إصدار البطاقة</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Add Beneficiary Modal ── -->
+{% if has_permission('add') %}
+<div class="qe-backdrop" id="add-modal">
+  <div class="qe-modal" style="max-width:920px">
+    <div class="qe-head">
+      <h3><i class="fa-solid fa-user-plus"></i> إضافة مستفيد جديد</h3>
+      <button type="button" class="qe-close" id="add-close">✕</button>
+    </div>
+    <div class="qe-msg" id="add-msg"></div>
+    <form id="add-form" autocomplete="off">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+
+      <!-- Type picker (pretty cards) -->
+      <div class="qe-section">
+        <div class="qe-section-title"><i class="fa-solid fa-user-tag"></i> نوع المشترك</div>
+        <div class="pick-grid" style="grid-template-columns:repeat(3,1fr)">
+          <button type="button" class="pick-card add-type-card is-selected" data-type="tawjihi"
+                  style="--pick-accent:#16a34a;--pick-bg-from:rgba(22,163,74,.10);--pick-bg-to:rgba(22,163,74,.22)">
+            <span class="pc-ico"><i class="fa-solid fa-user-graduate"></i></span>
+            <span class="pc-label">طالب توجيهي</span>
+            <span class="pc-sub">سنة + فرع</span>
+          </button>
+          <button type="button" class="pick-card add-type-card" data-type="university"
+                  style="--pick-accent:#d97706;--pick-bg-from:rgba(217,119,6,.10);--pick-bg-to:rgba(217,119,6,.22)">
+            <span class="pc-ico"><i class="fa-solid fa-building-columns"></i></span>
+            <span class="pc-label">طالب جامعي</span>
+            <span class="pc-sub">جامعة + تخصص</span>
+          </button>
+          <button type="button" class="pick-card add-type-card" data-type="freelancer"
+                  style="--pick-accent:#7c3aed;--pick-bg-from:rgba(124,58,237,.10);--pick-bg-to:rgba(124,58,237,.22)">
+            <span class="pc-ico"><i class="fa-solid fa-laptop-code"></i></span>
+            <span class="pc-label">عامل حر</span>
+            <span class="pc-sub">شركة + تخصص</span>
+          </button>
+        </div>
+        <input type="hidden" name="user_type" id="add-user-type" value="tawjihi">
+      </div>
+
+      <div class="qe-section">
+        <div class="qe-section-title"><i class="fa-solid fa-id-card"></i> الاسم الرباعي والجوال</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>الاسم الأول *</label><input name="first_name" required></div>
+          <div class="qe-field"><label>اسم الأب *</label><input name="second_name" required></div>
+          <div class="qe-field"><label>اسم الجد *</label><input name="third_name" required></div>
+          <div class="qe-field"><label>اسم العائلة *</label><input name="fourth_name" required></div>
+          <div class="qe-field full"><label>رقم الجوال * <span class="hint">(10 أرقام يبدأ بـ 0)</span></label><input name="phone" inputmode="numeric" pattern="0[0-9]{9}" maxlength="10" required></div>
+        </div>
+      </div>
+
+      <div class="qe-section add-type-section" data-type-for="tawjihi">
+        <div class="qe-section-title"><i class="fa-solid fa-user-graduate"></i> بيانات التوجيهي</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>السنة</label>
+            <select name="tawjihi_year">
+              <option value="">— اختر —</option>
+              {% for y in ['2026','2025','2024','2023','2022','2021','2020'] %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="qe-field"><label>الفرع</label>
+            <select name="tawjihi_branch">
+              <option value="">— اختر —</option>
+              {% for b in ['علمي','أدبي','شرعي','صناعي','تجاري','زراعي','فندقي','ريادة'] %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="qe-section add-type-section" data-type-for="university" style="display:none">
+        <div class="qe-section-title"><i class="fa-solid fa-building-columns"></i> بيانات الجامعة</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>اسم الجامعة</label><input name="university_name"></div>
+          <div class="qe-field"><label>الرقم الجامعي</label><input name="university_number"></div>
+          <div class="qe-field"><label>الكلية</label><input name="university_college"></div>
+          <div class="qe-field"><label>التخصص</label><input name="university_specialization"></div>
+          <div class="qe-field"><label>أيام الدوام</label><input name="university_days"></div>
+          <div class="qe-field"><label>طريقة الاتصال</label>
+            <select name="university_internet_method">
+              <option value="نظام البطاقات">نظام البطاقات</option>
+              <option value="يوزر إنترنت">حساب إنترنت</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="qe-section add-type-section" data-type-for="freelancer" style="display:none">
+        <div class="qe-section-title"><i class="fa-solid fa-laptop-code"></i> بيانات العمل الحر</div>
+        <div class="qe-grid">
+          <div class="qe-field"><label>التخصص</label><input name="freelancer_specialization"></div>
+          <div class="qe-field"><label>الشركة/الجهة</label><input name="freelancer_company"></div>
+          <div class="qe-field"><label>نوع الجدول</label>
+            <select name="freelancer_schedule_type">
+              <option value="">—</option><option value="مرن">مرن</option><option value="ثابت">ثابت</option>
+            </select>
+          </div>
+          <div class="qe-field"><label>طريقة الاتصال</label>
+            <select name="freelancer_internet_method">
+              <option value="نظام البطاقات">نظام البطاقات</option>
+              <option value="يوزر إنترنت">حساب إنترنت</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="qe-section">
+        <div class="qe-section-title"><i class="fa-solid fa-comment"></i> ملاحظات</div>
+        <div class="qe-grid">
+          <div class="qe-field full"><textarea name="notes" placeholder="أي ملاحظات تخص المشترك (اختياري)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="qe-actions">
+        <button type="button" class="qe-btn qe-btn-cancel" id="add-cancel">إلغاء</button>
+        <button type="submit" class="qe-btn qe-btn-save" id="add-save"><i class="fa-solid fa-floppy-disk"></i> حفظ المشترك</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+(function(){
+  // ─── AJAX list state ───
+  var ajaxLoading = false;
+  var ajaxAbort = null;
+  function readState(){
+    var u = new URL(window.location.href);
+    return {
+      q: u.searchParams.get('q') || '',
+      user_type: u.searchParams.get('user_type') || '',
+      tawjihi_year: u.searchParams.get('tawjihi_year') || '',
+      tawjihi_branch: u.searchParams.get('tawjihi_branch') || '',
+      university_name: u.searchParams.get('university_name') || '',
+      page: u.searchParams.get('page') || '1',
+    };
+  }
+  function buildUrl(state, base){
+    var u = new URL((base||window.location.origin) + '/admin/beneficiaries');
+    Object.keys(state).forEach(function(k){
+      if(state[k] !== '' && state[k] != null) u.searchParams.set(k, state[k]);
+    });
+    return u;
+  }
+  function setTabsActive(ut){
+    document.querySelectorAll('#tab-pills .tab-pill').forEach(function(p){
+      p.classList.toggle('active', (p.dataset.type || '') === (ut || ''));
+    });
+  }
+  function loadRows(state, pushHistory){
+    if(ajaxAbort){ try{ ajaxAbort.abort(); }catch(e){} }
+    ajaxAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var rowsEl = document.getElementById('ben-rows');
+    if(!rowsEl) return;
+    rowsEl.classList.add('rows-busy');
+    var ajaxUrl = '/admin/beneficiaries/rows-ajax' + buildUrl(state).search;
+    fetch(ajaxUrl, {credentials:'same-origin', signal: ajaxAbort ? ajaxAbort.signal : undefined})
+      .then(function(r){ return r.json(); }).then(function(d){
+        if(!d || !d.ok) return;
+        rowsEl.innerHTML = d.tbody_html;
+        // KPIs + counts
+        var tc = document.getElementById('total-count'); if(tc) tc.textContent = d.total;
+        if(d.kpis){
+          var k = d.kpis;
+          var setText = function(id,v){ var el=document.getElementById(id); if(el) el.textContent = v; };
+          setText('cnt-all', k.total); setText('cnt-tawjihi', k.tawjihi);
+          setText('cnt-university', k.university); setText('cnt-freelancer', k.freelancer);
+          // KPI cards (the ones in the d-kpi-grid)
+          var kpiVals = document.querySelectorAll('.d-kpi .d-kpi-value');
+          if(kpiVals.length === 4){
+            kpiVals[0].textContent = k.total;
+            kpiVals[1].textContent = k.tawjihi;
+            kpiVals[2].textContent = k.university;
+            kpiVals[3].textContent = k.freelancer;
+          } else if(kpiVals.length >= 6){
+            kpiVals[0].textContent = k.total;
+            kpiVals[1].textContent = k.tawjihi;
+            kpiVals[2].textContent = k.university;
+            kpiVals[3].textContent = k.freelancer;
+            kpiVals[4].textContent = k.username;
+            kpiVals[5].textContent = k.cards;
+          }
+        }
+        setTabsActive(state.user_type);
+        // clear bulk selection (rows changed)
+        var headCb = document.getElementById('head-cb'); if(headCb) headCb.checked = false;
+        var bulkBar = document.getElementById('bulk-bar'); if(bulkBar) bulkBar.classList.remove('is-show');
+        var bulkCount = document.getElementById('bulk-count'); if(bulkCount) bulkCount.textContent = '0';
+        // URL history
+        if(pushHistory){
+          var url = buildUrl(state).toString();
+          window.history.pushState({state:state}, '', url);
+        }
+      }).catch(function(err){
+        if(err && err.name === 'AbortError') return;
+        // silent
+      }).finally(function(){
+        rowsEl.classList.remove('rows-busy');
+        ajaxLoading = false;
+      });
+  }
+
+  // Tab pill clicks → AJAX
+  document.querySelectorAll('#tab-pills .tab-pill').forEach(function(p){
+    p.addEventListener('click', function(){
+      var ut = p.dataset.type || '';
+      var s = readState(); s.user_type = ut; s.page = '1';
+      loadRows(s, true);
+    });
+  });
+
+  // Filter form submit → AJAX (no reload)
+  var filterForm = document.querySelector('form.filter-row');
+  if(filterForm){
+    filterForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var fd = new FormData(filterForm);
+      var s = {
+        q: fd.get('q') || '',
+        user_type: fd.get('user_type') || '',
+        tawjihi_year: fd.get('tawjihi_year') || '',
+        tawjihi_branch: fd.get('tawjihi_branch') || '',
+        university_name: fd.get('university_name') || '',
+        page: '1',
+      };
+      loadRows(s, true);
+    });
+    // Live search-on-type (debounced) + spinner status
+    var qInput = filterForm.querySelector('input[name="q"]');
+    var statusEl = document.getElementById('bn-search-status');
+    function setStatus(state){
+      if(!statusEl) return;
+      statusEl.innerHTML = ''; statusEl.classList.remove('is-on');
+      if(state === 'searching'){ statusEl.classList.add('is-on'); }
+      else if(state === 'done'){
+        statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#166534"></i>';
+        setTimeout(function(){ statusEl.innerHTML = ''; }, 800);
+      }
+    }
+    // patch loadRows to show spinner
+    var _origLoadRows = loadRows;
+    loadRows = function(state, push){
+      setStatus('searching');
+      return _origLoadRows(state, push);
+    };
+    if(qInput){
+      var debTimer = null;
+      qInput.addEventListener('input', function(){
+        if(debTimer) clearTimeout(debTimer);
+        setStatus('searching');
+        debTimer = setTimeout(function(){
+          var s = readState();
+          s.q = qInput.value || '';
+          s.page = '1';
+          loadRows(s, true);
+        }, 280);
+      });
+    }
+    // ─ Live filter on dropdowns ─
+    filterForm.querySelectorAll('select').forEach(function(sel){
+      sel.addEventListener('change', function(){
+        var fd = new FormData(filterForm);
+        var s = {
+          q: fd.get('q') || '',
+          user_type: fd.get('user_type') || '',
+          tawjihi_year: fd.get('tawjihi_year') || '',
+          tawjihi_branch: fd.get('tawjihi_branch') || '',
+          university_name: fd.get('university_name') || '',
+          page: '1',
+        };
+        loadRows(s, true);
+      });
+    });
+    // مسح button — intercept and load empty state
+    var clearLink = filterForm.querySelector('a[href="/admin/beneficiaries"]');
+    if(clearLink){
+      clearLink.addEventListener('click', function(e){
+        e.preventDefault();
+        filterForm.reset();
+        // أعد ضبط user_type المخفي
+        var hu = filterForm.querySelector('input[name="user_type"]'); if(hu) hu.value = '';
+        loadRows({page:'1'}, true);
+      });
+    }
+    // إخفاء spinner عند انتهاء كل عملية جلب — نراقب الـ tbody
+    var rowsEl = document.getElementById('ben-rows');
+    if(rowsEl){
+      var mo = new MutationObserver(function(){ setStatus('done'); });
+      mo.observe(rowsEl, {childList:true});
+    }
+  }
+
+  // History back/forward
+  window.addEventListener('popstate', function(){ loadRows(readState(), false); });
+
+  // ─── Toast helper ───
+  function showToast(text, type){
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:12px;font-weight:800;font-size:13.5px;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.18);'+(type==='success'?'background:#1f8f51;color:#fff':'background:#b91c1c;color:#fff');
+    t.textContent = text; document.body.appendChild(t);
+    setTimeout(()=>{ t.style.opacity='0';t.style.transition='opacity .35s'; }, 2200);
+    setTimeout(()=>{ try{ document.body.removeChild(t); }catch(e){} }, 2700);
+  }
+
+  // ─── Selection (checkboxes + bulk bar) ───
+  var bulkBar = document.getElementById('bulk-bar');
+  var bulkCount = document.getElementById('bulk-count');
+  var headCb = document.getElementById('head-cb');
+  function updateBulkBar(){
+    var checked = document.querySelectorAll('.row-cb:checked');
+    bulkCount.textContent = checked.length;
+    bulkBar.classList.toggle('is-show', checked.length > 0);
+  }
+  // Delegated checkbox change (survives AJAX swaps)
+  document.addEventListener('change', function(e){
+    if(e.target && e.target.classList && e.target.classList.contains('row-cb')){
+      updateBulkBar();
+    }
+  });
+  if(headCb){
+    headCb.addEventListener('change', () => {
+      document.querySelectorAll('.row-cb').forEach(cb => {
+        if(cb.closest('tr').offsetParent !== null){ cb.checked = headCb.checked; }
+      });
+      updateBulkBar();
+    });
+  }
+  document.getElementById('bulk-clear').addEventListener('click', () => {
+    document.querySelectorAll('.row-cb').forEach(cb => cb.checked = false);
+    if(headCb) headCb.checked = false;
+    updateBulkBar();
+  });
+
+  function bulkAction(action){
+    var ids = Array.from(document.querySelectorAll('.row-cb:checked')).map(cb => cb.dataset.bid);
+    if(!ids.length) return;
+    var actionLabel = {
+      'delete':'حذف نهائي',
+      'reset_weekly':'تصفير عداد الأسبوع',
+      'switch_to_cards':'التحويل لنظام البطاقات',
+      'switch_to_username':'التحويل إلى حساب إنترنت',
+    }[action] || 'تطبيق العملية';
+    if(!confirm('سيتم تطبيق "'+actionLabel+'" على '+ids.length+' مستفيد. متابعة؟')) return;
+    var fd = new FormData();
+    fd.append('action', action);
+    ids.forEach(id => fd.append('ids', id));
+    fetch('/admin/beneficiaries/bulk-action', {method:'POST', credentials:'same-origin', body:fd})
+      .then(r => r.json()).then(d => {
+        if(d.ok){ showToast(d.message, 'success'); setTimeout(() => window.location.reload(), 700); }
+        else showToast(d.message || 'فشلت العملية', 'error');
+      }).catch(() => showToast('فشل الاتصال', 'error'));
+  }
+  document.querySelectorAll('.bulk-bar .bulk-btn[data-action]').forEach(b =>
+    b.addEventListener('click', () => bulkAction(b.dataset.action)));
+
+  // ─── Delete single row (delegated) ───
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('.delete-btn');
+    if(!btn) return;
+    var bid = btn.dataset.bid, name = btn.dataset.name;
+    if(!confirm('سيتم حذف "'+name+'" نهائيًا. متابعة؟')) return;
+    var fd = new FormData();
+    fetch('/admin/beneficiaries/'+bid+'/delete-ajax', {method:'POST', credentials:'same-origin', body:fd})
+      .then(r => r.json()).then(d => {
+        if(d.ok){
+          var row = document.querySelector('tr.beneficiary-row[data-bid="'+bid+'"]');
+          if(row) row.remove();
+          showToast(d.message, 'success');
+        } else showToast(d.message || 'تعذّر الحذف', 'error');
+      }).catch(() => showToast('فشل الاتصال', 'error'));
+  });
+
+  // ─── Quick-edit Modal (FULL) ───
+  var qeModal = document.getElementById('qe-modal');
+  var qeForm = document.getElementById('qe-form');
+  var qeMsg = document.getElementById('qe-msg');
+  var qeSave = document.getElementById('qe-save');
+  var qeTypeBadge = document.getElementById('qe-type-badge');
+  var qeTawjihi = document.getElementById('qe-tawjihi-section');
+  var qeUniversity = document.getElementById('qe-university-section');
+  var qeFreelancer = document.getElementById('qe-freelancer-section');
+
+  function qeShowMsg(t, txt){ qeMsg.className = 'qe-msg is-show '+t; qeMsg.textContent = txt; }
+  function qeClear(){ qeMsg.className = 'qe-msg'; qeMsg.textContent = ''; }
+  function setSelectValue(elId, val){ var el = document.getElementById(elId); if(el) el.value = val || ''; }
+  function qeApplyType(ut){
+    ut = (ut || '').toLowerCase();
+    var label = {tawjihi:'توجيهي', university:'جامعي', freelancer:'عمل حر'}[ut] || ut;
+    qeTypeBadge.textContent = label;
+    document.getElementById('qe-user-type').value = ut;
+    qeTawjihi.style.display = (ut === 'tawjihi') ? '' : 'none';
+    qeUniversity.style.display = (ut === 'university') ? '' : 'none';
+    qeFreelancer.style.display = (ut === 'freelancer') ? '' : 'none';
+    document.querySelectorAll('.qe-type-card').forEach(function(c){
+      c.classList.toggle('is-selected', c.dataset.type === ut);
+    });
+  }
+  // type-picker click listeners (wired once)
+  document.querySelectorAll('.qe-type-card').forEach(function(card){
+    card.addEventListener('click', function(){ qeApplyType(card.dataset.type); });
+  });
+  function qeOpen(bid){
+    qeClear(); qeSave.disabled = true;
+    document.getElementById('qe-bid').value = bid;
+    fetch('/admin/beneficiaries/'+bid+'/quick-edit', {credentials:'same-origin'})
+      .then(r => r.json()).then(d => {
+        if(!d || !d.ok){ qeShowMsg('error', d && d.message || 'تعذّر التحميل'); return; }
+        var x = d.data;
+        document.getElementById('qe-first').value = x.first_name;
+        document.getElementById('qe-second').value = x.second_name;
+        document.getElementById('qe-third').value = x.third_name;
+        document.getElementById('qe-fourth').value = x.fourth_name;
+        document.getElementById('qe-phone').value = x.phone;
+        document.getElementById('qe-notes').value = x.notes || '';
+
+        // Apply type (badge + sections + picker selection)
+        var ut = (x.user_type || '').toLowerCase();
+        qeApplyType(ut);
+
+        if(ut === 'tawjihi'){
+          setSelectValue('qe-tawjihi-year', x.tawjihi_year);
+          setSelectValue('qe-tawjihi-branch', x.tawjihi_branch);
+        } else if(ut === 'university'){
+          document.getElementById('qe-uni-name').value = x.university_name;
+          document.getElementById('qe-uni-number').value = x.university_number;
+          document.getElementById('qe-uni-college').value = x.university_college;
+          document.getElementById('qe-uni-spec').value = x.university_specialization;
+          document.getElementById('qe-uni-days').value = x.university_days;
+          setSelectValue('qe-uni-method', x.university_internet_method || 'نظام البطاقات');
+        } else if(ut === 'freelancer'){
+          document.getElementById('qe-free-spec').value = x.freelancer_specialization;
+          document.getElementById('qe-free-company').value = x.freelancer_company;
+          setSelectValue('qe-free-sched', x.freelancer_schedule_type);
+          setSelectValue('qe-free-method', x.freelancer_internet_method || 'نظام البطاقات');
+        }
+        qeSave.disabled = false;
+      }).catch(() => qeShowMsg('error','فشل الاتصال'));
+    qeModal.classList.add('is-open');
+  }
+  function qeClose(){ qeModal.classList.remove('is-open'); }
+  // Delegated quick-edit click
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.quick-edit-btn');
+    if(b) qeOpen(b.dataset.bid);
+  });
+  document.getElementById('qe-close').addEventListener('click', qeClose);
+  document.getElementById('qe-cancel').addEventListener('click', qeClose);
+  qeModal.addEventListener('click', e => { if(e.target === qeModal) qeClose(); });
+
+  qeForm.addEventListener('submit', e => {
+    e.preventDefault(); qeSave.disabled = true; qeClear();
+    var bid = document.getElementById('qe-bid').value;
+    fetch('/admin/beneficiaries/'+bid+'/quick-edit', {method:'POST', credentials:'same-origin', body:new FormData(qeForm)})
+      .then(r => r.json()).then(d => {
+        if(d.ok){
+          var row = document.querySelector('tr.beneficiary-row[data-bid="'+bid+'"]');
+          if(row){ var n = row.querySelector('.row-fullname'); var p = row.querySelector('.row-phone'); if(n) n.textContent = d.data.full_name; if(p) p.textContent = d.data.phone || '—'; }
+          qeShowMsg('success', d.message); setTimeout(qeClose, 700);
+        } else { qeShowMsg('error', d.message); qeSave.disabled = false; }
+      }).catch(() => { qeShowMsg('error','فشل الاتصال'); qeSave.disabled = false; });
+  });
+
+  // ─── Issue-card Modal ───
+  var icModal = document.getElementById('ic-modal');
+  var icForm = document.getElementById('ic-form');
+  var icMsg = document.getElementById('ic-msg');
+  var icSave = document.getElementById('ic-save');
+  var currentBid = null;
+  function icShowMsg(t, txt){ icMsg.className = 'qe-msg is-show '+t; icMsg.textContent = txt; }
+  function icClear(){ icMsg.className = 'qe-msg'; icMsg.textContent = ''; }
+  function catMeta(d){
+    var x = parseInt(d || 0, 10);
+    if(x <= 30)  return {icon:'fa-bolt',           accent:'#0891b2', bgFrom:'rgba(8,145,178,.10)',  bgTo:'rgba(8,145,178,.22)',  sub:'استخدام سريع'};
+    if(x <= 60)  return {icon:'fa-clock',          accent:'#1c52a8', bgFrom:'rgba(28,82,168,.10)',  bgTo:'rgba(28,82,168,.22)',  sub:'استخدام سريع'};
+    if(x <= 120) return {icon:'fa-hourglass-half', accent:'#7c3aed', bgFrom:'rgba(124,58,237,.10)', bgTo:'rgba(124,58,237,.22)', sub:'جلسة مركّزة'};
+    if(x <= 180) return {icon:'fa-bolt-lightning', accent:'#d97706', bgFrom:'rgba(217,119,6,.10)',  bgTo:'rgba(217,119,6,.22)',  sub:'جلسة طويلة'};
+    return                {icon:'fa-fire',         accent:'#dc2626', bgFrom:'rgba(220,38,38,.10)',  bgTo:'rgba(220,38,38,.22)',  sub:'جلسة مطوّلة'};
+  }
+  var REASON_META = {
+    'تنفيذ تجربة':    {icon:'fa-flask',            accent:'#dc2626', bgFrom:'rgba(220,38,38,.10)',  bgTo:'rgba(220,38,38,.22)',  sub:'اختبار عملي'},
+    'تقديم اختبار':   {icon:'fa-pen-to-square',    accent:'#1c52a8', bgFrom:'rgba(28,82,168,.10)',  bgTo:'rgba(28,82,168,.22)',  sub:'سريع ومحدد'},
+    'حل واجب':        {icon:'fa-list-check',       accent:'#d97706', bgFrom:'rgba(217,119,6,.10)',  bgTo:'rgba(217,119,6,.22)',  sub:'إنجاز مهمة'},
+    'دراسة':          {icon:'fa-book-open',        accent:'#16a34a', bgFrom:'rgba(22,163,74,.10)',  bgTo:'rgba(22,163,74,.22)',  sub:'جلسة تعلّم'},
+    'عمل حر':         {icon:'fa-laptop-code',      accent:'#7c3aed', bgFrom:'rgba(124,58,237,.10)', bgTo:'rgba(124,58,237,.22)', sub:'عمل مستقل'},
+    'تحميل محاضرات':  {icon:'fa-cloud-arrow-down', accent:'#0891b2', bgFrom:'rgba(8,145,178,.10)',  bgTo:'rgba(8,145,178,.22)',  sub:'محاضرات وملفات'},
+    'أخرى':           {icon:'fa-ellipsis',         accent:'#6b7280', bgFrom:'rgba(107,114,128,.10)',bgTo:'rgba(107,114,128,.22)',sub:'سبب مخصّص'},
+  };
+  function buildCard(o){
+    var b = document.createElement('button');
+    b.type='button'; b.className='pick-card';
+    b.style.setProperty('--pick-accent', o.accent);
+    b.style.setProperty('--pick-bg-from', o.bgFrom);
+    b.style.setProperty('--pick-bg-to', o.bgTo);
+    b.innerHTML = '<span class="pc-ico"><i class="fa-solid '+o.icon+'"></i></span><span class="pc-label">'+o.label+'</span>'+(o.sub?'<span class="pc-sub">'+o.sub+'</span>':'');
+    return b;
+  }
+  function icOpen(bid, name){
+    icClear(); currentBid = bid; icSave.disabled = true;
+    document.getElementById('ic-name').textContent = name;
+    document.getElementById('ic-category').value = '';
+    document.getElementById('ic-reason').value = '';
+    document.getElementById('ic-delivery').value = 'paper';
+    document.getElementById('ic-notes').value = '';
+    document.querySelectorAll('.delivery-opt').forEach((o,i) => o.classList.toggle('is-selected', i===0));
+    fetch('/admin/beneficiaries/'+bid+'/issue-card', {credentials:'same-origin'})
+      .then(r => r.json()).then(d => {
+        if(!d || !d.ok){ icShowMsg('error', d && d.message || 'تعذّر التحميل'); return; }
+        var cats = document.getElementById('ic-categories'); cats.innerHTML = '';
+        (d.categories || []).forEach(c => {
+          var m = catMeta(c.duration);
+          var card = buildCard({icon:m.icon,accent:m.accent,bgFrom:m.bgFrom,bgTo:m.bgTo,label:c.label,sub:m.sub});
+          card.addEventListener('click', () => {
+            cats.querySelectorAll('.pick-card').forEach(x => x.classList.remove('is-selected'));
+            card.classList.add('is-selected');
+            document.getElementById('ic-category').value = c.code; checkReady();
+          });
+          cats.appendChild(card);
+        });
+        var rs = document.getElementById('ic-reasons'); rs.innerHTML = '';
+        (d.reasons || []).forEach(r => {
+          var m = REASON_META[r] || {icon:'fa-circle',accent:'#6b7280',bgFrom:'rgba(107,114,128,.10)',bgTo:'rgba(107,114,128,.22)',sub:''};
+          var card = buildCard({icon:m.icon,accent:m.accent,bgFrom:m.bgFrom,bgTo:m.bgTo,label:r,sub:m.sub});
+          card.addEventListener('click', () => {
+            rs.querySelectorAll('.pick-card').forEach(x => x.classList.remove('is-selected'));
+            card.classList.add('is-selected');
+            document.getElementById('ic-reason').value = r; checkReady();
+          });
+          rs.appendChild(card);
+        });
+      }).catch(() => icShowMsg('error','فشل الاتصال'));
+    icModal.classList.add('is-open');
+  }
+  function icClose(){ icModal.classList.remove('is-open'); }
+  function checkReady(){
+    icSave.disabled = !(document.getElementById('ic-category').value && document.getElementById('ic-reason').value);
+  }
+  // Delegated issue-card click
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.issue-card-btn');
+    if(b) icOpen(b.dataset.bid, b.dataset.name);
+  });
+  document.getElementById('ic-close').addEventListener('click', icClose);
+  document.getElementById('ic-cancel').addEventListener('click', icClose);
+  icModal.addEventListener('click', e => { if(e.target === icModal) icClose(); });
+  document.querySelectorAll('.delivery-opt').forEach(o => {
+    o.addEventListener('click', () => {
+      document.querySelectorAll('.delivery-opt').forEach(x => x.classList.remove('is-selected'));
+      o.classList.add('is-selected'); document.getElementById('ic-delivery').value = o.dataset.mode;
+    });
+  });
+  icForm.addEventListener('submit', e => {
+    e.preventDefault(); icSave.disabled = true; icClear();
+    fetch('/admin/beneficiaries/'+currentBid+'/issue-card', {method:'POST', credentials:'same-origin', body:new FormData(icForm)})
+      .then(r => r.json()).then(d => {
+        if(d.ok){ icClose(); showToast(d.message || 'تم تسجيل الإصدار', 'success'); }
+        else { icShowMsg('error', d.message); icSave.disabled = false; }
+      }).catch(() => { icShowMsg('error','فشل الاتصال'); icSave.disabled = false; });
+  });
+
+  // ─── Add Beneficiary Modal ───
+  var addModal = document.getElementById('add-modal');
+  var addBtn = document.getElementById('open-add-modal');
+  if(addBtn && addModal){
+    var addForm = document.getElementById('add-form');
+    var addMsg = document.getElementById('add-msg');
+    var addSave = document.getElementById('add-save');
+    var addTypeInput = document.getElementById('add-user-type');
+    function addShowMsg(t, txt){ addMsg.className = 'qe-msg is-show '+t; addMsg.textContent = txt; }
+    function addClearMsg(){ addMsg.className = 'qe-msg'; addMsg.textContent = ''; }
+    function addOpen(){
+      addClearMsg(); addForm.reset();
+      // reset type to tawjihi
+      addTypeInput.value = 'tawjihi';
+      document.querySelectorAll('.add-type-card').forEach(function(c){
+        c.classList.toggle('is-selected', c.dataset.type === 'tawjihi');
+      });
+      document.querySelectorAll('.add-type-section').forEach(function(s){
+        s.style.display = (s.dataset.typeFor === 'tawjihi') ? '' : 'none';
+      });
+      addSave.disabled = false;
+      addModal.classList.add('is-open');
+    }
+    function addClose(){ addModal.classList.remove('is-open'); }
+
+    addBtn.addEventListener('click', addOpen);
+    document.getElementById('add-close').addEventListener('click', addClose);
+    document.getElementById('add-cancel').addEventListener('click', addClose);
+    addModal.addEventListener('click', function(e){ if(e.target === addModal) addClose(); });
+
+    // Type picker
+    document.querySelectorAll('.add-type-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        var t = card.dataset.type;
+        document.querySelectorAll('.add-type-card').forEach(function(x){ x.classList.toggle('is-selected', x === card); });
+        addTypeInput.value = t;
+        document.querySelectorAll('.add-type-section').forEach(function(s){
+          s.style.display = (s.dataset.typeFor === t) ? '' : 'none';
+        });
+      });
+    });
+
+    addForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      addSave.disabled = true; addClearMsg();
+      fetch('/admin/beneficiaries/add-ajax', {
+        method:'POST', credentials:'same-origin', body:new FormData(addForm)
+      }).then(function(r){ return r.json(); }).then(function(d){
+        if(d.ok){
+          addShowMsg('success', d.message);
+          showToast(d.message, 'success');
+          setTimeout(function(){ window.location.reload(); }, 700);
+        } else {
+          addShowMsg('error', d.message || 'تعذّر الحفظ');
+          addSave.disabled = false;
+        }
+      }).catch(function(){ addShowMsg('error', 'فشل الاتصال'); addSave.disabled = false; });
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){
+      if(qeModal.classList.contains('is-open')) qeClose();
+      if(icModal.classList.contains('is-open')) icClose();
+      if(addModal && addModal.classList.contains('is-open')) addModal.classList.remove('is-open');
+    }
+  });
+})();
+</script>
+
+{% endblock %}

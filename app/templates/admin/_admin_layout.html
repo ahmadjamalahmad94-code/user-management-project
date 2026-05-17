@@ -1,0 +1,186 @@
+{% extends "dashboard/_layout.html" %}
+
+{% block head_extra %}{% endblock %}
+
+{% block sidebar_subtitle %}لوحة الإدارة{% endblock %}
+{% block user_initial %}{{ (session.get('username') or 'A')[0] | upper }}{% endblock %}
+{% block user_name %}{{ session.get('full_name') or session.get('username') or 'مدير' }}{% endblock %}
+{% block user_role %}مدير عام{% endblock %}
+
+{% block sidebar_nav %}
+{% set p = request.path %}
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-gauge-high"></i><span>لوحة التحكم</span></div>
+  <a class="d-nav-item {% if p in ('/admin/dashboard', '/dashboard', '/admin', '/admin/home') %}is-active{% endif %}"
+     href="/admin/dashboard" data-label="الرئيسية">
+    <i class="fa-solid fa-house"></i><span>الرئيسية</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-users"></i><span>المستفيدون</span></div>
+  <a class="d-nav-item {% if p == '/admin/beneficiaries' or (p.startswith('/admin/beneficiaries') and p != '/admin/beneficiaries/add') or p.startswith('/admin/users/') %}is-active{% endif %}"
+     href="/admin/beneficiaries" data-label="كل المستفيدين">
+    <i class="fa-solid fa-users-viewfinder"></i><span>كل المستفيدين</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/beneficiaries/add' %}is-active{% endif %}"
+     href="/admin/beneficiaries/add" data-label="إضافة مستفيد">
+    <i class="fa-solid fa-user-plus"></i><span>إضافة مستفيد</span>
+  </a>
+  <a class="d-nav-item {% if p.startswith('/admin/portal-accounts') %}is-active{% endif %}"
+     href="/admin/portal-accounts" data-label="حسابات البوابة">
+    <i class="fa-solid fa-id-card-clip"></i><span>حسابات البوابة</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-circle-user"></i><span>حسابات الإنترنت</span></div>
+  <a class="d-nav-item {% if p in ('/admin/users-account', '/admin/users-account/', '/admin/users-account/overview', '/admin/users-account/list') %}is-active{% endif %}"
+     href="/admin/users-account" data-label="حسابات الإنترنت">
+    <i class="fa-solid fa-chart-pie"></i><span>حسابات الإنترنت</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-ticket"></i><span>البطاقات</span></div>
+  <a class="d-nav-item {% if p == '/admin/cards/subscribers' %}is-active{% endif %}"
+     href="/admin/cards/subscribers" data-label="مشتركو البطاقات">
+    <i class="fa-solid fa-users"></i><span>مشتركو البطاقات</span>
+  </a>
+  <a class="d-nav-item {% if p in ('/admin/cards', '/admin/cards/overview') %}is-active{% endif %}"
+     href="/admin/cards" data-label="لوحة البطاقات">
+    <i class="fa-solid fa-chart-pie"></i><span>لوحة البطاقات</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/cards/inventory' %}is-active{% endif %}"
+     href="{{ url_for('admin_cards_inventory_page') }}" data-label="المخزون والصادرة">
+    <i class="fa-solid fa-boxes-stacked"></i><span>المخزون والصادرة</span>
+  </a>
+  <a class="d-nav-item {% if p.startswith('/admin/cards/categories') %}is-active{% endif %}"
+     href="{{ url_for('admin_cards_categories') }}" data-label="الفئات">
+    <i class="fa-solid fa-layer-group"></i><span>الفئات</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/cards/policies' %}is-active{% endif %}"
+     href="{{ url_for('admin_cards_policies') }}" data-label="السياسات">
+    <i class="fa-solid fa-sliders"></i><span>السياسات</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/cards/user-type-rules' %}is-active{% endif %}"
+     href="/admin/cards/user-type-rules" data-label="قواعد الأنواع">
+    <i class="fa-solid fa-user-tag"></i><span>قواعد الأنواع</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/quota-groups' %}is-active{% endif %}"
+     href="/admin/quota-groups" data-label="مجموعات السياسات">
+    <i class="fa-solid fa-people-group"></i><span>المجموعات</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/cards/import' %}is-active{% endif %}"
+     href="/admin/cards/import" data-label="رفع بطاقات">
+    <i class="fa-solid fa-file-arrow-up"></i><span>رفع بطاقات</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-inbox"></i><span>مركز الطلبات</span></div>
+  <a class="d-nav-item {% if p == '/admin/notifications' %}is-active{% endif %}"
+     href="/admin/notifications" data-label="الإشعارات">
+    <i class="fa-solid fa-bell"></i><span>الإشعارات</span>
+    {% if notification_count and notification_count > 0 %}<span class="d-nav-badge">{{ notification_count }}</span>{% endif %}
+  </a>
+  <a class="d-nav-item {% if p == '/admin/requests' or p.startswith('/admin/internet-requests') or p.startswith('/admin/users-account/requests') or p == '/admin/cards/pending' %}is-active{% endif %}"
+     href="/admin/requests" data-label="مركز الطلبات"
+     data-merged-routes="/admin/internet-requests /admin/users-account/requests /admin/cards/pending">
+    <i class="fa-solid fa-inbox"></i><span>مركز الطلبات</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-satellite-dish"></i><span>RADIUS</span></div>
+  <a class="d-nav-item {% if p in ('/admin/radius/online', '/admin/radius/users-online') %}is-active{% endif %}"
+     href="{{ url_for('admin_radius_online') }}" data-label="المتصلون الآن">
+    <i class="fa-solid fa-wifi"></i><span>المتصلون الآن</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/radius/live-monitor' %}is-active{% endif %}"
+     href="/admin/radius/live-monitor" data-label="مراقبة حية">
+    <i class="fa-solid fa-broadcast-tower"></i><span>مراقبة حية</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/radius/user-lookup' %}is-active{% endif %}"
+     href="/admin/radius/user-lookup" data-label="بحث مستخدم">
+    <i class="fa-solid fa-magnifying-glass"></i><span>بحث مستخدم</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/radius/settings' %}is-active{% endif %}"
+     href="{{ url_for('radius_settings_page') }}" data-label="إعدادات الربط">
+    <i class="fa-solid fa-sliders"></i><span>إعدادات الربط</span>
+  </a>
+  <a class="d-nav-item {% if p.startswith('/admin/api') %}is-active{% endif %}"
+     href="{{ url_for('admin_api_test') }}" data-label="فحص الربط">
+    <i class="fa-solid fa-plug"></i><span>فحص الربط</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-folder-tree"></i><span>السجلات والبيانات</span></div>
+  <a class="d-nav-item {% if p in ('/admin/audit-log', '/audit-log') %}is-active{% endif %}"
+     href="/admin/audit-log" data-label="سجل العمليات">
+    <i class="fa-solid fa-clock-rotate-left"></i><span>سجل العمليات</span>
+  </a>
+  <a class="d-nav-item {% if p in ('/admin/usage-logs', '/usage-logs') %}is-active{% endif %}"
+     href="/admin/usage-logs" data-label="سجل البطاقات">
+    <i class="fa-solid fa-table-list"></i><span>سجل البطاقات</span>
+  </a>
+  <a class="d-nav-item {% if p in ('/admin/usage-archive', '/admin/archive', '/usage-archive') %}is-active{% endif %}"
+     href="/admin/usage-archive" data-label="أرشيف البطاقات">
+    <i class="fa-solid fa-box-archive"></i><span>أرشيف البطاقات</span>
+  </a>
+  <a class="d-nav-item {% if p.startswith('/admin/import') or p.startswith('/import') %}is-active{% endif %}"
+     href="/admin/import" data-label="استيراد CSV">
+    <i class="fa-solid fa-file-arrow-up"></i><span>استيراد CSV</span>
+  </a>
+  <a class="d-nav-item {% if p.startswith('/admin/exports') or p.startswith('/exports') %}is-active{% endif %}"
+     href="/admin/exports" data-label="مركز التصدير">
+    <i class="fa-solid fa-file-arrow-down"></i><span>مركز التصدير</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-comment-sms"></i><span>الرسائل القصيرة</span></div>
+  <a class="d-nav-item {% if p == '/admin/sms' %}is-active{% endif %}"
+     href="/admin/sms" data-label="لوحة SMS">
+    <i class="fa-solid fa-gauge-high"></i><span>لوحة SMS</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/sms/settings' %}is-active{% endif %}"
+     href="/admin/sms/settings" data-label="إعدادات API">
+    <i class="fa-solid fa-gear"></i><span>إعدادات API</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/sms/services' %}is-active{% endif %}"
+     href="/admin/sms/services" data-label="خدمات SMS">
+    <i class="fa-solid fa-toggle-on"></i><span>خدمات SMS</span>
+  </a>
+  <a class="d-nav-item {% if p == '/admin/sms/log' %}is-active{% endif %}"
+     href="/admin/sms/log" data-label="سجل الرسائل">
+    <i class="fa-solid fa-list-check"></i><span>سجل الرسائل</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-screwdriver-wrench"></i><span>النظام</span></div>
+  <a class="d-nav-item {% if p in ('/admin/timer', '/timer') %}is-active{% endif %}"
+     href="/admin/timer" data-label="عداد تحويل الكهرباء">
+    <i class="fa-solid fa-bolt"></i><span>عداد تحويل الكهرباء</span>
+  </a>
+  <a class="d-nav-item {% if p in ('/admin/system-cleanup', '/admin-control') %}is-active{% endif %}"
+     href="/admin/system-cleanup" data-label="تنظيف النظام">
+    <i class="fa-solid fa-broom"></i><span>تنظيف النظام</span>
+  </a>
+</div>
+
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-shield-halved"></i><span>الإدارة</span></div>
+  <a class="d-nav-item {% if p.startswith('/admin/accounts') or p.startswith('/accounts') %}is-active{% endif %}"
+     href="/admin/accounts" data-label="المستخدمون والصلاحيات">
+    <i class="fa-solid fa-users-gear"></i><span>المستخدمون والصلاحيات</span>
+  </a>
+  <a class="d-nav-item {% if p in ('/admin/profile', '/profile') %}is-active{% endif %}"
+     href="/admin/profile" data-label="ملفي الشخصي">
+    <i class="fa-solid fa-id-badge"></i><span>ملفي الشخصي</span>
+  </a>
+</div>
+{% endblock %}

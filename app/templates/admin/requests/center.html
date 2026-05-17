@@ -1,0 +1,299 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}مركز الطلبات{% endblock %}
+{% block page_title %}مركز الطلبات{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>مركز الطلبات</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_hub.css') }}">
+<style>
+.rc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.rc-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:18px;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(30,30,30,.04);transition:var(--d-transition)}
+.rc-card:hover{border-color:var(--d-gold);transform:translateY(-1px);box-shadow:0 10px 24px rgba(30,30,30,.08)}
+.rc-card h3{margin:0 0 8px;font-size:15px;font-weight:900;color:var(--d-black);display:flex;align-items:center;gap:8px}
+.rc-card h3 i{color:var(--d-gold)}
+.rc-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.rc-stat{flex:1;min-width:92px;border-radius:12px;background:#FAFAF8;padding:10px 12px}
+.rc-stat strong{display:block;font-size:26px;line-height:1;font-weight:900;color:var(--d-black);font-feature-settings:"tnum" 1}
+.rc-stat span{display:block;margin-top:4px;font-size:11px;font-weight:800;color:var(--d-text-muted)}
+.rc-filter{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.rc-filter .field{display:flex;flex-direction:column;gap:5px;min-width:160px}
+.rc-filter .field.search{flex:1;min-width:260px}
+.rc-filter label{font-size:11.5px;font-weight:800;color:var(--d-text-muted)}
+.rc-filter .date-field{direction:ltr;text-align:right}
+.rc-source{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:900;white-space:nowrap}
+.rc-source.internet{background:#e8eef9;color:#1c52a8}
+.rc-source.user{background:#e8f6ee;color:#166534}
+.rc-source.card{background:#fff7df;color:#7c2d12}
+.rc-status{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:900;white-space:nowrap}
+.rc-status.pending,.rc-status.in_progress{background:#FDF1CF;color:#7c2d12}
+.rc-status.approved{background:#e7f0fd;color:#1c52a8}
+.rc-status.done,.rc-status.executed{background:#e8f6ee;color:#166534}
+.rc-status.cancelled,.rc-status.rejected{background:#F4F3EF;color:var(--d-text-soft)}
+.rc-status.failed{background:#fde2e2;color:#b91c1c}
+
+/* تصغير وتنظيم خانة الإجراء */
+.rc-actions{display:inline-flex;gap:6px;flex-wrap:nowrap;align-items:center;justify-content:flex-end}
+.rc-actions form{display:inline;margin:0}
+.rc-act{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 11px;border-radius:8px;
+  background:#fff;border:1px solid var(--d-border-strong);
+  color:var(--d-text);font-size:12px;font-weight:800;text-decoration:none;
+  font-family:inherit;cursor:pointer;transition:.15s ease;white-space:nowrap;
+}
+.rc-act:hover{background:#1E1E1E;color:#fff;border-color:#1E1E1E}
+.rc-act i{font-size:11px}
+.rc-act--ok{background:#e8f6ee;color:#166534;border-color:#bce5cb}
+.rc-act--ok:hover{background:#166534;color:#fff;border-color:#166534}
+.rc-act--ko{background:#fde2e2;color:#b91c1c;border-color:#fbc2c2}
+.rc-act--ko:hover{background:#b91c1c;color:#fff;border-color:#b91c1c}
+
+.rc-fulfill-form{display:flex!important;gap:6px;flex-wrap:wrap;align-items:center;max-width:420px}
+.rc-fulfill-form .d-field{padding:6px 8px;border-radius:8px;max-width:120px;font-size:12px}
+
+/* روابط الصف تحت اسم المشترك */
+.rc-row-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.rc-row-links a{
+  display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;
+  color:var(--d-text-muted);text-decoration:none;
+}
+.rc-row-links a:hover{color:var(--d-gold-deep)}
+.rc-row-links a i{font-size:10px}
+
+.payload-line{font-size:11.5px;color:var(--d-text-muted);max-width:280px;white-space:normal;line-height:1.5;margin-top:2px}
+.rc-event{display:block;margin-top:3px;color:#7c2d12;font-size:10.5px;font-weight:800}
+
+/* الجدول نفسه: padding ولون hover */
+.rc-table tbody tr:hover{background:#fbfaf7}
+.rc-table td{padding:12px 14px;font-size:13px;vertical-align:middle}
+.rc-table th{padding:12px 14px;font-size:11.5px;color:var(--d-text-soft);font-weight:800;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.rc-id{font-weight:900;color:var(--d-black);font-feature-settings:"tnum" 1}
+.rc-name{font-size:13px;font-weight:900;color:var(--d-black);display:block;line-height:1.3}
+.rc-phone{font-size:11.5px;color:var(--d-text-muted);font-weight:700;display:block;margin-top:2px;font-feature-settings:"tnum" 1}
+.rc-action-name{font-size:13px;font-weight:900;color:var(--d-black);display:block}
+.rc-date{
+  display:inline-flex;flex-direction:column;align-items:flex-end;gap:1px;
+  font-feature-settings:"tnum" 1;
+}
+.rc-date b{font-size:12px;color:var(--d-black);font-weight:800}
+.rc-date small{font-size:10.5px;color:var(--d-text-muted);font-weight:700}
+
+@media (max-width:1050px){.rc-grid{grid-template-columns:1fr}.rc-filter .field{min-width:100%}}
+</style>
+{% endblock %}
+
+{% macro status_badge(status, label) -%}
+  {% set s = (status or 'pending')|lower %}
+  <span class="rc-status {{ s }}">
+    {% if s == 'pending' %}<i class="fa-solid fa-hourglass-half"></i>
+    {% elif s == 'in_progress' %}<i class="fa-solid fa-spinner"></i>
+    {% elif s in ['done','executed','approved'] %}<i class="fa-solid fa-check"></i>
+    {% elif s in ['cancelled','rejected'] %}<i class="fa-solid fa-ban"></i>
+    {% elif s == 'failed' %}<i class="fa-solid fa-triangle-exclamation"></i>
+    {% endif %}
+    {{ label }}
+  </span>
+{%- endmacro %}
+
+{% macro type_link(type_value, label, icon, data) -%}
+  <a class="rc-card" href="{{ url_for('admin_request_center', type=type_value) }}">
+    <h3><i class="fa-solid {{ icon }}"></i>{{ label }}</h3>
+    <p style="margin:0;color:var(--d-text-soft);font-size:12.5px;line-height:1.7">اعرض طلبات هذا النوع، وراجع التفاصيل قبل التنفيذ أو التحويل للصفحة الفنية عند الحاجة.</p>
+    <div class="rc-stats">
+      <div class="rc-stat"><strong>{{ data.total }}</strong><span>الإجمالي</span></div>
+      <div class="rc-stat"><strong>{{ data.pending }}</strong><span>معلّق</span></div>
+    </div>
+  </a>
+{%- endmacro %}
+
+{% block content %}
+{% include "admin/requests/_request_nav.html" %}
+
+<!-- ─── Unified Control Hub ─── -->
+<section class="hub">
+  <div class="hub-stats">
+    <a class="hub-stat" href="{{ url_for('admin_request_center', type='internet') }}" style="text-decoration:none;color:inherit">
+      <span class="hub-stat-ico{% if summary.internet.pending > 0 %} warn has-pulse{% endif %}"><i class="fa-solid fa-bolt"></i></span>
+      <div><span class="lbl">خدمات الإنترنت</span><span class="val">{{ summary.internet.total }}<small>{{ summary.internet.pending }} معلّق</small></span></div>
+    </a>
+    <a class="hub-stat" href="{{ url_for('admin_request_center', type='user') }}" style="text-decoration:none;color:inherit">
+      <span class="hub-stat-ico cyan{% if summary.user.pending > 0 %} has-pulse{% endif %}"><i class="fa-solid fa-circle-user"></i></span>
+      <div><span class="lbl">حسابات الإنترنت</span><span class="val">{{ summary.user.total }}<small>{{ summary.user.pending }} معلّق</small></span></div>
+    </a>
+    <a class="hub-stat" href="{{ url_for('admin_request_center', type='card') }}" style="text-decoration:none;color:inherit">
+      <span class="hub-stat-ico muted{% if summary.card.pending > 0 %} has-pulse{% endif %}"><i class="fa-solid fa-ticket"></i></span>
+      <div><span class="lbl">البطاقات</span><span class="val">{{ summary.card.total }}<small>{{ summary.card.pending }} معلّق</small></span></div>
+    </a>
+  </div>
+
+  <div class="hub-pills">
+    <a class="hub-pill{% if filters.type != 'all' %} is-zero{% endif %}" href="{{ url_for('admin_request_center', type='all') }}"><i class="fa-solid fa-grip"></i>الكل</a>
+    <a class="hub-pill{% if filters.type != 'internet' %} is-zero{% endif %}" href="{{ url_for('admin_request_center', type='internet') }}"><i class="fa-solid fa-bolt"></i>إنترنت</a>
+    <a class="hub-pill{% if filters.type != 'user' %} is-zero{% endif %}" href="{{ url_for('admin_request_center', type='user') }}"><i class="fa-solid fa-circle-user"></i>حسابات</a>
+    <a class="hub-pill{% if filters.type not in ['card','cards'] %} is-zero{% endif %}" href="{{ url_for('admin_request_center', type='card') }}"><i class="fa-solid fa-ticket"></i>بطاقات</a>
+  </div>
+
+  <form class="hub-search" id="rc-filter-form" method="GET" autocomplete="off">
+    <div class="hub-search-input">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" name="q" id="rc-q" value="{{ filters.q or '' }}" placeholder="ابحث باسم المشترك / رقم الجوال / نوع الطلب / الملاحظة…">
+      <span class="hub-search-spinner" id="rc-search-status" aria-hidden="true"></span>
+    </div>
+    <input type="hidden" name="type" id="rc-type" value="{{ filters.type or 'all' }}">
+    <select name="status" id="rc-status" class="hub-search-select">
+      <option value="" {% if not filters.status %}selected{% endif %}>كل الحالات</option>
+      <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>معلّق</option>
+      <option value="approved" {% if filters.status == 'approved' %}selected{% endif %}>معتمد</option>
+      <option value="in_progress" {% if filters.status == 'in_progress' %}selected{% endif %}>قيد التنفيذ</option>
+      <option value="done" {% if filters.status == 'done' %}selected{% endif %}>منجز</option>
+      <option value="executed" {% if filters.status == 'executed' %}selected{% endif %}>منفّذ</option>
+      <option value="cancelled" {% if filters.status == 'cancelled' %}selected{% endif %}>ملغي</option>
+      <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>مرفوض</option>
+      <option value="failed" {% if filters.status == 'failed' %}selected{% endif %}>فشل</option>
+    </select>
+    <input class="hub-search-select" type="text" name="date_from" id="rc-date-from" value="{{ filters.date_from or '' }}" inputmode="numeric" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" placeholder="من تاريخ" style="min-width:120px;text-align:center">
+    <input class="hub-search-select" type="text" name="date_to" id="rc-date-to" value="{{ filters.date_to or '' }}" inputmode="numeric" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" placeholder="إلى تاريخ" style="min-width:120px;text-align:center">
+    {% if filters.beneficiary_id %}<input type="hidden" name="beneficiary_id" value="{{ filters.beneficiary_id }}">{% endif %}
+    <button type="button" class="hub-search-clear" id="rc-clear-btn" title="مسح"><i class="fa-solid fa-xmark"></i></button>
+  </form>
+</section>
+
+{% if filters.beneficiary_id %}
+<div class="d-notice" style="margin-bottom:14px">
+  <i class="fa-solid fa-user-check"></i>
+  <div><strong>التصفية حسب مشترك محدد.</strong> تعرض القائمة طلبات المشترك رقم #{{ filters.beneficiary_id }} فقط.</div>
+</div>
+{% endif %}
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list-check"></i>قائمة الطلبات</h3>
+    <span style="font-size:12px;color:var(--d-text-muted)"><span id="rc-results-count">{{ items|length }}</span> طلب</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table rc-table" id="rc-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="request-center-unified">
+      <thead>
+        <tr>
+          <th style="width:60px">#</th>
+          <th style="width:130px">النوع</th>
+          <th>المشترك</th>
+          <th>تفاصيل الطلب</th>
+          <th style="width:110px">الحالة</th>
+          <th style="width:120px">التاريخ</th>
+          <th style="width:1%;text-align:end">الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="rc-tbody">
+        {% for item in items %}
+        <tr>
+          <td><span class="rc-id">#{{ item.id }}</span></td>
+          <td>
+            <span class="rc-source {{ item.source }}">
+              {% if item.source == 'internet' %}<i class="fa-solid fa-bolt"></i>
+              {% elif item.source == 'user' %}<i class="fa-solid fa-circle-user"></i>
+              {% else %}<i class="fa-solid fa-ticket"></i>{% endif %}
+              {{ item.source_label }}
+            </span>
+          </td>
+          <td>
+            <span class="rc-name">{{ item.full_name or '—' }}</span>
+            {% if item.phone %}<span class="rc-phone">{{ item.phone }}</span>{% endif %}
+            <div class="rc-row-links">
+              {% if item.profile_href %}
+                <a href="{{ item.profile_href }}"><i class="fa-solid fa-id-card-clip"></i>ملف المشترك</a>
+              {% endif %}
+              {% if item.beneficiary_requests_href %}
+                <a href="{{ item.beneficiary_requests_href }}"><i class="fa-solid fa-inbox"></i>طلبات المشترك</a>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <span class="rc-action-name">{{ item.action_label }}</span>
+            {% if item.detail %}<div class="payload-line">{{ item.detail }}</div>{% endif %}
+            {% if item.notes %}<div class="payload-line"><i class="fa-solid fa-note-sticky"></i> {{ item.notes }}</div>{% endif %}
+            {% if item.last_event %}<span class="rc-event"><i class="fa-solid fa-bell"></i> {{ item.last_event }}</span>{% endif %}
+          </td>
+          <td>{{ status_badge(item.status, item.status_label) }}</td>
+          <td>
+            {% set dt = format_dt_short(item.created_at) %}
+            {% set dt_parts = dt.split(' ') if dt else [] %}
+            <span class="rc-date">
+              {% if dt_parts|length >= 2 %}
+                <b>{{ dt_parts[1] }}</b>
+                <small>{{ dt_parts[0] }}</small>
+              {% else %}
+                <b>{{ dt or '—' }}</b>
+              {% endif %}
+            </span>
+          </td>
+          <td style="text-align:end;white-space:nowrap">
+            <div class="rc-actions">
+              {% if item.source == 'internet' %}
+                <a class="rc-act" href="{{ item.href }}" title="مراجعة"><i class="fa-solid fa-eye"></i>مراجعة</a>
+                <a class="rc-act" href="{{ item.specialized_href }}" title="صفحة التنفيذ الفنية"><i class="fa-solid fa-screwdriver-wrench"></i>تنفيذ فني</a>
+              {% elif item.source == 'user' %}
+                {% if item.status == 'pending' %}
+                  <form method="POST" action="{{ url_for('admin_user_request_done', action_id=item.id) }}">
+                    {{ csrf_token_input() | safe }}
+                    <button class="rc-act rc-act--ok" type="submit" onclick="return confirm('تأكيد وضع هذا الطلب كمنفّذ؟')"><i class="fa-solid fa-check"></i>منفّذ</button>
+                  </form>
+                  <form method="POST" action="{{ url_for('admin_user_request_cancel', action_id=item.id) }}">
+                    {{ csrf_token_input() | safe }}
+                    <button class="rc-act rc-act--ko" type="submit" onclick="return confirm('إلغاء هذا الطلب؟')"><i class="fa-solid fa-xmark"></i>إلغاء</button>
+                  </form>
+                {% else %}
+                  <a class="rc-act" href="{{ item.href }}"><i class="fa-solid fa-eye"></i>عرض</a>
+                {% endif %}
+                <a class="rc-act" href="{{ item.specialized_href }}" title="صفحة التنفيذ الفنية"><i class="fa-solid fa-screwdriver-wrench"></i>تنفيذ فني</a>
+              {% else %}
+                {% if item.status == 'pending' %}
+                  <form class="rc-fulfill-form" method="POST" action="{{ url_for('admin_cards_pending_fulfill', action_id=item.id) }}">
+                    {{ csrf_token_input() | safe }}
+                    <input class="d-field" name="card_username" placeholder="اسم البطاقة" required autocomplete="off">
+                    <input class="d-field" name="card_password" placeholder="كلمة المرور" required autocomplete="off">
+                    <button class="rc-act rc-act--ok" type="submit" onclick="return confirm('تأكيد تسليم البطاقة لهذا الطلب؟')"><i class="fa-solid fa-hand-holding"></i>تسليم</button>
+                  </form>
+                  <form method="POST" action="{{ url_for('admin_cards_pending_cancel', action_id=item.id) }}">
+                    {{ csrf_token_input() | safe }}
+                    <button class="rc-act rc-act--ko" type="submit" onclick="return confirm('إلغاء طلب البطاقة؟')"><i class="fa-solid fa-xmark"></i>إلغاء</button>
+                  </form>
+                {% else %}
+                  <a class="rc-act" href="{{ item.href }}"><i class="fa-solid fa-eye"></i>عرض</a>
+                {% endif %}
+                <a class="rc-act" href="{{ item.specialized_href }}" title="صفحة التنفيذ الفنية"><i class="fa-solid fa-screwdriver-wrench"></i>تنفيذ فني</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate">
+          <td colspan="7" style="text-align:center;color:var(--d-text-muted);padding:32px">لا توجد طلبات مطابقة للتصفية الحالية.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script src="{{ url_for('static', filename='js/dashboard_hub_search.js') }}"></script>
+<script>
+(function(){
+  if(!window.HubSearch) return;
+  window.HubSearch.attach({
+    formId: 'rc-filter-form',
+    tbodyId: 'rc-tbody',
+    tableId: 'rc-table',
+    statusId: 'rc-search-status',
+    countId: 'rc-results-count',
+    clearBtnId: 'rc-clear-btn'
+  });
+})();
+</script>
+
+{% endblock %}

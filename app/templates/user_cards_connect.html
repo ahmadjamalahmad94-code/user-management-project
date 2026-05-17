@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>جارٍ تجهيز اتصالك...</title>
+  <style>
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      font-family:Arial,Tahoma,sans-serif;
+      background:#f4f3ef;
+      color:#1e1e1e;
+    }
+    .connect-card{
+      width:min(520px,calc(100vw - 32px));
+      padding:28px;
+      border:1px solid #e4dfd2;
+      border-radius:18px;
+      background:#fff;
+      text-align:center;
+      box-shadow:0 18px 45px rgba(30,30,30,.10);
+    }
+    .spinner{
+      width:46px;
+      height:46px;
+      margin:0 auto 18px;
+      border-radius:50%;
+      border:5px solid #f4e4b8;
+      border-top-color:#f4ba2a;
+      animation:spin .85s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    h1{margin:0 0 8px;font-size:24px}
+    p{margin:0;color:#5b5849;line-height:1.8}
+    a{
+      display:inline-flex;
+      margin-top:20px;
+      padding:12px 20px;
+      border-radius:12px;
+      background:#1e1e1e;
+      color:#fff;
+      text-decoration:none;
+      font-weight:700;
+    }
+    iframe{display:none;width:0;height:0;border:0}
+  </style>
+</head>
+<body>
+  <main class="connect-card">
+    <div class="spinner" aria-hidden="true"></div>
+    <h1>جارٍ تجهيز اتصالك...</h1>
+    <p>سننهي أي جلسة Hotspot حالية، ثم نفتح اتصال البطاقة المختارة تلقائيًا.</p>
+    <a href="{{ login_url }}">المتابعة يدويًا إذا لم يتم التحويل تلقائيًا</a>
+  </main>
+
+  <iframe src="{{ logout_url }}" title="hotspot logout" aria-hidden="true"></iframe>
+  <script>
+    window.setTimeout(function () {
+      window.location.assign({{ login_url|tojson }});
+    }, {{ redirect_delay_ms|int }});
+  </script>
+</body>
+</html>

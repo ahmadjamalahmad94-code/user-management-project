@@ -1,0 +1,183 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}مراقبة حية{% endblock %}
+{% block page_title %}مراقبة المتصلين الحية{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span><i class="fa-solid fa-chevron-left"></i>
+  <span>RADIUS</span><i class="fa-solid fa-chevron-left"></i>
+  <span>مراقبة حية</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.lm-hero{background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border-radius:18px;
+  padding:20px 24px;margin-bottom:14px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
+.lm-hero::after{content:"";position:absolute;inset:auto -80px -120px auto;width:180px;height:180px;
+  border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,.30),transparent 70%)}
+.lm-hero-ico{width:48px;height:48px;border-radius:13px;background:#22c55e;color:#fff;
+  display:grid;place-items:center;font-size:20px;flex-shrink:0;animation:lmPulse 2s infinite}
+@keyframes lmPulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}50%{box-shadow:0 0 0 12px rgba(34,197,94,0)}}
+.lm-hero h2{margin:0 0 3px;font-size:18px;font-weight:900}
+.lm-hero p{margin:0;font-size:12.5px;color:rgba(255,255,255,.7)}
+.lm-counter{margin-inline-start:auto;display:flex;align-items:center;gap:10px}
+.lm-counter .n{font-size:32px;font-weight:900;color:#22c55e;line-height:1;font-feature-settings:"tnum" 1}
+.lm-counter .l{font-size:11px;color:rgba(255,255,255,.7);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+
+.lm-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.lm-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;
+  background:#fff;border:1.5px solid var(--d-border-strong);font-size:12.5px;font-weight:800;cursor:pointer}
+.lm-toggle input{width:18px;height:18px;accent-color:#22c55e}
+.lm-status-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
+  background:#e8f6ee;color:#166534;font-size:11.5px;font-weight:800}
+.lm-status-pill .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:lmBlink 1.2s infinite}
+@keyframes lmBlink{50%{opacity:.4}}
+
+.lm-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(30,30,30,.04)}
+.lm-card-head{display:flex;align-items:center;gap:10px;padding:13px 18px;
+  background:#fbfaf7;border-bottom:1px solid var(--d-border)}
+.lm-card-head h3{margin:0;font-size:14px;font-weight:900}
+.lm-card-head .updated{margin-inline-start:auto;font-size:11px;color:var(--d-text-muted);font-feature-settings:"tnum"}
+.lm-table{width:100%;border-collapse:collapse}
+.lm-table th,.lm-table td{padding:10px 14px;font-size:12.5px;text-align:start;border-bottom:1px solid #f5f3ee}
+.lm-table th{font-size:11px;color:var(--d-text-soft);font-weight:800;text-transform:uppercase;letter-spacing:.3px;
+  background:#fbfaf7;white-space:nowrap}
+.lm-table tbody tr:hover{background:#fafafa}
+.lm-online{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;
+  background:#e8f6ee;color:#166534;font-size:10.5px;font-weight:800}
+.lm-online .dot{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:lmBlink 1.2s infinite}
+.lm-offline{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;
+  background:#f3f4f6;color:#6b7280;font-size:10.5px;font-weight:800}
+
+.lm-empty{padding:40px;text-align:center;color:var(--d-text-muted);font-size:13.5px}
+.lm-empty i{display:block;font-size:32px;margin-bottom:8px;color:var(--d-text-muted)}
+.lm-err{padding:14px 16px;background:#fde2e2;color:#b91c1c;font-size:13px;font-weight:700;
+  display:flex;align-items:center;gap:8px}
+
+.lm-stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.lm-stat{background:#fff;border:1px solid var(--d-border);border-radius:12px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px}
+.lm-stat-ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:15px;flex-shrink:0;
+  background:var(--d-gold-faint,#FDF1CF);color:var(--d-gold-deep,#D8A11C)}
+.lm-stat .lbl{font-size:10.5px;color:var(--d-text-soft);font-weight:800;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:2px}
+.lm-stat .val{font-size:20px;font-weight:900;color:var(--d-black);line-height:1;font-feature-settings:"tnum"}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="lm-hero">
+  <span class="lm-hero-ico"><i class="fa-solid fa-wifi"></i></span>
+  <div>
+    <h2>المراقبة الحية للمتصلين</h2>
+    <p>يستدعي <code>/get_online_users</code> من RADIUS API كل 5 ثوانٍ ويعرض اللحظة الراهنة.</p>
+  </div>
+  <div class="lm-counter">
+    <div style="text-align:end">
+      <div class="n" id="lm-count">0</div>
+      <div class="l">متصل الآن</div>
+    </div>
+  </div>
+</section>
+
+<div class="lm-controls">
+  <span class="lm-status-pill"><span class="dot"></span><span id="lm-status">متابعة...</span></span>
+  <label class="lm-toggle">
+    <input type="checkbox" id="lm-autorefresh" checked>
+    <span>تحديث تلقائي</span>
+  </label>
+  <button class="lm-toggle" id="lm-refresh-btn"><i class="fa-solid fa-rotate"></i> تحديث الآن</button>
+  <form method="POST" action="{{ url_for('admin_radius_snapshots_run') }}" style="margin-inline-start:auto">
+    {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+    <button class="lm-toggle" type="submit" onclick="return confirm('أخذ snapshot لكل المشتركين النشطين الآن؟')"><i class="fa-solid fa-camera"></i> Snapshot يومي</button>
+  </form>
+</div>
+
+<section class="lm-card">
+  <div class="lm-card-head">
+    <i class="fa-solid fa-broadcast-tower" style="color:var(--d-gold)"></i>
+    <h3>المشتركون المتصلون</h3>
+    <span class="updated" id="lm-updated">—</span>
+  </div>
+  <div id="lm-table-wrap"><div class="lm-empty"><i class="fa-solid fa-spinner fa-spin"></i><div>جارٍ التحميل...</div></div></div>
+</section>
+
+<script>
+(function(){
+  var countEl = document.getElementById('lm-count');
+  var statusEl = document.getElementById('lm-status');
+  var updatedEl = document.getElementById('lm-updated');
+  var wrapEl = document.getElementById('lm-table-wrap');
+  var autoEl = document.getElementById('lm-autorefresh');
+  var refreshBtn = document.getElementById('lm-refresh-btn');
+  var timer = null;
+
+  function fmt(d){
+    var t = new Date();
+    return t.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+
+  function renderRows(users){
+    if(!users || !users.length){
+      wrapEl.innerHTML = '<div class="lm-empty"><i class="fa-solid fa-circle-info"></i><div>لا يوجد مشتركون متصلون حاليًا.</div></div>';
+      return;
+    }
+    var html = '<table class="lm-table"><thead><tr>'
+             + '<th>اليوزر</th><th>الاسم</th><th>الباقة</th><th>نزول</th><th>صعود</th><th>الاستهلاك</th><th>IP</th><th>الجلسة</th><th>الحالة</th>'
+             + '</tr></thead><tbody>';
+    users.forEach(function(u){
+      html += '<tr>'
+            + '<td style="font-family:monospace;font-weight:900">' + (u.username || '—') + '</td>'
+            + '<td>' + (u.firstname || u.name || '—') + '</td>'
+            + '<td><span class="d-badge">' + (u.profile_name || '—') + '</span></td>'
+            + '<td style="font-family:monospace">' + (u.down_speed || u.down || '—') + '</td>'
+            + '<td style="font-family:monospace">' + (u.up_speed || u.up || '—') + '</td>'
+            + '<td style="font-family:monospace">' + (u.usage_quota || u.usage || '—') + '</td>'
+            + '<td style="font-family:monospace;font-size:11px">' + (u.ip_address || u.ip || u.framed_ip || '—') + '</td>'
+            + '<td style="font-size:11px;color:#6b7280">' + (u.session_time || u.uptime || '—') + '</td>'
+            + '<td><span class="lm-online"><span class="dot"></span>متصل</span></td>'
+            + '</tr>';
+    });
+    html += '</tbody></table>';
+    wrapEl.innerHTML = html;
+  }
+
+  function fetchData(){
+    statusEl.textContent = 'جلب البيانات...';
+    fetch('/admin/radius/live-monitor/data', {credentials:'same-origin', headers:{'Accept':'application/json'}})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        updatedEl.textContent = 'آخر تحديث: ' + fmt();
+        if(!j.ok){
+          statusEl.textContent = 'خطأ';
+          wrapEl.innerHTML = '<div class="lm-err"><i class="fa-solid fa-triangle-exclamation"></i><span>' + (j.error || 'خطأ غير معروف') + '</span></div>';
+          return;
+        }
+        statusEl.textContent = 'متابعة...';
+        var data = j.data || {};
+        // البيانات قد تكون في data.users أو data.online_users أو مباشرة
+        var users = data.users || data.online_users || data.data || [];
+        if(!Array.isArray(users)) users = [];
+        countEl.textContent = users.length;
+        renderRows(users);
+      })
+      .catch(function(){
+        statusEl.textContent = 'انقطع الاتصال';
+        wrapEl.innerHTML = '<div class="lm-err"><i class="fa-solid fa-triangle-exclamation"></i><span>تعذّر الاتصال بالخادم.</span></div>';
+      });
+  }
+
+  function startTimer(){ stopTimer(); timer = setInterval(fetchData, 5000); }
+  function stopTimer(){ if(timer){ clearInterval(timer); timer = null; } }
+
+  autoEl.addEventListener('change', function(){
+    if(autoEl.checked){ startTimer(); statusEl.textContent='متابعة...'; }
+    else{ stopTimer(); statusEl.textContent='متوقّف'; }
+  });
+  refreshBtn.addEventListener('click', fetchData);
+
+  fetchData();
+  startTimer();
+})();
+</script>
+{% endblock %}

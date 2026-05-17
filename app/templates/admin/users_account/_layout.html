@@ -1,0 +1,17 @@
+{% extends "admin/_admin_layout.html" %}
+
+
+
+
+
+
+{% block crumbs %}
+  <span>إدارة حسابات الإنترنت</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>{{ self.page_title() }}</span>
+{% endblock %}
+
+{% block content %}
+{% include "admin/users_account/_user_nav.html" %}
+{% block users_content %}{% endblock %}
+{% endblock %}

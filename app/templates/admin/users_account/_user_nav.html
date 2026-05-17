@@ -1,0 +1,25 @@
+{% set p = request.path %}
+<style>
+.users-subnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.users-subnav a{
+  display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;
+  border:1px solid var(--d-border-strong);background:#fff;color:var(--d-text-soft);
+  font-size:12.5px;font-weight:800;text-decoration:none;transition:var(--d-transition)
+}
+.users-subnav a:hover{border-color:var(--d-gold);color:var(--d-black)}
+.users-subnav a.is-active{background:var(--d-black);border-color:var(--d-black);color:#fff}
+</style>
+<nav class="users-subnav" aria-label="تنقل إدارة حسابات الإنترنت">
+  <a class="{% if p in ['/admin/users-account', '/admin/users-account/', '/admin/users-account/overview'] %}is-active{% endif %}" href="/admin/users-account">
+    <i class="fa-solid fa-chart-pie"></i>نظرة عامة
+  </a>
+  <a class="{% if p == '/admin/users-account/list' or p.startswith('/admin/users/') %}is-active{% endif %}" href="{{ url_for('admin_users_account_list') }}">
+    <i class="fa-solid fa-users-viewfinder"></i>قائمة حسابات الإنترنت
+  </a>
+  <a class="{% if p.startswith('/admin/users-account/requests') %}is-active{% endif %}" href="{{ url_for('admin_users_account_requests') }}">
+    <i class="fa-solid fa-list-check"></i>طلبات حسابات الإنترنت
+  </a>
+  <a class="{% if p == '/admin/radius/online' %}is-active{% endif %}" href="{{ url_for('admin_radius_online') }}">
+    <i class="fa-solid fa-wifi"></i>المتصلون الآن
+  </a>
+</nav>

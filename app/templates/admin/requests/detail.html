@@ -1,0 +1,172 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}طلب رقم #{{ item.id }}{% endblock %}
+{% block page_title %}تفاصيل الطلب{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>مركز الطلبات</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>#{{ item.id }}</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.rd-hero{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start;padding:22px 24px;border-radius:16px;background:linear-gradient(135deg,#1E1E1E,#2a2724);color:#fff;margin-bottom:16px}
+.rd-hero h2{margin:0 0 6px;color:#fff;font-size:22px;font-weight:900}
+.rd-hero p{margin:0;color:rgba(255,255,255,.72);font-size:13px}
+.rd-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 13px;font-size:12px;font-weight:900;background:rgba(244,186,42,.16);border:1px solid rgba(244,186,42,.32);color:#FFD96A}
+.rd-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rd-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.rd-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:18px}
+.rd-card h3{margin:0 0 12px;font-size:14px;font-weight:900;color:var(--d-black);display:flex;align-items:center;gap:8px}
+.rd-card h3 i{color:var(--d-gold)}
+.rd-kv{display:grid;grid-template-columns:130px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid #FAFAF8;font-size:13px}
+.rd-kv:last-child{border-bottom:0}
+.rd-kv span:first-child{font-size:11.5px;font-weight:800;color:var(--d-text-muted)}
+.rd-kv span:last-child{font-weight:800;color:var(--d-text)}
+.rd-json{background:#1E1E1E;color:#FFD96A;border-radius:12px;padding:12px;font:12px/1.7 monospace;white-space:pre-wrap;overflow:auto;max-height:260px}
+.rd-timeline{display:grid;gap:10px}
+.rd-event{border:1px solid var(--d-border);border-radius:12px;padding:12px;background:#FAFAF8}
+.rd-event strong{display:block;font-size:13px;color:var(--d-black)}
+.rd-event small{display:block;margin-top:3px;color:var(--d-text-muted);font-size:11.5px}
+.rd-inline-form{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.rd-inline-form .d-field{max-width:150px;padding:8px 10px}
+.rd-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.rd-field{display:flex;flex-direction:column;gap:5px}
+.rd-field.full{grid-column:1/-1}
+.rd-field label{font-size:12px;font-weight:800;color:var(--d-text)}
+.rd-field input,.rd-field textarea,.rd-field select{border:1.5px solid var(--d-border-strong);border-radius:10px;background:#FAFAF8;padding:9px 11px;font:inherit;font-size:13px}
+.rd-field textarea{min-height:72px;resize:vertical}
+@media(max-width:900px){.rd-grid{grid-template-columns:1fr}.rd-kv{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "admin/requests/_request_nav.html" %}
+
+<section class="rd-hero">
+  <div>
+    <span class="rd-badge">
+      {% if item.source == 'internet' %}<i class="fa-solid fa-bolt"></i>
+      {% elif item.source == 'card' %}<i class="fa-solid fa-ticket"></i>
+      {% else %}<i class="fa-solid fa-circle-user"></i>{% endif %}
+      {{ item.source_label }}
+    </span>
+    <h2>{{ item.action_label }} #{{ item.id }}</h2>
+    <p>{{ item.full_name or 'مشترك غير محدد' }}{% if item.phone %} · {{ item.phone }}{% endif %}</p>
+  </div>
+  <div class="rd-actions">
+    <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_request_center', type=item.source) }}"><i class="fa-solid fa-arrow-right"></i>رجوع إلى مركز الطلبات</a>
+    {% if item.profile_href %}<a class="d-pill-btn d-pill-btn--ghost" href="{{ item.profile_href }}"><i class="fa-solid fa-id-card-clip"></i>ملف المشترك</a>{% endif %}
+    {% if item.specialized_href %}<a class="d-pill-btn d-pill-btn--ghost" href="{{ item.specialized_href }}"><i class="fa-solid fa-screwdriver-wrench"></i>التنفيذ الفني</a>{% endif %}
+  </div>
+</section>
+
+<div class="rd-grid">
+  <section class="rd-card">
+    <h3><i class="fa-solid fa-circle-info"></i>ملخص الطلب</h3>
+    <div class="rd-kv"><span>الحالة</span><span>{{ item.status_label }}</span></div>
+    <div class="rd-kv"><span>تاريخ الطلب</span><span>{{ format_dt_short(item.created_at) or '—' }}</span></div>
+    <div class="rd-kv"><span>أنشأه</span><span>{{ item.requested_by or '—' }}</span></div>
+    <div class="rd-kv"><span>نفذه</span><span>{{ item.executed_by or item.reviewed_by or '—' }}</span></div>
+    <div class="rd-kv"><span>وقت التنفيذ</span><span>{{ format_dt_short(item.executed_at) or format_dt_short(item.reviewed_at) or '—' }}</span></div>
+    <div class="rd-kv"><span>ملاحظات</span><span>{{ item.notes or '—' }}</span></div>
+    {% if item.error_message %}<div class="rd-kv"><span>خطأ</span><span style="color:#b91c1c">{{ item.error_message }}</span></div>{% endif %}
+  </section>
+
+  <section class="rd-card">
+    <h3><i class="fa-solid fa-bolt"></i>إجراء سريع</h3>
+    {% if item.source == 'internet' %}
+      {% if item.status == 'pending' and has_permission('approve_internet_requests') %}
+      <form method="POST" action="{{ url_for('admin_internet_request_approve', request_id=item.id) }}">
+        {{ csrf_token_input() | safe }}
+        {% set admin_payload = item.admin_payload or {} %}
+        {% set requested_payload = item.payload or {} %}
+        <div class="rd-form-grid">
+          <div class="rd-field"><label>اسم المستخدم الخارجي</label><input name="external_username" value="{{ admin_payload.external_username or requested_payload.external_username or requested_payload.desired_username or '' }}"></div>
+          <div class="rd-field"><label>رقم باقة السرعة</label><input name="profile_id" value="{{ admin_payload.profile_id or requested_payload.profile_id or '' }}"></div>
+          <div class="rd-field"><label>اسم باقة السرعة</label><input name="profile_name" value="{{ admin_payload.profile_name or requested_payload.profile_name or '' }}"></div>
+          <div class="rd-field"><label>باقة السرعة الأصلية</label><input name="original_profile_id" value="{{ admin_payload.original_profile_id or requested_payload.original_profile_id or '' }}"></div>
+          <div class="rd-field"><label>مدة رفع السرعة (دقائق)</label><input name="duration_minutes" type="number" min="1" value="{{ admin_payload.duration_minutes or requested_payload.duration_minutes or 60 }}"></div>
+          <div class="rd-field"><label>عدد البطاقات</label><input name="card_count" type="number" min="1" value="{{ admin_payload.card_count or requested_payload.card_count or 1 }}"></div>
+          <div class="rd-field"><label>إضافة وقت</label><input name="time_amount" type="number" min="1" value="{{ admin_payload.time_amount or requested_payload.time_amount or '' }}"></div>
+          <div class="rd-field"><label>وحدة الوقت</label><select name="time_unit"><option value="minutes">دقائق</option><option value="hours">ساعات</option><option value="days">أيام</option></select></div>
+          <div class="rd-field"><label>إضافة حصة بيانات (MB)</label><input name="quota_amount_mb" type="number" min="0" value="{{ admin_payload.quota_amount_mb or requested_payload.quota_amount_mb or '' }}"></div>
+          <div class="rd-field"><label>حصة الرفع (MB)</label><input name="upload_quota_mb" type="number" min="0" value="{{ admin_payload.upload_quota_mb or requested_payload.upload_quota_mb or '' }}"></div>
+          <div class="rd-field"><label>حصة التنزيل (MB)</label><input name="download_quota_mb" type="number" min="0" value="{{ admin_payload.download_quota_mb or requested_payload.download_quota_mb or '' }}"></div>
+          <div class="rd-field"><label>عنوان الجهاز</label><input name="mac_address" value="{{ admin_payload.mac_address or requested_payload.mac_address or '' }}"></div>
+          <div class="rd-field"><label>كلمة مرور جديدة</label><input name="new_password" type="text"></div>
+          <div class="rd-field full"><label>ملاحظات الإدارة</label><textarea name="notes">{{ admin_payload.notes or requested_payload.notes or '' }}</textarea></div>
+        </div>
+        <div class="rd-actions" style="margin-top:12px">
+          <button class="d-pill-btn" type="submit" onclick="return confirm('اعتماد هذا الطلب وتجهيزه للتنفيذ؟')"><i class="fa-solid fa-check"></i>اعتماد الطلب</button>
+        </div>
+      </form>
+      <form method="POST" action="{{ url_for('admin_internet_request_reject', request_id=item.id) }}" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--d-border)">
+        {{ csrf_token_input() | safe }}
+        <div class="rd-field full"><label>سبب الرفض</label><textarea name="reason" placeholder="اكتب سببًا واضحًا للرفض"></textarea></div>
+        <div class="rd-actions" style="margin-top:12px">
+          <button class="d-pill-btn d-pill-btn--ghost" type="submit" onclick="return confirm('رفض هذا الطلب؟')"><i class="fa-solid fa-ban"></i>رفض الطلب</button>
+        </div>
+      </form>
+      {% elif item.status in ['approved','failed'] and has_permission('execute_radius_actions') %}
+      <p style="margin:0 0 12px;color:var(--d-text-muted);font-size:13px">سيتم تنفيذ الطلب عبر واجهة الربط وحفظ النتيجة في النظام.</p>
+      <form method="POST" action="{{ url_for('admin_internet_request_execute', request_id=item.id) }}">
+        {{ csrf_token_input() | safe }}
+        <button class="d-pill-btn" type="submit" onclick="return confirm('تنفيذ هذا الطلب عبر واجهة الربط؟')"><i class="fa-solid fa-play"></i>تنفيذ الآن</button>
+      </form>
+      {% else %}
+      <p style="margin:0 0 12px;color:var(--d-text-muted);font-size:13px">لا توجد إجراءات مباشرة لهذه الحالة. صفحة التنفيذ بقيت كمرجع فني عند الحاجة.</p>
+      <a class="d-pill-btn d-pill-btn--ghost" href="{{ item.specialized_href }}"><i class="fa-solid fa-screwdriver-wrench"></i>فتح صفحة التنفيذ الفني</a>
+      {% endif %}
+    {% elif item.source == 'user' and item.status == 'pending' %}
+      <div class="rd-inline-form">
+        <form method="POST" action="{{ url_for('admin_user_request_done', action_id=item.id) }}">
+          {{ csrf_token_input() | safe }}
+          <button class="d-pill-btn" type="submit" onclick="return confirm('تأكيد وضع هذا الطلب كمنفّذ؟')"><i class="fa-solid fa-check"></i>منفّذ</button>
+        </form>
+        <form method="POST" action="{{ url_for('admin_user_request_cancel', action_id=item.id) }}">
+          {{ csrf_token_input() | safe }}
+          <button class="d-pill-btn d-pill-btn--ghost" type="submit" onclick="return confirm('إلغاء هذا الطلب؟')"><i class="fa-solid fa-xmark"></i>إلغاء</button>
+        </form>
+      </div>
+    {% elif item.source == 'card' and item.status == 'pending' %}
+      <form class="rd-inline-form" method="POST" action="{{ url_for('admin_cards_pending_fulfill', action_id=item.id) }}">
+        {{ csrf_token_input() | safe }}
+        <input class="d-field" name="card_username" placeholder="اسم البطاقة" required autocomplete="off">
+        <input class="d-field" name="card_password" placeholder="كلمة المرور" required autocomplete="off">
+        <button class="d-pill-btn" type="submit" onclick="return confirm('تأكيد تسليم البطاقة لهذا الطلب؟')"><i class="fa-solid fa-hand-holding"></i>تسليم</button>
+        <button class="d-pill-btn d-pill-btn--ghost" type="submit" formaction="{{ url_for('admin_cards_pending_cancel', action_id=item.id) }}" onclick="return confirm('إلغاء طلب البطاقة؟')"><i class="fa-solid fa-xmark"></i>إلغاء</button>
+      </form>
+    {% else %}
+      <p style="margin:0;color:var(--d-text-muted);font-size:13px">لا توجد إجراءات مباشرة لهذه الحالة. الطلب محفوظ للرجوع والمراجعة.</p>
+    {% endif %}
+  </section>
+</div>
+
+<div class="rd-grid">
+  <section class="rd-card">
+    <h3><i class="fa-solid fa-file-lines"></i>بيانات الطلب</h3>
+    <div class="rd-json">{{ item.payload | tojson(indent=2) }}</div>
+  </section>
+  <section class="rd-card">
+    <h3><i class="fa-solid fa-plug"></i>بيانات الإدارة والربط</h3>
+    <div class="rd-json">{{ {'admin_payload': item.admin_payload or {}, 'api_response': item.api_response or {}} | tojson(indent=2) }}</div>
+  </section>
+</div>
+
+<section class="rd-card">
+  <h3><i class="fa-solid fa-clock-rotate-left"></i>سجل أحداث الطلب</h3>
+  <div class="rd-timeline">
+    {% for event in item.events %}
+    <div class="rd-event">
+      <strong>{{ event.title }}</strong>
+      {% if event.body %}<small>{{ event.body }}</small>{% endif %}
+      <small>{{ event.actor_name or 'النظام' }} · {{ format_dt_short(event.created_at) or '—' }}</small>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

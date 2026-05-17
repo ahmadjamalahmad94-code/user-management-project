@@ -1,0 +1,407 @@
+{% extends "admin/cards/_cards_layout.html" %}
+{% block title %}مجموعات السياسات{% endblock %}
+{% block page_title %}مجموعات السياسات{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+/* Group cards grid */
+.qg-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.qg-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 3px rgba(30,30,30,.04);transition:.2s ease}
+.qg-card:hover{box-shadow:0 8px 22px rgba(30,30,30,.08);border-color:var(--d-gold)}
+.qg-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.qg-name{font-size:15px;font-weight:900;color:var(--d-black);line-height:1.3;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.qg-count{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:var(--d-gold-faint,#FDF1CF);color:var(--d-gold-deep,#D8A11C);font-size:11.5px;font-weight:800;flex-shrink:0}
+.qg-desc{font-size:12px;color:var(--d-text-soft);line-height:1.7;min-height:30px}
+.qg-actions{display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px dashed var(--d-border)}
+.qg-btn{flex:1;padding:7px 10px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid var(--d-border);background:#fff;color:var(--d-text-soft);transition:.18s ease;display:inline-flex;align-items:center;justify-content:center;gap:4px;text-decoration:none;min-width:0}
+.qg-btn:hover{border-color:var(--d-gold);color:var(--d-black)}
+.qg-btn.gold{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;border-color:transparent}
+.qg-btn.gold:hover{transform:translateY(-1px)}
+.qg-btn.danger{color:#b91c1c}
+.qg-btn.danger:hover{border-color:#b91c1c;background:rgba(185,28,28,.06)}
+.qg-empty{text-align:center;padding:40px 20px;color:var(--d-text-muted);background:#FAFAF8;border:1px dashed var(--d-border-strong);border-radius:14px}
+.qg-empty i{font-size:36px;display:block;margin-bottom:8px;color:var(--d-border-strong)}
+
+/* Modal */
+.qg-backdrop{position:fixed;inset:0;background:rgba(30,30,30,.65);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;backdrop-filter:blur(3px)}
+.qg-backdrop.is-open{display:flex;animation:qgFade .2s ease}
+@keyframes qgFade{from{opacity:0}to{opacity:1}}
+.qg-modal{background:#fff;border-radius:18px;max-width:640px;width:100%;padding:22px 26px;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:qgSlide .25s ease;max-height:92vh;overflow-y:auto}
+@keyframes qgSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.qg-head-modal{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--d-border)}
+.qg-head-modal h3{margin:0;font-size:17px;font-weight:800;color:var(--d-black);display:flex;align-items:center;gap:8px}
+.qg-head-modal h3 i{color:var(--d-gold)}
+.qg-close{background:none;border:0;color:var(--d-text-muted);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px}
+.qg-msg{padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:700;margin-bottom:12px;display:none}
+.qg-msg.is-show{display:block}
+.qg-msg.error{background:#fde2e2;color:#b91c1c}
+.qg-msg.success{background:#e8f6ee;color:#1f8f51}
+.qg-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.qg-field label{font-size:12px;font-weight:700;color:var(--d-text)}
+.qg-field input,.qg-field textarea{padding:10px 13px;border-radius:10px;border:1.5px solid var(--d-border-strong);font-family:inherit;font-size:13.5px;background:#FAFAF8;box-sizing:border-box;transition:.18s ease}
+.qg-field input:focus,.qg-field textarea:focus{outline:0;border-color:var(--d-gold);background:#fff}
+.qg-field textarea{min-height:60px;resize:vertical}
+.qg-modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px dashed var(--d-border)}
+.qg-modal-btn{padding:10px 22px;border-radius:11px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;border:0;display:inline-flex;align-items:center;gap:6px}
+.qg-modal-btn.save{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E}
+.qg-modal-btn.save:disabled{opacity:.5;cursor:not-allowed}
+.qg-modal-btn.cancel{background:#F4F3EF;color:var(--d-text-soft)}
+
+/* Search picker (لإضافة الأعضاء) */
+.member-search{position:relative;margin-bottom:14px}
+.member-search input{width:100%;padding:11px 14px 11px 38px;border-radius:11px;border:1.5px solid var(--d-border-strong);font-family:inherit;font-size:13.5px;background:#FAFAF8;box-sizing:border-box}
+.member-search input:focus{outline:0;border-color:var(--d-gold);background:#fff}
+.member-search i{position:absolute;top:50%;inset-inline-start:14px;transform:translateY(-50%);color:var(--d-text-muted);font-size:13px}
+.search-results{margin-top:8px;max-height:240px;overflow-y:auto;border:1px solid var(--d-border);border-radius:10px;background:#fff;display:none}
+.search-results.is-show{display:block}
+.search-result-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--d-border);display:flex;justify-content:space-between;align-items:center;gap:10px;transition:.15s ease}
+.search-result-item:last-child{border-bottom:0}
+.search-result-item:hover{background:var(--d-gold-faint,#FDF1CF)}
+.sr-info{flex:1;min-width:0}
+.sr-name{font-size:13px;font-weight:700;color:var(--d-black);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-meta{font-size:11px;color:var(--d-text-muted);font-family:monospace;margin-top:2px}
+.sr-id{font-size:10.5px;font-weight:700;background:var(--d-gold-faint,#FDF1CF);color:var(--d-gold-deep,#D8A11C);padding:2px 8px;border-radius:999px;font-family:monospace;flex-shrink:0}
+
+/* Members list */
+.members-section{margin-top:6px}
+.members-section-title{font-size:11.5px;font-weight:800;color:var(--d-text-muted);text-transform:uppercase;letter-spacing:.4px;margin:0 0 10px;padding-bottom:6px;border-bottom:1px dashed var(--d-border)}
+.member-pill{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;background:#FAFAF8;border:1px solid var(--d-border);border-radius:10px;margin-bottom:6px}
+.member-pill .info{flex:1;min-width:0}
+.member-pill .name{font-size:13px;font-weight:700;color:var(--d-black);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.member-pill .meta{font-size:11px;color:var(--d-text-muted);font-family:monospace;margin-top:2px}
+.member-pill .remove{background:none;border:0;color:#b91c1c;cursor:pointer;padding:6px 10px;border-radius:8px;flex-shrink:0}
+.member-pill .remove:hover{background:rgba(185,28,28,.08)}
+</style>
+{% endblock %}
+
+{% block cards_content %}
+
+<div class="d-notice d-notice--info">
+  <i class="fa-solid fa-people-group"></i>
+  <div>
+    <strong>مجموعات السياسات</strong> — جمّع المستفيدين في مجموعات (مثلاً: "طلاب التوجيهي 2026" أو "المتطوعون")
+    ثم طبّق سياسة حصص واحدة على المجموعة كاملة من صفحة السياسات.
+  </div>
+</div>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-people-group"></i>كل المجموعات</h3>
+    <button type="button" class="d-pill-btn d-pill-btn--gold" id="open-add-group"><i class="fa-solid fa-plus"></i>إنشاء مجموعة</button>
+  </div>
+  <div class="d-card-body">
+    {% if groups %}
+    <div class="qg-grid" id="qg-grid">
+      {% for g in groups %}
+      <div class="qg-card" data-gid="{{ g.id }}">
+        <div class="qg-head">
+          <div class="qg-name">{{ g.name }}</div>
+          <span class="qg-count"><i class="fa-solid fa-users"></i>{{ g.members_count|default(0) }}</span>
+        </div>
+        <div class="qg-desc">{{ g.description or 'بدون وصف' }}</div>
+        <div class="qg-actions">
+          <button type="button" class="qg-btn gold manage-members-btn" data-gid="{{ g.id }}" data-name="{{ g.name }}"><i class="fa-solid fa-users-gear"></i>الأعضاء</button>
+          <button type="button" class="qg-btn edit-group-btn" data-gid="{{ g.id }}" data-name="{{ g.name }}" data-desc="{{ g.description or '' }}"><i class="fa-solid fa-pen"></i>تعديل</button>
+          <button type="button" class="qg-btn danger delete-group-btn" data-gid="{{ g.id }}" data-name="{{ g.name }}"><i class="fa-solid fa-trash"></i>حذف</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="qg-empty">
+      <i class="fa-regular fa-folder-open"></i>
+      <div>لا توجد مجموعات بعد.</div>
+      <div style="margin-top:6px;font-size:12px">اضغط "إنشاء مجموعة" لإضافة أول واحدة.</div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Modal: Add/Edit Group -->
+<div class="qg-backdrop" id="group-modal">
+  <div class="qg-modal" style="max-width:520px">
+    <div class="qg-head-modal">
+      <h3><i class="fa-solid fa-people-group"></i> <span id="group-modal-title">إنشاء مجموعة جديدة</span></h3>
+      <button type="button" class="qg-close" id="group-modal-close">✕</button>
+    </div>
+    <div class="qg-msg" id="group-msg"></div>
+    <form id="group-form">
+      {{ csrf_token_input() | safe if csrf_token_input is defined else '' }}
+      <input type="hidden" id="group-id" value="">
+      <div class="qg-field">
+        <label>اسم المجموعة</label>
+        <input name="name" id="group-name" required maxlength="100" placeholder="مثلاً: طلاب التوجيهي 2026">
+      </div>
+      <div class="qg-field">
+        <label>الوصف <small style="color:var(--d-text-muted);font-weight:600">(اختياري)</small></label>
+        <textarea name="description" id="group-desc" placeholder="ما تعريف هذه المجموعة؟"></textarea>
+      </div>
+      <div class="qg-modal-actions">
+        <button type="button" class="qg-modal-btn cancel" id="group-cancel">إلغاء</button>
+        <button type="submit" class="qg-modal-btn save"><i class="fa-solid fa-floppy-disk"></i><span id="group-save-label">إنشاء</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Manage Members -->
+<div class="qg-backdrop" id="members-modal">
+  <div class="qg-modal">
+    <div class="qg-head-modal">
+      <h3><i class="fa-solid fa-users-gear"></i> أعضاء: <span id="members-group-name">—</span></h3>
+      <button type="button" class="qg-close" id="members-modal-close">✕</button>
+    </div>
+    <div class="qg-msg" id="members-msg"></div>
+
+    <div class="members-section">
+      <div class="members-section-title"><i class="fa-solid fa-user-plus" style="color:var(--d-gold)"></i> إضافة عضو جديد</div>
+      <div class="member-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" id="member-search-input" placeholder="ابحث بالاسم أو رقم الجوال... (حرفان فأكثر)">
+      </div>
+      <div class="search-results" id="search-results"></div>
+    </div>
+
+    <div class="members-section" style="margin-top:14px">
+      <div class="members-section-title"><i class="fa-solid fa-users" style="color:var(--d-gold)"></i> الأعضاء الحاليون (<span id="members-count">0</span>)</div>
+      <div id="members-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function showToast(text, type){
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:12px;font-weight:800;font-size:13.5px;z-index:10001;box-shadow:0 8px 24px rgba(0,0,0,.18);'+(type==='success'?'background:#1f8f51;color:#fff':'background:#b91c1c;color:#fff');
+    t.textContent = text; document.body.appendChild(t);
+    setTimeout(function(){ try{document.body.removeChild(t);}catch(e){} }, 2400);
+  }
+  function safeJson(url, opts){
+    opts = opts || {};
+    opts.credentials = 'same-origin';
+    opts.headers = Object.assign({'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}, opts.headers || {});
+    return fetch(url, opts).then(function(r){
+      if(r.redirected) throw new Error('تم التحويل — صلاحيات أو تسجيل دخول');
+      return r.text().then(function(t){
+        try{ return JSON.parse(t); } catch(e){ throw new Error('HTTP '+r.status); }
+      });
+    });
+  }
+
+  // ── Group create/edit modal
+  var groupModal = document.getElementById('group-modal');
+  var groupForm = document.getElementById('group-form');
+  var groupId = document.getElementById('group-id');
+  var groupName = document.getElementById('group-name');
+  var groupDesc = document.getElementById('group-desc');
+  var groupTitle = document.getElementById('group-modal-title');
+  var groupSaveLabel = document.getElementById('group-save-label');
+  var groupMsg = document.getElementById('group-msg');
+
+  function openAddGroup(){
+    groupId.value = '';
+    groupName.value = '';
+    groupDesc.value = '';
+    groupTitle.textContent = 'إنشاء مجموعة جديدة';
+    groupSaveLabel.textContent = 'إنشاء';
+    groupMsg.className = 'qg-msg';
+    groupModal.classList.add('is-open');
+    setTimeout(function(){ groupName.focus(); }, 100);
+  }
+  function openEditGroup(gid, name, desc){
+    groupId.value = gid;
+    groupName.value = name;
+    groupDesc.value = desc;
+    groupTitle.textContent = 'تعديل المجموعة';
+    groupSaveLabel.textContent = 'حفظ';
+    groupMsg.className = 'qg-msg';
+    groupModal.classList.add('is-open');
+  }
+  function closeGroupModal(){ groupModal.classList.remove('is-open'); }
+
+  document.getElementById('open-add-group').addEventListener('click', openAddGroup);
+  document.getElementById('group-modal-close').addEventListener('click', closeGroupModal);
+  document.getElementById('group-cancel').addEventListener('click', closeGroupModal);
+  groupModal.addEventListener('click', function(e){ if(e.target === groupModal) closeGroupModal(); });
+
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.edit-group-btn');
+    if(b){ openEditGroup(b.dataset.gid, b.dataset.name, b.dataset.desc); }
+  });
+
+  groupForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var gid = groupId.value;
+    var url = gid ? '/admin/quota-groups/'+gid+'/edit' : '/admin/quota-groups/create';
+    safeJson(url, {method:'POST', body:new FormData(groupForm)})
+      .then(function(d){
+        if(d.ok){
+          showToast(d.message, 'success');
+          setTimeout(function(){ window.location.reload(); }, 500);
+        } else {
+          groupMsg.className = 'qg-msg is-show error'; groupMsg.textContent = d.message || 'فشل';
+        }
+      })
+      .catch(function(err){ groupMsg.className = 'qg-msg is-show error'; groupMsg.textContent = err.message; });
+  });
+
+  // ── Delete group
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.delete-group-btn');
+    if(!b) return;
+    if(!confirm('حذف "'+b.dataset.name+'" نهائياً؟ سيتم إلغاء عضوية كل أعضائها.')) return;
+    safeJson('/admin/quota-groups/'+b.dataset.gid+'/delete', {method:'POST'})
+      .then(function(d){
+        showToast(d.message, d.ok ? 'success' : 'error');
+        if(d.ok){
+          var card = document.querySelector('.qg-card[data-gid="'+b.dataset.gid+'"]');
+          if(card) card.remove();
+        }
+      })
+      .catch(function(err){ showToast(err.message, 'error'); });
+  });
+
+  // ── Members modal
+  var membersModal = document.getElementById('members-modal');
+  var membersGroupName = document.getElementById('members-group-name');
+  var membersList = document.getElementById('members-list');
+  var membersCount = document.getElementById('members-count');
+  var searchInput = document.getElementById('member-search-input');
+  var searchResults = document.getElementById('search-results');
+  var currentGroupId = null;
+  var membersMsg = document.getElementById('members-msg');
+
+  function renderMembers(items){
+    membersCount.textContent = items.length;
+    if(!items.length){
+      membersList.innerHTML = '<div style="text-align:center;color:var(--d-text-muted);padding:18px;font-size:12.5px"><i class="fa-regular fa-folder-open" style="display:block;font-size:24px;margin-bottom:6px"></i>لا أعضاء بعد. ابحث وأضف من فوق.</div>';
+      return;
+    }
+    membersList.innerHTML = items.map(function(m){
+      return '<div class="member-pill">' +
+        '<div class="info">' +
+          '<div class="name">'+m.full_name+'</div>' +
+          '<div class="meta">'+m.phone+' • #'+m.beneficiary_id+'</div>' +
+        '</div>' +
+        '<button type="button" class="remove member-remove-btn" data-bid="'+m.beneficiary_id+'" title="إزالة"><i class="fa-solid fa-trash"></i></button>' +
+      '</div>';
+    }).join('');
+  }
+  function loadMembers(gid){
+    safeJson('/admin/quota-groups/'+gid+'/members')
+      .then(function(d){
+        if(d.ok){
+          membersGroupName.textContent = d.group.name;
+          renderMembers(d.members);
+        } else { showToast(d.message, 'error'); }
+      })
+      .catch(function(err){ showToast(err.message, 'error'); });
+  }
+  function openMembersModal(gid, name){
+    currentGroupId = gid;
+    membersGroupName.textContent = name;
+    membersList.innerHTML = '<div style="text-align:center;color:var(--d-text-muted);padding:18px">جارٍ التحميل...</div>';
+    searchInput.value = '';
+    searchResults.innerHTML = '';
+    searchResults.classList.remove('is-show');
+    membersMsg.className = 'qg-msg';
+    membersModal.classList.add('is-open');
+    loadMembers(gid);
+  }
+  function closeMembersModal(){ membersModal.classList.remove('is-open'); currentGroupId = null; }
+
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.manage-members-btn');
+    if(b){ openMembersModal(b.dataset.gid, b.dataset.name); }
+  });
+  document.getElementById('members-modal-close').addEventListener('click', closeMembersModal);
+  membersModal.addEventListener('click', function(e){ if(e.target === membersModal) closeMembersModal(); });
+
+  // ── Beneficiary search (debounced)
+  var searchTimer = null;
+  searchInput.addEventListener('input', function(){
+    var q = searchInput.value.trim();
+    if(searchTimer) clearTimeout(searchTimer);
+    if(q.length < 2){ searchResults.classList.remove('is-show'); searchResults.innerHTML = ''; return; }
+    searchTimer = setTimeout(function(){
+      safeJson('/admin/beneficiaries/search?q=' + encodeURIComponent(q))
+        .then(function(d){
+          if(!d.ok || !d.results.length){
+            searchResults.innerHTML = '<div style="padding:14px;text-align:center;color:var(--d-text-muted);font-size:12.5px">لا نتائج</div>';
+            searchResults.classList.add('is-show');
+            return;
+          }
+          var types = {tawjihi:'توجيهي', university:'جامعي', freelancer:'عمل حر'};
+          searchResults.innerHTML = d.results.map(function(r){
+            var t = types[r.user_type] || '';
+            return '<div class="search-result-item" data-bid="'+r.id+'" data-name="'+r.full_name+'">' +
+              '<div class="sr-info">' +
+                '<div class="sr-name">'+r.full_name+(t?' <span style="color:var(--d-text-muted);font-weight:600;font-size:11px">— '+t+'</span>':'')+'</div>' +
+                '<div class="sr-meta">'+r.phone+'</div>' +
+              '</div>' +
+              '<span class="sr-id">#'+r.id+'</span>' +
+            '</div>';
+          }).join('');
+          searchResults.classList.add('is-show');
+        })
+        .catch(function(err){ searchResults.innerHTML = '<div style="padding:12px;color:#b91c1c;font-size:12px">'+err.message+'</div>'; searchResults.classList.add('is-show'); });
+    }, 300);
+  });
+
+  // ── Add member on click
+  document.addEventListener('click', function(e){
+    var item = e.target.closest && e.target.closest('.search-result-item');
+    if(!item || !currentGroupId) return;
+    var bid = item.dataset.bid;
+    var fd = new FormData(); fd.append('beneficiary_id', bid);
+    safeJson('/admin/quota-groups/'+currentGroupId+'/members/add', {method:'POST', body:fd})
+      .then(function(d){
+        if(d.ok){
+          showToast(d.message, 'success');
+          searchInput.value = '';
+          searchResults.classList.remove('is-show');
+          loadMembers(currentGroupId);
+          // also update count badge on the card outside
+          var card = document.querySelector('.qg-card[data-gid="'+currentGroupId+'"] .qg-count');
+          if(card){
+            var n = parseInt(card.textContent.match(/\d+/)) + 1;
+            card.innerHTML = '<i class="fa-solid fa-users"></i>'+n;
+          }
+        } else { showToast(d.message, 'error'); }
+      })
+      .catch(function(err){ showToast(err.message, 'error'); });
+  });
+
+  // ── Remove member
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.member-remove-btn');
+    if(!b || !currentGroupId) return;
+    if(!confirm('إزالة هذا العضو من المجموعة؟')) return;
+    safeJson('/admin/quota-groups/'+currentGroupId+'/members/'+b.dataset.bid+'/remove', {method:'POST'})
+      .then(function(d){
+        if(d.ok){
+          showToast(d.message, 'success');
+          loadMembers(currentGroupId);
+          var card = document.querySelector('.qg-card[data-gid="'+currentGroupId+'"] .qg-count');
+          if(card){
+            var n = Math.max(0, parseInt(card.textContent.match(/\d+/)) - 1);
+            card.innerHTML = '<i class="fa-solid fa-users"></i>'+n;
+          }
+        } else { showToast(d.message, 'error'); }
+      })
+      .catch(function(err){ showToast(err.message, 'error'); });
+  });
+
+  // Esc closes
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape') return;
+    if(groupModal.classList.contains('is-open')) closeGroupModal();
+    if(membersModal.classList.contains('is-open')) closeMembersModal();
+  });
+})();
+</script>
+
+{% endblock %}

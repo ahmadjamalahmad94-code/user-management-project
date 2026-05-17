@@ -1,0 +1,134 @@
+{% extends "dashboard/_layout.html" %}
+{% block title %}إشعاراتي{% endblock %}
+{% block sidebar_subtitle %}{% if portal_kind == 'cards' %}بوابة البطاقات{% else %}بوابة حساب الإنترنت{% endif %}{% endblock %}
+{% block user_initial %}{{ beneficiary_full_name[0] if beneficiary_full_name else 'م' }}{% endblock %}
+{% block user_name %}{{ beneficiary_full_name | default('مشترك') }}{% endblock %}
+{% block user_role %}{% if portal_kind == 'cards' %}مشترك بطاقات{% else %}مشترك حساب إنترنت{% endif %}{% endblock %}
+{% block page_title %}إشعاراتي{% endblock %}
+{% block crumbs %}
+  <span>بوابة المشترك</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>الإشعارات</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+{% if portal_kind == 'cards' %}
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-ticket"></i><span>البطاقات</span></div>
+  <a class="d-nav-item" href="/card" data-label="بطاقاتي"><i class="fa-solid fa-ticket"></i><span>بطاقاتي</span></a>
+  <a class="d-nav-item" href="/card/pending" data-label="طلباتي"><i class="fa-solid fa-hourglass-half"></i><span>طلباتي</span>{% if my_pending_count and my_pending_count > 0 %}<span class="d-nav-badge">{{ my_pending_count }}</span>{% endif %}</a>
+  <a class="d-nav-item" href="/card/history" data-label="السجل"><i class="fa-solid fa-clock-rotate-left"></i><span>السجل</span></a>
+  <a class="d-nav-item is-active" href="/card/notifications" data-label="إشعاراتي"><i class="fa-solid fa-bell"></i><span>إشعاراتي</span>{% if notification_count and notification_count > 0 %}<span class="d-nav-badge">{{ notification_count }}</span>{% endif %}</a>
+</div>
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-user"></i><span>حسابي</span></div>
+  <a class="d-nav-item" href="{{ url_for('user_profile_page') }}" data-label="ملفي"><i class="fa-solid fa-id-card"></i><span>ملفي الشخصي</span></a>
+  <a class="d-nav-item" href="/card/logout" data-label="خروج"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>تسجيل خروج</span></a>
+</div>
+{% else %}
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-house"></i><span>الرئيسية</span></div>
+  <a class="d-nav-item" href="/user/account" data-label="حسابي"><i class="fa-solid fa-id-badge"></i><span>حسابي</span></a>
+</div>
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-list-check"></i><span>متابعة</span></div>
+  <a class="d-nav-item" href="/user/account/requests" data-label="طلباتي"><i class="fa-solid fa-clock-rotate-left"></i><span>طلباتي</span>{% if pending_count and pending_count > 0 %}<span class="d-nav-badge">{{ pending_count }}</span>{% endif %}</a>
+  <a class="d-nav-item is-active" href="/user/notifications" data-label="إشعاراتي"><i class="fa-solid fa-bell"></i><span>إشعاراتي</span>{% if notification_count and notification_count > 0 %}<span class="d-nav-badge">{{ notification_count }}</span>{% endif %}</a>
+</div>
+<div class="d-nav-group">
+  <div class="d-nav-group-label"><i class="fa-solid fa-user"></i><span>حسابي</span></div>
+  <a class="d-nav-item" href="{{ url_for('user_profile_page') }}" data-label="ملفي"><i class="fa-solid fa-id-card"></i><span>ملفي الشخصي</span></a>
+  <a class="d-nav-item" href="{{ url_for('user_logout') }}" data-label="خروج"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>تسجيل خروج</span></a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.sub-notice-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.sub-notice-list{display:grid;gap:10px}
+.sub-notice{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:14px 16px;border:1px solid var(--d-border);border-radius:14px;background:#fff}
+.sub-notice.is-read{background:#fbfaf7;opacity:.84}
+.sub-notice-title{font-size:14px;font-weight:900;color:var(--d-black);display:flex;align-items:center;gap:8px}
+.sub-notice-title i{color:var(--d-gold)}
+.sub-notice-text{margin-top:5px;font-size:12.5px;color:var(--d-text-soft);line-height:1.6}
+.sub-notice-meta{margin-top:5px;font-size:12px;color:var(--d-text-muted)}
+.sub-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.sub-badge{display:inline-flex;align-items:center;white-space:nowrap;border-radius:999px;padding:5px 11px;background:var(--d-gold-faint);color:#7c2d12;font-size:11.5px;font-weight:900}
+.sub-empty{padding:28px;text-align:center;color:var(--d-text-muted);background:#fff;border:1px dashed var(--d-border-strong);border-radius:14px}
+.sub-form{margin:0}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="d-hero">
+  <div>
+    <h2>مركز إشعاراتي</h2>
+    <p>تابع تحديثات طلباتك وبطاقاتك من هنا، مع إمكانية تعليم الإشعارات كمقروءة.</p>
+  </div>
+  <div class="d-hero-actions">
+    {% if portal_kind == 'cards' %}
+    <a class="d-pill-btn d-pill-btn--ghost" href="/card/pending"><i class="fa-solid fa-hourglass-half"></i>طلباتي</a>
+    {% else %}
+    <a class="d-pill-btn d-pill-btn--ghost" href="/user/account/requests"><i class="fa-solid fa-clock-rotate-left"></i>طلباتي</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="d-kpi-grid">
+  <div class="d-kpi">
+    <div class="d-kpi-head"><span class="d-kpi-label">غير مقروءة</span><span class="d-kpi-icon"><i class="fa-solid fa-bell"></i></span></div>
+    <div class="d-kpi-value">{{ pending_count }}</div>
+  </div>
+  <div class="d-kpi">
+    <div class="d-kpi-head"><span class="d-kpi-label">منجزة</span><span class="d-kpi-icon d-kpi-icon--success"><i class="fa-solid fa-check"></i></span></div>
+    <div class="d-kpi-value">{{ done_count }}</div>
+  </div>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-bell"></i>آخر التحديثات</h3>
+  </div>
+  <div class="d-card-body">
+    <div class="sub-notice-toolbar">
+      <span class="sub-badge">{{ pending_count }} غير مقروءة</span>
+      <form class="sub-form" method="POST" action="{% if portal_kind == 'cards' %}/card/notifications/read-all{% else %}/user/notifications/read-all{% endif %}">
+        <button class="d-pill-btn d-pill-btn--ghost" type="submit"><i class="fa-solid fa-check-double"></i>تعليم الكل كمقروء</button>
+      </form>
+    </div>
+    <div class="sub-notice-list">
+      {% for item in rows %}
+      <div class="sub-notice {% if item.read_at %}is-read{% endif %}">
+        <div>
+          <div class="sub-notice-title">
+            <i class="fa-solid {% if item.read_at %}fa-circle-check{% else %}fa-circle-dot{% endif %}"></i>
+            {{ item.title }}
+          </div>
+          <div class="sub-notice-meta">#{{ item.id }} · {{ item.created_at or '—' }}</div>
+          <div class="sub-notice-text">{{ item.body or 'تحديث على حسابك' }}</div>
+        </div>
+        <div class="sub-actions">
+          <span class="sub-badge">{{ status_label(item.status) }}</span>
+          {% if item.action_url %}
+          <a class="d-card-action" href="{{ item.action_url }}"><i class="fa-solid fa-arrow-up-left-from-circle"></i>فتح</a>
+          {% endif %}
+          {% if item.read_at %}
+          <form class="sub-form" method="POST" action="{% if portal_kind == 'cards' %}/card/notifications/{{ item.id }}/unread{% else %}/user/notifications/{{ item.id }}/unread{% endif %}">
+            <button class="d-card-action" type="submit"><i class="fa-regular fa-envelope"></i>غير مقروء</button>
+          </form>
+          {% else %}
+          <form class="sub-form" method="POST" action="{% if portal_kind == 'cards' %}/card/notifications/{{ item.id }}/read{% else %}/user/notifications/{{ item.id }}/read{% endif %}">
+            <button class="d-card-action" type="submit"><i class="fa-regular fa-envelope-open"></i>مقروء</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="sub-empty">لا توجد إشعارات بعد. أي تحديث على طلباتك سيظهر هنا.</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

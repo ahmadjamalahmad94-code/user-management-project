@@ -1,0 +1,284 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}مركز التصدير{% endblock %}
+{% block page_title %}مركز التصدير الشامل{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>السجلات</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>التصدير</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_hub.css') }}">
+<style>
+/* ── Hero ── */
+.exp-hero{position:relative;background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 60%,#3a3633 100%);color:#fff;border-radius:20px;padding:28px 30px;margin-bottom:18px;overflow:hidden;box-shadow:0 16px 40px rgba(30,30,30,.22)}
+.exp-hero::before{content:"";position:absolute;top:-60px;inset-inline-end:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.30),transparent 70%);pointer-events:none}
+.exp-hero h2{margin:0 0 8px;font-size:24px;font-weight:900;letter-spacing:-.3px}
+.exp-hero h2 i{color:var(--d-gold);margin-inline-end:8px}
+.exp-hero p{margin:0;font-size:13.5px;color:rgba(255,255,255,.72);line-height:1.8;max-width:680px}
+.exp-hero-stats{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap}
+.exp-hero-stat{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;font-size:12px;font-weight:700}
+.exp-hero-stat i{color:var(--d-gold)}
+
+/* Section header */
+.exp-section-head{display:flex;align-items:center;gap:10px;margin:18px 0 10px;padding-bottom:8px;border-bottom:1px dashed var(--d-border)}
+.exp-section-head h3{margin:0;font-size:15px;font-weight:900;color:var(--d-black);display:flex;align-items:center;gap:8px}
+.exp-section-head h3 i{width:28px;height:28px;border-radius:9px;background:var(--d-gold-faint,#FDF1CF);color:var(--d-gold-deep,#D8A11C);display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+.exp-section-head small{font-size:11.5px;color:var(--d-text-muted);font-weight:600;margin-inline-start:auto}
+
+/* Export cards grid */
+.exp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.exp-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 3px rgba(30,30,30,.04);transition:.2s ease;text-decoration:none;color:inherit;cursor:pointer}
+.exp-card:hover{border-color:var(--d-gold);box-shadow:0 10px 24px rgba(30,30,30,.08);transform:translateY(-2px)}
+.exp-card .ec-head{display:flex;align-items:flex-start;gap:10px;justify-content:space-between}
+.exp-card .ec-ico{width:40px;height:40px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.exp-card.color-green .ec-ico{background:#e8f6ee;color:#1f8f51}
+.exp-card.color-orange .ec-ico{background:#FDF1CF;color:#d97706}
+.exp-card.color-gold .ec-ico{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E}
+.exp-card.color-blue .ec-ico{background:#e8eef9;color:#1c52a8}
+.exp-card.color-purple .ec-ico{background:rgba(124,58,237,.15);color:#7c3aed}
+.exp-card.color-red .ec-ico{background:rgba(220,38,38,.12);color:#dc2626}
+.exp-card.color-cyan .ec-ico{background:rgba(8,145,178,.12);color:#0891b2}
+.exp-card.color-dark .ec-ico{background:rgba(30,30,30,.08);color:#1E1E1E}
+.exp-card .ec-title{flex:1;min-width:0}
+.exp-card .ec-title h4{margin:0;font-size:14px;font-weight:800;color:var(--d-black);line-height:1.3}
+.exp-card .ec-title small{display:block;font-size:11px;color:var(--d-text-muted);font-weight:600;margin-top:2px;font-family:monospace}
+.exp-card p{margin:0;font-size:12px;color:var(--d-text-soft);line-height:1.6}
+.exp-card .ec-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:8px;border-top:1px dashed var(--d-border);margin-top:auto}
+.exp-card .ec-count{font-size:11.5px;color:var(--d-text-muted);font-weight:700}
+.exp-card .ec-count strong{color:var(--d-gold-deep,#D8A11C);font-family:monospace;font-size:13px}
+.exp-card .ec-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:9px;background:#1E1E1E;color:#fff;font-size:11.5px;font-weight:800;transition:.18s ease}
+.exp-card:hover .ec-btn{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E}
+
+/* Filter form (for beneficiaries) */
+.exp-filter-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.exp-filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px}
+.exp-filter-grid label{font-size:11.5px;font-weight:700;color:var(--d-text);display:block;margin-bottom:4px}
+.exp-filter-grid select, .exp-filter-grid input{width:100%;padding:9px 12px;border-radius:10px;border:1.5px solid var(--d-border-strong);font-family:inherit;font-size:13px;background:#FAFAF8;box-sizing:border-box}
+.exp-filter-grid select:focus, .exp-filter-grid input:focus{outline:0;border-color:var(--d-gold);background:#fff}
+
+/* Quick stats row */
+.exp-quick-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.exp-stat{background:#fff;border:1px solid var(--d-border);border-radius:12px;padding:12px 14px;text-align:center}
+.exp-stat .num{font-size:22px;font-weight:900;color:var(--d-black);line-height:1;font-feature-settings:"tnum" 1}
+.exp-stat .lbl{font-size:10.5px;font-weight:700;color:var(--d-text-muted);text-transform:uppercase;letter-spacing:.3px;margin-top:4px}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero ── -->
+<div class="exp-hero">
+  <h2><i class="fa-solid fa-file-arrow-down"></i>مركز التصدير الشامل</h2>
+  <p>كل بياناتك جاهزة للتصدير بضغطة — ملفات إكسل احترافية مع رؤوس عربية وتنسيق موحّد. تصدير المستفيدين، الحسابات، السياسات، السجلات، والمخزون.</p>
+  <div class="exp-hero-stats">
+    <span class="exp-hero-stat"><i class="fa-solid fa-file-excel"></i>صيغة إكسل</span>
+    <span class="exp-hero-stat"><i class="fa-solid fa-shield-halved"></i>محفوظ في سجل العمليات</span>
+    <span class="exp-hero-stat"><i class="fa-solid fa-bolt"></i>تصدير فوري</span>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────
+     قسم 1: المستفيدون (تصدير مفلتر بدقة)
+     ───────────────────────────────────────────── -->
+<div class="exp-section-head">
+  <h3><i class="fa-solid fa-users"></i>المستفيدون — تصدير مفلتر</h3>
+  <small>اختر الفلتر ثم اضغط تصدير</small>
+</div>
+
+<div class="exp-filter-card">
+  <form method="GET" action="/admin/exports/csv">
+    <div class="exp-filter-grid">
+      <div>
+        <label>نوع المشترك</label>
+        <select name="user_type">
+          <option value="">— الكل —</option>
+          <option value="tawjihi">توجيهي</option>
+          <option value="university">جامعي</option>
+          <option value="freelancer">عمل حر</option>
+        </select>
+      </div>
+      <div>
+        <label>الجامعة</label>
+        <select name="university_name">
+          <option value="">— الكل —</option>
+          {% for u in universities %}<option value="{{ u }}">{{ u }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>بحث (اسم/جوال)</label>
+        <input type="search" name="q" placeholder="0599...">
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="d-pill-btn d-pill-btn--gold" type="submit" style="width:100%">
+          <i class="fa-solid fa-file-excel"></i>تصدير حسب الفلتر
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="exp-grid">
+  <a class="exp-card color-green" href="/admin/exports/csv?user_type=tawjihi">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-user-graduate"></i></span>
+      <div class="ec-title"><h4>طلاب التوجيهي</h4><small>ملف إكسل للتوجيهي</small></div>
+    </div>
+    <p>كل طلاب التوجيهي مع الفرع والسنة الدراسية.</p>
+    <div class="ec-foot"><span class="ec-count">جدول كامل</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+  <a class="exp-card color-orange" href="/admin/exports/csv?user_type=university">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-building-columns"></i></span>
+      <div class="ec-title"><h4>الطلاب الجامعيون</h4><small>ملف إكسل للجامعيين</small></div>
+    </div>
+    <p>كل الطلاب الجامعيين مع التخصص والجامعة.</p>
+    <div class="ec-foot"><span class="ec-count">جدول كامل</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+  <a class="exp-card color-purple" href="/admin/exports/csv?user_type=freelancer">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-laptop-code"></i></span>
+      <div class="ec-title"><h4>العمل الحر</h4><small>ملف إكسل للعمل الحر</small></div>
+    </div>
+    <p>المشتركون من العمل الحر مع التخصص والشركة.</p>
+    <div class="ec-foot"><span class="ec-count">جدول كامل</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+  <a class="exp-card color-gold" href="/admin/exports/csv">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-users"></i></span>
+      <div class="ec-title"><h4>كل المستفيدين</h4><small>ملف إكسل شامل</small></div>
+    </div>
+    <p>قاعدة المشتركين كاملة بكل الأنواع والحقول.</p>
+    <div class="ec-foot"><span class="ec-count">جدول كامل</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+</div>
+
+<!-- ─────────────────────────────────────────────
+     قسم 2: حسابات وأذونات الدخول
+     ───────────────────────────────────────────── -->
+<div class="exp-section-head">
+  <h3><i class="fa-solid fa-id-card-clip"></i>حسابات الدخول</h3>
+  <small>بوابة المشتركين + حسابات الإدارة</small>
+</div>
+
+<div class="exp-grid">
+  <a class="exp-card color-cyan" href="/admin/exports/portal-accounts">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-id-card-clip"></i></span>
+      <div class="ec-title"><h4>حسابات البوابة</h4><small>ملف إكسل لحسابات البوابة</small></div>
+    </div>
+    <p>كل حسابات بوابة المشتركين مع اسم المستخدم وكلمة المرور والحالة.</p>
+    <div class="ec-foot"><span class="ec-count">بيانات الدخول كاملة</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+  <a class="exp-card color-dark" href="/admin/exports/admin-accounts">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-users-gear"></i></span>
+      <div class="ec-title"><h4>حسابات الإدارة</h4><small>ملف إكسل لحسابات الإدارة</small></div>
+    </div>
+    <p>قائمة مستخدمي الإدارة مع آخر دخول والحالة.</p>
+    <div class="ec-foot"><span class="ec-count">بدون كلمات مرور</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+</div>
+
+<!-- ─────────────────────────────────────────────
+     قسم 3: نظام البطاقات
+     ───────────────────────────────────────────── -->
+<div class="exp-section-head">
+  <h3><i class="fa-solid fa-ticket"></i>نظام البطاقات</h3>
+  <small>المخزون + الفئات + السياسات + المجموعات</small>
+</div>
+
+<div class="exp-grid">
+  <a class="exp-card color-gold" href="/admin/exports/cards-inventory">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-boxes-stacked"></i></span>
+      <div class="ec-title"><h4>مخزون البطاقات</h4><small>ملف إكسل للمخزون</small></div>
+    </div>
+    <p>كل البطاقات (متاحة + مسلّمة) مع اسم المستخدم وكلمة المرور.</p>
+    <div class="ec-foot"><span class="ec-count">حتى 50000 صف</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+  <a class="exp-card color-blue" href="/admin/exports/card-categories">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-layer-group"></i></span>
+      <div class="ec-title"><h4>فئات البطاقات</h4><small>ملف إكسل للفئات</small></div>
+    </div>
+    <p>الفئات الرسمية والمخصصة مع المدد والأيقونات.</p>
+    <div class="ec-foot"><span class="ec-count">شامل</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+  <a class="exp-card color-orange" href="/admin/exports/quota-policies">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-sliders"></i></span>
+      <div class="ec-title"><h4>سياسات الحصص</h4><small>ملف إكسل للسياسات</small></div>
+    </div>
+    <p>سياسات الحدود اليومية/الأسبوعية والقيود.</p>
+    <div class="ec-foot"><span class="ec-count">شامل</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+  <a class="exp-card color-purple" href="/admin/exports/quota-groups">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-people-group"></i></span>
+      <div class="ec-title"><h4>مجموعات السياسات</h4><small>ملف إكسل للمجموعات</small></div>
+    </div>
+    <p>كل المجموعات المنشأة + عدد الأعضاء.</p>
+    <div class="ec-foot"><span class="ec-count">+ تصدير الأعضاء أدناه</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+  <a class="exp-card color-purple" href="/admin/exports/quota-group-members">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-user-tag"></i></span>
+      <div class="ec-title"><h4>أعضاء المجموعات</h4><small>ملف إكسل للأعضاء</small></div>
+    </div>
+    <p>تفاصيل كل عضو في كل مجموعة (للجدول العلائقي).</p>
+    <div class="ec-foot"><span class="ec-count">تفاصيل دقيقة</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+</div>
+
+<!-- ─────────────────────────────────────────────
+     قسم 4: السجلات
+     ───────────────────────────────────────────── -->
+<div class="exp-section-head">
+  <h3><i class="fa-solid fa-clock-rotate-left"></i>السجلات</h3>
+  <small>سجل البطاقات الصادرة + سجل العمليات</small>
+</div>
+
+<div class="exp-grid">
+  <a class="exp-card color-gold" href="/admin/exports/usage-logs">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-clipboard-list"></i></span>
+      <div class="ec-title"><h4>سجل البطاقات الصادرة</h4><small>ملف إكسل لسجل البطاقات</small></div>
+    </div>
+    <p>كل البطاقات التي أُصدرت للمشتركين مع السبب والتاريخ.</p>
+    <div class="ec-foot"><span class="ec-count">حتى <strong>20000</strong> سجل</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+  <a class="exp-card color-red" href="/admin/exports/audit-logs">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-shield-halved"></i></span>
+      <div class="ec-title"><h4>سجل العمليات</h4><small>ملف إكسل لسجل العمليات</small></div>
+    </div>
+    <p>سجل كل العمليات الإدارية (إضافة، تعديل، حذف...).</p>
+    <div class="ec-foot"><span class="ec-count">حتى <strong>10000</strong> عملية</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تصدير</span></div>
+  </a>
+</div>
+
+<!-- ─────────────────────────────────────────────
+     قسم 5: تصدير SQL خام (نسخة احتياطية)
+     ───────────────────────────────────────────── -->
+<div class="exp-section-head">
+  <h3><i class="fa-solid fa-database"></i>نسخة قاعدة البيانات الخام</h3>
+  <small>للنسخ الاحتياطي التقني</small>
+</div>
+
+<div class="exp-grid">
+  <a class="exp-card color-dark" href="/backup_sql">
+    <div class="ec-head">
+      <span class="ec-ico"><i class="fa-solid fa-database"></i></span>
+      <div class="ec-title"><h4>نسخة قاعدة البيانات للمستفيدين</h4><small>ملف احتياطي للاستعادة</small></div>
+    </div>
+    <p>ملف خام يحوي أوامر إدخال لكل المستفيدين — للاستعادة على قاعدة بيانات أخرى.</p>
+    <div class="ec-foot"><span class="ec-count">نسخة احتياطية</span><span class="ec-btn"><i class="fa-solid fa-download"></i>تنزيل</span></div>
+  </a>
+</div>
+
+{% endblock %}

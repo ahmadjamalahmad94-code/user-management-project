@@ -1,0 +1,121 @@
+{% extends "admin/users_account/_layout.html" %}
+{% block title %}طلبات حسابات الإنترنت{% endblock %}
+{% block page_title %}طلبات حسابات الإنترنت المعلّقة{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+{% endblock %}
+
+{% block users_content %}
+<div class="d-notice">
+  <i class="fa-solid fa-hourglass-half"></i>
+  <div>
+    <strong>صفحة تنفيذ فنية.</strong>
+    المتابعة اليومية الموحدة أصبحت من مركز الطلبات، وهذه الصفحة تبقى لتنفيذ طلبات حسابات الإنترنت اليدوية فقط.
+    <br>
+    <strong>الطلبات اليدوية لمشتركي حساب الإنترنت.</strong>
+    عند ربط RADIUS API، ستُنفّذ كل عملية مباشرة عبر الـ endpoint المقابل لها بدلًا من الإجراء اليدوي.
+    <div style="margin-top:8px">
+      <a class="d-card-action" href="{{ url_for('admin_request_center', type='user', beneficiary_id=beneficiary_filter) if beneficiary_filter else url_for('admin_request_center', type='user') }}"><i class="fa-solid fa-inbox"></i>فتحها داخل مركز الطلبات الموحد</a>
+    </div>
+  </div>
+</div>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-filter"></i>الفلترة</h3>
+  </div>
+  <div class="d-card-body">
+    <form method="GET" class="d-form-row cols-3">
+      {% if beneficiary_filter %}<input type="hidden" name="beneficiary_id" value="{{ beneficiary_filter }}">{% endif %}
+      <div>
+        <label class="d-label">نوع الطلب</label>
+        <select class="d-field" name="type">
+          <option value="">— الكل —</option>
+          <option value="reset_password" {% if filter_type=='reset_password' %}selected{% endif %}>كلمة مرور</option>
+          <option value="unblock_site" {% if filter_type=='unblock_site' %}selected{% endif %}>فتح موقع</option>
+          <option value="speed_upgrade" {% if filter_type=='speed_upgrade' %}selected{% endif %}>رفع سرعة</option>
+          <option value="create_user" {% if filter_type=='create_user' %}selected{% endif %}>إنشاء حساب</option>
+        </select>
+      </div>
+      <div>
+        <label class="d-label">الحالة</label>
+        <select class="d-field" name="status">
+          <option value="pending" {% if filter_status=='pending' %}selected{% endif %}>معلّقة</option>
+          <option value="done" {% if filter_status=='done' %}selected{% endif %}>منفّذة</option>
+          <option value="cancelled" {% if filter_status=='cancelled' %}selected{% endif %}>ملغية</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px">
+        <button class="d-pill-btn" type="submit"><i class="fa-solid fa-magnifying-glass"></i>تصفية</button>
+        {% if beneficiary_filter %}<a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_users_account_requests') }}">عرض كل الطلبات</a>{% endif %}
+      </div>
+    </form>
+    {% if beneficiary_filter %}
+    <div class="d-notice" style="margin-top:12px">
+      <i class="fa-solid fa-filter"></i>
+      <div><strong>فلتر مستفيد محدد.</strong> تعرض هذه القائمة طلبات المستفيد #{{ beneficiary_filter }} فقط.</div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list-check"></i>الطلبات</h3>
+    <span style="font-size:12px;color:var(--d-text-muted)">{{ items | length }} طلب</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="users-account-requests">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>المشترك</th>
+          <th>نوع الطلب</th>
+          <th>التفاصيل</th>
+          <th>الوقت</th>
+          <th>إجراء</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in items %}
+        <tr>
+          <td>#{{ a.id }}</td>
+          <td>
+            <strong>{{ a.beneficiary_name or '—' }}</strong>
+            <div style="font-size:11.5px;color:var(--d-text-muted)">{{ a.beneficiary_phone or '' }}</div>
+          </td>
+          <td><span class="d-badge">{{ a.type_label }}</span></td>
+          <td style="max-width:340px;white-space:normal;font-size:12.5px;color:var(--d-text-soft)">
+            {% for k, v in (a.payload or {}).items() %}
+              <div><strong>{{ k }}:</strong> {{ v }}</div>
+            {% endfor %}
+            {% if a.notes %}<div style="margin-top:4px;color:var(--d-text-muted)"><i class="fa-solid fa-note-sticky"></i> {{ a.notes }}</div>{% endif %}
+          </td>
+          <td>{{ a.requested_at }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_user_request_done', action_id=a.id) }}" style="display:inline">
+              {{ csrf_token_input() | safe }}
+              <button class="d-pill-btn d-pill-btn--gold" type="submit" style="padding:6px 12px;font-size:12px" onclick="return confirm('تأكيد وضع هذا الطلب كمنفّذ؟')">
+                <i class="fa-solid fa-check"></i>منفّذ
+              </button>
+            </form>
+            <form method="POST" action="{{ url_for('admin_user_request_cancel', action_id=a.id) }}" style="display:inline">
+              {{ csrf_token_input() | safe }}
+              <button class="d-pill-btn d-pill-btn--ghost" type="submit" style="padding:6px 12px;font-size:12px" onclick="return confirm('إلغاء هذا الطلب؟')">
+                <i class="fa-solid fa-xmark"></i>إلغاء
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate">
+          <td colspan="6" style="text-align:center;color:var(--d-text-muted);padding:32px">لا توجد طلبات مطابقة.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}

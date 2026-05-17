@@ -1,0 +1,55 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}بحث مستخدم RADIUS{% endblock %}
+{% block page_title %}بحث مستخدم RADIUS{% endblock %}
+{% block crumbs %}<span>الإدارة</span><i class="fa-solid fa-chevron-left"></i><span>RADIUS</span><i class="fa-solid fa-chevron-left"></i><span>بحث مستخدم</span>{% endblock %}
+
+{% block head_extra %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.search-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.search-bar .f{display:flex;flex-direction:column;gap:5px;flex:1;min-width:200px}
+.search-bar input{padding:11px 14px;border-radius:11px;border:1.5px solid var(--d-border-strong);font-size:14px;background:#FAFAF8;font-family:inherit}
+.search-bar input:focus{outline:0;border-color:var(--d-gold);background:#fff;box-shadow:0 0 0 3px rgba(244,186,42,.20)}
+.payload-box{padding:14px;border-radius:11px;background:#1E1E1E;color:#FFD96A;font-family:monospace;font-size:12.5px;line-height:1.7;overflow:auto;max-height:280px;white-space:pre-wrap;word-break:break-all}
+</style>{% endblock %}
+
+{% block content %}
+<section class="d-hero">
+  <div><h2>🔍 بحث مستخدم RADIUS</h2><p>عرض الجلسات والاستهلاك والأجهزة والبطاقات لمستخدم محدد.</p></div>
+</section>
+
+{% if error_text %}<div style="padding:12px 16px;border-radius:11px;background:#fde2e2;color:#b91c1c;border:1px solid rgba(185,28,28,.3);margin-bottom:14px">{{ error_text }}</div>{% endif %}
+
+<section class="d-card" style="margin-bottom:14px">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-magnifying-glass"></i>البحث</h3></div>
+  <div class="d-card-body">
+    <form method="POST" class="search-bar">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <div class="f"><label class="d-label">اسم المستخدم</label><input name="username" value="{{ username or '' }}" placeholder="مثلاً: ahmad_net" required></div>
+      <button class="d-pill-btn" type="submit"><i class="fa-solid fa-magnifying-glass"></i>بحث</button>
+    </form>
+  </div>
+</section>
+
+{% if username and not error_text %}
+<div class="d-grid-2">
+  <section class="d-card">
+    <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-clock"></i>الجلسات</h3></div>
+    <div class="d-card-body"><div class="payload-box">{{ sessions_json or '—' }}</div></div>
+  </section>
+  <section class="d-card">
+    <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-chart-line"></i>الاستهلاك</h3></div>
+    <div class="d-card-body"><div class="payload-box">{{ usage_json or '—' }}</div></div>
+  </section>
+</div>
+<div class="d-grid-2" style="margin-top:14px">
+  <section class="d-card">
+    <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-gauge-high"></i>الباندويث</h3></div>
+    <div class="d-card-body"><div class="payload-box">{{ bandwidth_json or '—' }}</div></div>
+  </section>
+  <section class="d-card">
+    <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-laptop"></i>الأجهزة والبطاقات</h3></div>
+    <div class="d-card-body"><div class="payload-box">{{ devices_cards_json or '—' }}</div></div>
+  </section>
+</div>
+{% endif %}
+{% endblock %}

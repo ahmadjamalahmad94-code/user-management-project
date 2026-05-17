@@ -1,0 +1,318 @@
+{% extends "admin/_admin_layout.html" %}
+
+{% block title %}متابعة الاستيراد{% endblock %}
+{% block page_title %}متابعة الاستيراد المباشرة{% endblock %}
+
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>السجلات</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <a href="{{ url_for('import_page') }}">الاستيراد</a>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>متابعة المهمة</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<style>
+.ist-hero{
+  position:relative;background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 60%,#3a3633 100%);
+  color:#fff;border-radius:20px;padding:24px 28px;margin-bottom:16px;overflow:hidden;
+  box-shadow:0 16px 40px rgba(30,30,30,.22);
+}
+.ist-hero::before{
+  content:"";position:absolute;top:-60px;inset-inline-end:-60px;width:220px;height:220px;
+  border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.30),transparent 70%);
+  pointer-events:none;
+}
+.ist-hero h2{margin:0 0 6px;font-size:22px;font-weight:900;letter-spacing:-.3px}
+.ist-hero h2 i{color:var(--d-gold);margin-inline-end:8px}
+.ist-hero p{margin:0;font-size:13px;color:rgba(255,255,255,.72);line-height:1.7;max-width:680px}
+.ist-hero-meta{
+  display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;
+}
+.ist-hero-meta .pill{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);
+  border-radius:999px;padding:6px 12px;font-size:12px;font-weight:800;color:#fff;
+}
+.ist-hero-meta .pill i{color:var(--d-gold)}
+
+/* Metrics grid */
+.ist-metrics{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px;
+}
+.ist-metric{
+  background:#fff;border:1px solid var(--d-border);border-radius:14px;
+  padding:16px 18px;box-shadow:0 1px 3px rgba(30,30,30,.04);
+  display:flex;align-items:center;gap:12px;
+}
+.ist-metric-ico{
+  width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:16px;flex-shrink:0;
+}
+.ist-metric-ico.total{background:#eef4ff;color:#1d4ed8}
+.ist-metric-ico.proc{background:#fff7df;color:#7a5310}
+.ist-metric-ico.ins{background:#e8f6ee;color:#166534}
+.ist-metric-ico.upd{background:#fef3c7;color:#92400e}
+.ist-metric-ico.err{background:#fde2e2;color:#b91c1c}
+.ist-metric-ico.sta{background:linear-gradient(135deg,var(--d-gold),#FFD96A);color:#1E1E1E}
+.ist-metric .lbl{font-size:11.5px;color:var(--d-text-soft);font-weight:800;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:2px}
+.ist-metric .val{font-size:22px;font-weight:900;color:var(--d-black);line-height:1.1}
+
+/* Status badge */
+.ist-status-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:999px;font-size:12px;font-weight:900;
+  border:1.5px solid transparent;
+}
+.ist-status-pill.pending{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.ist-status-pill.running{background:#eef4ff;color:#1d4ed8;border-color:#c7d8ff}
+.ist-status-pill.completed{background:#e8f6ee;color:#166534;border-color:#bce5cb}
+.ist-status-pill.failed{background:#fde2e2;color:#b91c1c;border-color:#fbc2c2}
+
+/* Card */
+.ist-card{
+  background:#fff;border:1px solid var(--d-border);border-radius:16px;
+  padding:20px 22px;box-shadow:0 1px 3px rgba(30,30,30,.04);margin-bottom:14px;
+}
+.ist-card-title{
+  display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:14.5px;
+  font-weight:900;color:var(--d-black);padding-bottom:10px;border-bottom:1px dashed var(--d-border);
+}
+.ist-card-title i{
+  width:30px;height:30px;border-radius:9px;background:var(--d-gold-faint,#FDF1CF);
+  color:var(--d-gold-deep,#D8A11C);display:inline-flex;align-items:center;justify-content:center;font-size:13px;
+}
+
+/* Progress bar */
+.ist-progress-wrap{margin-top:6px}
+.ist-progress-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ist-progress-head .lbl{font-size:12.5px;color:var(--d-text-soft);font-weight:800}
+.ist-progress-head .val{font-size:14px;font-weight:900;color:var(--d-black)}
+.ist-progress-track{
+  position:relative;height:22px;background:#f5efe1;border-radius:999px;overflow:hidden;
+  border:1px solid var(--d-border);
+}
+.ist-progress-fill{
+  height:100%;background:linear-gradient(90deg,var(--d-gold),#FFD96A);
+  border-radius:999px;transition:width .4s ease;
+  position:relative;overflow:hidden;
+}
+.ist-progress-fill::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.4) 50%,transparent 100%);
+  animation:istShimmer 1.8s infinite;
+}
+@keyframes istShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.ist-progress-track.is-done .ist-progress-fill{
+  background:linear-gradient(90deg,#22c55e,#16a34a);
+}
+.ist-progress-track.is-done .ist-progress-fill::after{display:none}
+.ist-progress-track.is-failed .ist-progress-fill{
+  background:linear-gradient(90deg,#ef4444,#dc2626);
+}
+
+/* Detail rows */
+.ist-detail-rows{display:grid;gap:8px}
+.ist-detail-row{
+  display:grid;grid-template-columns:160px 1fr;gap:14px;
+  padding:10px 14px;background:var(--d-cream-soft,#FAFAF8);border-radius:10px;
+  font-size:13px;border:1px solid var(--d-border);
+}
+.ist-detail-row .k{font-weight:800;color:var(--d-text-soft)}
+.ist-detail-row .v{font-weight:700;color:var(--d-black);word-break:break-word}
+.ist-detail-row .v.muted{color:var(--d-text-soft);font-weight:600}
+
+/* Logs */
+.ist-logs{
+  background:#0f172a;color:#e2e8f0;border-radius:14px;padding:14px 16px;
+  max-height:420px;overflow:auto;font-family:Consolas,"Courier New",monospace;
+  font-size:12.5px;line-height:1.8;border:1px solid #1e293b;
+}
+.ist-logs div{padding:2px 0;border-bottom:1px dashed rgba(255,255,255,.06)}
+.ist-logs div:last-child{border-bottom:0}
+.ist-logs .empty{color:#64748b;text-align:center;padding:24px 0;font-family:inherit}
+
+/* Actions */
+.ist-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.ist-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  border:0;border-radius:11px;padding:10px 16px;font:inherit;
+  font-weight:900;cursor:pointer;font-size:13px;text-decoration:none;
+}
+.ist-btn--ghost{background:#fff;color:var(--d-text);border:1.5px solid var(--d-border-strong)}
+.ist-btn--ghost:hover{background:var(--d-cream-soft)}
+.ist-btn--primary{background:#1E1E1E;color:#fff}
+.ist-btn--primary:hover{background:#000}
+.ist-btn--gold{background:var(--d-gold);color:#1E1E1E}
+.ist-btn--gold:hover{background:#e9ad17}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="ist-hero">
+  <h2><i class="fa-solid fa-chart-line"></i> متابعة الاستيراد المباشرة</h2>
+  <p>شاشة حية تعرض تقدّم المهمة، عدد السجلات المضافة والمحدّثة، وسير العمليات لحظة بلحظة.</p>
+  <div class="ist-hero-meta">
+    <span class="pill"><i class="fa-solid fa-file-csv"></i> <span id="meta-filename">{{ task.filename or '—' }}</span></span>
+    <span class="pill"><i class="fa-solid fa-hashtag"></i> <span>{{ task.id }}</span></span>
+    <span class="pill"><i class="fa-solid fa-circle-check"></i> <span class="ist-status-pill {{ task.status }}" id="meta-status">{{ task.status }}</span></span>
+  </div>
+</section>
+
+<div class="ist-metrics">
+  <div class="ist-metric">
+    <span class="ist-metric-ico total"><i class="fa-solid fa-database"></i></span>
+    <div><span class="lbl">إجمالي السجلات</span><span class="val" id="task-total">{{ task.total or 0 }}</span></div>
+  </div>
+  <div class="ist-metric">
+    <span class="ist-metric-ico proc"><i class="fa-solid fa-gears"></i></span>
+    <div><span class="lbl">تمت معالجته</span><span class="val" id="task-processed">{{ task.processed or 0 }}</span></div>
+  </div>
+  <div class="ist-metric">
+    <span class="ist-metric-ico ins"><i class="fa-solid fa-circle-plus"></i></span>
+    <div><span class="lbl">تمت إضافته</span><span class="val" id="task-inserted">{{ task.inserted or 0 }}</span></div>
+  </div>
+  <div class="ist-metric">
+    <span class="ist-metric-ico upd"><i class="fa-solid fa-pen-to-square"></i></span>
+    <div><span class="lbl">تم تحديثه</span><span class="val" id="task-updated">{{ task.updated or 0 }}</span></div>
+  </div>
+  <div class="ist-metric">
+    <span class="ist-metric-ico err"><i class="fa-solid fa-triangle-exclamation"></i></span>
+    <div><span class="lbl">الأخطاء</span><span class="val" id="task-errors">{{ task.error_count or 0 }}</span></div>
+  </div>
+</div>
+
+<div class="ist-card">
+  <h3 class="ist-card-title"><i class="fa-solid fa-percent"></i> نسبة الإنجاز</h3>
+  <div class="ist-progress-wrap">
+    <div class="ist-progress-head">
+      <span class="lbl">التقدم الحالي</span>
+      <span class="val" id="task-percent">{{ task.percent or 0 }}%</span>
+    </div>
+    <div class="ist-progress-track" id="task-bar-track">
+      <div class="ist-progress-fill" id="task-bar" style="width:{{ task.percent or 0 }}%"></div>
+    </div>
+  </div>
+</div>
+
+<div class="ist-card">
+  <h3 class="ist-card-title"><i class="fa-solid fa-circle-info"></i> تفاصيل المهمة</h3>
+  <div class="ist-detail-rows">
+    <div class="ist-detail-row">
+      <span class="k">الملف</span>
+      <span class="v">{{ task.filename or '—' }}</span>
+    </div>
+    <div class="ist-detail-row">
+      <span class="k">الخطوة الحالية</span>
+      <span class="v" id="task-step">{{ task.current_step or '—' }}</span>
+    </div>
+    <div class="ist-detail-row">
+      <span class="k">آخر رسالة</span>
+      <span class="v" id="task-message">{{ task.message or '—' }}</span>
+    </div>
+    <div class="ist-detail-row">
+      <span class="k">بدأت</span>
+      <span class="v muted" id="task-started">{{ task.started_at or '—' }}</span>
+    </div>
+    <div class="ist-detail-row">
+      <span class="k">انتهت</span>
+      <span class="v muted" id="task-finished">{{ task.finished_at or '—' }}</span>
+    </div>
+  </div>
+  <div class="ist-actions">
+    <a class="ist-btn ist-btn--ghost" href="{{ url_for('import_page') }}">
+      <i class="fa-solid fa-arrow-right"></i> رجوع لصفحة الاستيراد
+    </a>
+    <a class="ist-btn ist-btn--primary" href="{{ url_for('beneficiaries_page') }}">
+      <i class="fa-solid fa-users"></i> فتح المستفيدين
+    </a>
+  </div>
+</div>
+
+<div class="ist-card">
+  <h3 class="ist-card-title"><i class="fa-solid fa-terminal"></i> سير العمليات</h3>
+  <div id="task-logs" class="ist-logs">
+    {% if task.logs %}
+      {% for log in task.logs %}<div>{{ log }}</div>{% endfor %}
+    {% else %}
+      <div class="empty">بانتظار بدء المعالجة…</div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function(){
+  var TASK_ID = {{ task.id | tojson }};
+  var pollTimer = null;
+
+  function setText(id, value){
+    var el = document.getElementById(id);
+    if(el) el.textContent = (value === null || value === undefined) ? '' : value;
+  }
+
+  function renderLogs(logs){
+    var box = document.getElementById('task-logs');
+    if(!box) return;
+    if(!logs || !logs.length){
+      box.innerHTML = '<div class="empty">بانتظار بدء المعالجة…</div>';
+      return;
+    }
+    var html = '';
+    for(var i = 0; i < logs.length; i++){
+      var safe = String(logs[i]).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      html += '<div>' + safe + '</div>';
+    }
+    box.innerHTML = html;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function updateStatusPill(status){
+    var pill = document.getElementById('meta-status');
+    if(!pill) return;
+    pill.textContent = status || '';
+    pill.className = 'ist-status-pill ' + (status || '');
+  }
+
+  function updateBar(percent, status){
+    var bar = document.getElementById('task-bar');
+    var track = document.getElementById('task-bar-track');
+    if(bar) bar.style.width = (percent || 0) + '%';
+    if(track){
+      track.classList.toggle('is-done', status === 'completed');
+      track.classList.toggle('is-failed', status === 'failed');
+    }
+  }
+
+  function refresh(){
+    fetch('/import_progress/' + encodeURIComponent(TASK_ID))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d || d.error) return;
+        setText('task-total', d.total || 0);
+        setText('task-processed', d.processed || 0);
+        setText('task-inserted', d.inserted || 0);
+        setText('task-updated', d.updated || 0);
+        setText('task-errors', d.error_count || 0);
+        setText('task-percent', (d.percent || 0) + '%');
+        setText('task-step', d.current_step || '—');
+        setText('task-message', d.message || '—');
+        setText('task-started', d.started_at || '—');
+        setText('task-finished', d.finished_at || '—');
+        setText('meta-filename', d.filename || '—');
+        updateStatusPill(d.status || '');
+        updateBar(d.percent || 0, d.status || '');
+        if(d.status === 'completed' || d.status === 'failed'){
+          if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+        }
+        renderLogs(d.logs || []);
+      })
+      .catch(function(){});
+  }
+
+  refresh();
+  pollTimer = setInterval(refresh, 1200);
+})();
+</script>
+{% endblock %}

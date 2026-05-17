@@ -1,0 +1,11 @@
+{# ORPHAN — يستخدم admin/home.html → admin/_admin_layout.html بدلًا منه #}
+{% extends "admin/_admin_layout.html" %}
+{% block content %}
+<section class="d-card">
+  <div class="d-card-body">
+    <p style="padding:20px;text-align:center;color:var(--d-text-muted)">
+      تم نقل اللوحة. اذهب إلى <a href="/admin/dashboard">/admin/dashboard</a>.
+    </p>
+  </div>
+</section>
+{% endblock %}

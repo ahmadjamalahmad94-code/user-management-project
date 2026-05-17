@@ -1,0 +1,63 @@
+{% extends "portal/cards/dashboard.html" %}
+{% block title %}بوابتي — سجل البطاقات{% endblock %}
+{% block page_title %}سجل بطاقاتي{% endblock %}
+{% block crumbs %}
+  <span>بوابة المشترك</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>البطاقات</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>السجل الكامل</span>
+{% endblock %}
+
+{% block content %}
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-clock-rotate-left"></i>كل بطاقاتي</h3>
+    <span style="font-size:12px;color:var(--d-text-muted)">{{ all_cards | length }} بطاقة</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="10" data-page-sizes="10,20,50,100" data-persist-key="portal-cards-history">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الفئة</th>
+          <th>اسم البطاقة</th>
+          <th>كلمة المرور</th>
+          <th>الحالة</th>
+          <th>تاريخ الاستلام</th>
+          <th>اتصال</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in all_cards %}
+        {% set st = card_statuses.get(c.id) if card_statuses else None %}
+        <tr>
+          <td>#{{ c.id }}</td>
+          <td><span class="d-badge">{{ c.duration_minutes }} دقيقة</span></td>
+          <td style="font-family:monospace">{{ c.card_username }}</td>
+          <td style="font-family:monospace;color:var(--d-text-muted)">{{ c.card_password }}</td>
+          <td>
+            {% if st %}
+              <span class="d-badge {% if st.status == 'online' %}d-badge--success{% elif st.status == 'expired' %}d-badge--neutral{% else %}d-badge--warn{% endif %}">{{ st.status_label }}</span>
+              {% if st.remaining_seconds is not none %}
+              <small style="display:block;color:var(--d-text-muted);margin-top:4px">المتبقي {{ format_card_seconds(st.remaining_seconds) }}</small>
+              {% endif %}
+            {% else %}
+              <span class="d-badge d-badge--neutral">غير محدد</span>
+            {% endif %}
+          </td>
+          <td>{{ c.issued_at }}</td>
+          <td>
+            <a class="d-card-action" href="{{ url_for('user_cards_connect', card_id=c.id) }}">
+              دخول بالبطاقة
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="7" style="text-align:center;color:var(--d-text-muted);padding:32px">لا توجد بطاقات بعد.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

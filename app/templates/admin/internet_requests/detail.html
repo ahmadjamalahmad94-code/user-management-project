@@ -1,0 +1,322 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}طلب إنترنت #{{ req.id }}{% endblock %}
+{% block page_title %}طلب إنترنت #{{ req.id }}{% endblock %}
+{% block crumbs %}
+  <a href="{{ url_for('admin_request_center', type='internet') }}">مركز الطلبات</a>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>طلب #{{ req.id }}</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+/* ── Hero ── */
+.rd-hero{
+  background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 100%);
+  color:#fff;border-radius:16px;padding:22px 26px;margin-bottom:16px;
+  display:flex;align-items:center;gap:16px;position:relative;overflow:hidden;
+  box-shadow:0 12px 32px rgba(30,30,30,.18);
+}
+.rd-hero::after{
+  content:"";position:absolute;inset:auto -80px -120px auto;width:200px;height:200px;
+  border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.25),transparent 70%);
+}
+.rd-hero-avatar{
+  width:54px;height:54px;border-radius:50%;
+  background:linear-gradient(135deg,var(--d-gold),#FFD96A);
+  color:#1E1E1E;display:grid;place-items:center;font-size:22px;flex-shrink:0;
+}
+.rd-hero-body{flex:1;min-width:0}
+.rd-hero h2{margin:0 0 4px;font-size:20px;font-weight:900;letter-spacing:-.3px}
+.rd-hero p{margin:0;font-size:13px;color:rgba(255,255,255,.72);line-height:1.7}
+.rd-hero-aside{display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:relative;z-index:1}
+
+.rd-status{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:900;white-space:nowrap;
+}
+.rd-status.pending{background:#FDF1CF;color:#7c2d12}
+.rd-status.approved{background:#e7f0fd;color:#1c52a8}
+.rd-status.executed{background:#e8f6ee;color:#166534}
+.rd-status.failed{background:#fde2e2;color:#b91c1c}
+.rd-status.rejected{background:#F4F3EF;color:#5b5849}
+
+/* ── Info row (key facts) ── */
+.rd-facts{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;
+}
+.rd-fact{
+  background:#fff;border:1px solid var(--d-border);border-radius:12px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.rd-fact-ico{
+  width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:14px;
+  background:var(--d-gold-faint,#FDF1CF);color:var(--d-gold-deep,#D8A11C);
+  flex-shrink:0;
+}
+.rd-fact .k{font-size:11px;color:var(--d-text-soft);font-weight:800;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:2px}
+.rd-fact .v{font-size:13.5px;color:var(--d-black);font-weight:800;display:block}
+
+/* ── Action card (decision panel) ── */
+.rd-card{
+  background:#fff;border:1px solid var(--d-border);border-radius:14px;
+  margin-bottom:16px;box-shadow:0 1px 3px rgba(30,30,30,.04);overflow:hidden;
+}
+.rd-card-head{
+  padding:14px 18px;border-bottom:1px solid var(--d-border);
+  display:flex;align-items:center;gap:10px;background:#fbfaf7;
+}
+.rd-card-head i{
+  width:30px;height:30px;border-radius:9px;background:var(--d-gold-faint,#FDF1CF);
+  color:var(--d-gold-deep,#D8A11C);display:grid;place-items:center;font-size:13px;
+}
+.rd-card-head h3{margin:0;font-size:14.5px;font-weight:900;color:var(--d-black)}
+.rd-card-body{padding:18px}
+
+/* form fields */
+.rd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.rd-field{display:flex;flex-direction:column;gap:6px}
+.rd-field.full{grid-column:1 / -1}
+.rd-field label{font-size:12px;font-weight:800;color:var(--d-text-soft)}
+.rd-field input,.rd-field select,.rd-field textarea{
+  padding:10px 12px;border-radius:10px;border:1.5px solid var(--d-border-strong);
+  font-size:13px;font-family:inherit;background:#FAFAF8;transition:.15s ease;
+}
+.rd-field input:focus,.rd-field textarea:focus,.rd-field select:focus{
+  outline:0;border-color:var(--d-gold);background:#fff;box-shadow:0 0 0 3px rgba(244,186,42,.20);
+}
+.rd-field textarea{min-height:70px;resize:vertical}
+
+/* tabs (request/admin/api) */
+.rd-tabs{display:flex;gap:0;border-bottom:1px solid var(--d-border);margin-bottom:0}
+.rd-tab{
+  flex:1;padding:11px 14px;border:0;background:#fff;cursor:pointer;
+  font:inherit;font-size:13px;font-weight:800;color:var(--d-text-soft);
+  border-bottom:2.5px solid transparent;transition:.15s ease;
+}
+.rd-tab:hover{color:var(--d-black);background:#fbfaf7}
+.rd-tab.is-on{color:var(--d-black);border-bottom-color:var(--d-gold)}
+.rd-pane{display:none;padding:18px}
+.rd-pane.is-on{display:block}
+
+/* Payload viewer */
+.rd-payload{
+  background:#0f172a;color:#e2e8f0;border-radius:10px;padding:14px 16px;
+  font-family:Consolas,"Courier New",monospace;font-size:12px;line-height:1.7;
+  overflow:auto;max-height:280px;white-space:pre-wrap;direction:ltr;text-align:left;
+}
+.rd-payload.empty{
+  background:#fafaf8;color:var(--d-text-muted);border:1px dashed var(--d-border);
+  font-family:inherit;font-size:13px;text-align:center;padding:24px;direction:rtl;
+}
+
+/* Action buttons */
+.rd-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:11px 22px;border-radius:11px;font-size:13.5px;font-weight:900;
+  font-family:inherit;cursor:pointer;border:0;text-decoration:none;transition:.15s ease;
+}
+.rd-btn--approve{background:#1f8f51;color:#fff}
+.rd-btn--approve:hover{background:#15803d}
+.rd-btn--reject{background:#b91c1c;color:#fff}
+.rd-btn--reject:hover{background:#991b1b}
+.rd-btn--exec{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;box-shadow:0 8px 20px rgba(244,186,42,.30)}
+.rd-btn--exec:hover{transform:translateY(-1px)}
+.rd-btn--ghost{background:#fff;color:var(--d-text);border:1.5px solid var(--d-border-strong)}
+.rd-btn--ghost:hover{background:#fbfaf7}
+.rd-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+
+/* Error/notice */
+.rd-err{
+  background:#fde2e2;border:1px solid #fbc2c2;color:#b91c1c;
+  padding:12px 14px;border-radius:10px;font-size:13px;font-weight:700;
+  display:flex;align-items:center;gap:8px;line-height:1.7;margin-bottom:12px;
+}
+.rd-flash{padding:11px 14px;border-radius:11px;margin-bottom:12px;font-weight:700;font-size:13px}
+.rd-flash.s{background:#e8f6ee;color:#1f8f51}
+.rd-flash.e{background:#fde2e2;color:#b91c1c}
+</style>
+{% endblock %}
+
+{% block content %}
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in msgs %}
+    <div class="rd-flash {{ 's' if cat == 'success' else 'e' }}">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+{# ── Hero: subscriber + status + back ── #}
+<section class="rd-hero">
+  <span class="rd-hero-avatar"><i class="fa-solid fa-bolt"></i></span>
+  <div class="rd-hero-body">
+    <h2>{{ req.full_name or '—' }}</h2>
+    <p>{{ internet_request_type_label(req.request_type) }} · #{{ req.id }} · أنشأه {{ req.requested_by or '—' }}</p>
+  </div>
+  <div class="rd-hero-aside">
+    {% set s = (req.status or 'pending')|lower %}
+    <span class="rd-status {{ s }}">
+      {% if s == 'pending' %}<i class="fa-solid fa-hourglass-half"></i>قيد المراجعة
+      {% elif s == 'approved' %}<i class="fa-solid fa-check"></i>معتمد
+      {% elif s == 'executed' %}<i class="fa-solid fa-circle-check"></i>تم التنفيذ
+      {% elif s == 'failed' %}<i class="fa-solid fa-circle-exclamation"></i>فشل
+      {% else %}{{ req.status }}{% endif %}
+    </span>
+    <a class="rd-btn rd-btn--ghost" href="{{ url_for('admin_request_center', type='internet') }}">
+      <i class="fa-solid fa-arrow-right"></i>رجوع
+    </a>
+  </div>
+</section>
+
+{# ── Key facts (5 simple cards) ── #}
+<section class="rd-facts">
+  <div class="rd-fact">
+    <span class="rd-fact-ico"><i class="fa-solid fa-calendar"></i></span>
+    <div><span class="k">تاريخ الطلب</span><span class="v">{{ format_dt_short(req.created_at) or '—' }}</span></div>
+  </div>
+  <div class="rd-fact">
+    <span class="rd-fact-ico"><i class="fa-solid fa-user-shield"></i></span>
+    <div><span class="k">آخر مراجعة</span><span class="v">{{ req.reviewed_by or '—' }}</span></div>
+  </div>
+  <div class="rd-fact">
+    <span class="rd-fact-ico"><i class="fa-solid fa-circle-user"></i></span>
+    <div><span class="k">المستخدم الخارجي</span><span class="v">{{ linked_account.external_username or merged_username or '—' }}</span></div>
+  </div>
+  <div class="rd-fact">
+    <span class="rd-fact-ico"><i class="fa-solid fa-gauge-high"></i></span>
+    <div><span class="k">باقة السرعة</span><span class="v">{{ linked_account.current_profile_name or linked_account.current_profile_id or '—' }}</span></div>
+  </div>
+</section>
+
+{# ── Error message (if any) ── #}
+{% if req.error_message %}
+<div class="rd-err">
+  <i class="fa-solid fa-triangle-exclamation"></i>
+  <span><b>خطأ التنفيذ:</b> {{ req.error_message }}</span>
+</div>
+{% endif %}
+
+{# ── Decision panel (approve/reject) — only when pending ── #}
+{% if req.status == 'pending' and has_permission('approve_internet_requests') %}
+<section class="rd-card">
+  <div class="rd-card-head"><i class="fa-solid fa-gavel"></i><h3>اتخاذ القرار</h3></div>
+  <div class="rd-card-body">
+
+    <form method="POST" action="{{ url_for('admin_internet_request_approve', request_id=req.id) }}">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <div class="rd-grid">
+        <div class="rd-field">
+          <label>اسم المستخدم الخارجي</label>
+          <input name="external_username" value="{{ merged_username or '' }}" placeholder="مثلاً: ahmad_2025">
+        </div>
+        <div class="rd-field">
+          <label>باقة السرعة</label>
+          <input name="profile_name" value="{{ admin_payload.profile_name or requested_payload.profile_name or '' }}" placeholder="اسم الباقة">
+        </div>
+        <div class="rd-field">
+          <label>المدة (دقائق)</label>
+          <input name="duration_minutes" type="number" min="1" value="{{ admin_payload.duration_minutes or requested_payload.duration_minutes or 60 }}">
+        </div>
+        <div class="rd-field">
+          <label>كلمة مرور جديدة <small style="color:var(--d-text-muted);font-weight:600">(اختياري)</small></label>
+          <input name="new_password" type="text" autocomplete="off">
+        </div>
+        <div class="rd-field full">
+          <label>ملاحظات الإدارة</label>
+          <textarea name="notes" placeholder="ملاحظات داخلية للأرشيف…">{{ admin_payload.notes or requested_payload.notes or '' }}</textarea>
+        </div>
+        {# الحقول التقنية مخفية لكن مرسلة بالقيم الافتراضية #}
+        <input type="hidden" name="profile_id" value="{{ admin_payload.profile_id or requested_payload.profile_id or '' }}">
+        <input type="hidden" name="card_count" value="{{ admin_payload.card_count or requested_payload.card_count or 1 }}">
+        <input type="hidden" name="quota_amount_mb" value="{{ admin_payload.quota_amount_mb or requested_payload.quota_amount_mb or '' }}">
+        <input type="hidden" name="mac_address" value="{{ admin_payload.mac_address or requested_payload.mac_address or '' }}">
+      </div>
+      <div class="rd-actions">
+        <button type="submit" class="rd-btn rd-btn--approve">
+          <i class="fa-solid fa-check"></i>اعتماد الطلب
+        </button>
+      </div>
+    </form>
+
+    <form method="POST" action="{{ url_for('admin_internet_request_reject', request_id=req.id) }}"
+          style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--d-border)">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <div class="rd-field full">
+        <label>سبب الرفض</label>
+        <textarea name="reason" placeholder="اكتب سببًا واضحًا للرفض…"></textarea>
+      </div>
+      <div class="rd-actions">
+        <button type="submit" class="rd-btn rd-btn--reject">
+          <i class="fa-solid fa-ban"></i>رفض الطلب
+        </button>
+      </div>
+    </form>
+
+  </div>
+</section>
+{% endif %}
+
+{# ── Execute panel (only when approved or failed) ── #}
+{% if req.status in ('approved','failed') and has_permission('execute_radius_actions') %}
+<section class="rd-card">
+  <div class="rd-card-head"><i class="fa-solid fa-play"></i><h3>تنفيذ الطلب</h3></div>
+  <div class="rd-card-body">
+    <p style="margin:0 0 12px;font-size:13px;color:var(--d-text-soft);line-height:1.7">
+      سيتم استدعاء RADIUS API لتطبيق التغييرات وحفظ النتيجة هنا.
+    </p>
+    <form method="POST" action="{{ url_for('admin_internet_request_execute', request_id=req.id) }}">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <button type="submit" class="rd-btn rd-btn--exec">
+        <i class="fa-solid fa-play"></i>تنفيذ الآن
+      </button>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+{# ── Technical tabs (collapsed by default in UI flow) ── #}
+<section class="rd-card">
+  <div class="rd-card-head"><i class="fa-solid fa-code"></i><h3>التفاصيل التقنية</h3></div>
+  <div class="rd-tabs" role="tablist">
+    <button type="button" class="rd-tab is-on" data-rd-tab="req">بيانات الطلب</button>
+    <button type="button" class="rd-tab" data-rd-tab="admin">بيانات الإدارة</button>
+    {% if req.api_response %}
+    <button type="button" class="rd-tab" data-rd-tab="api">رد API</button>
+    {% endif %}
+  </div>
+  <div class="rd-pane is-on" data-rd-pane="req">
+    {% if requested_payload_json and requested_payload_json != '{}' %}
+      <div class="rd-payload">{{ requested_payload_json }}</div>
+    {% else %}
+      <div class="rd-payload empty">لا توجد بيانات إضافية.</div>
+    {% endif %}
+  </div>
+  <div class="rd-pane" data-rd-pane="admin">
+    {% if admin_payload_json and admin_payload_json != '{}' %}
+      <div class="rd-payload">{{ admin_payload_json }}</div>
+    {% else %}
+      <div class="rd-payload empty">لم تُدخل الإدارة بيانات إضافية بعد.</div>
+    {% endif %}
+  </div>
+  {% if req.api_response %}
+  <div class="rd-pane" data-rd-pane="api">
+    <div class="rd-payload">{{ api_response_json }}</div>
+  </div>
+  {% endif %}
+</section>
+
+<script>
+(function(){
+  document.querySelectorAll('.rd-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var key = btn.getAttribute('data-rd-tab');
+      btn.parentElement.querySelectorAll('.rd-tab').forEach(function(t){ t.classList.remove('is-on'); });
+      btn.classList.add('is-on');
+      btn.parentElement.parentElement.querySelectorAll('.rd-pane').forEach(function(p){
+        p.classList.toggle('is-on', p.getAttribute('data-rd-pane') === key);
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

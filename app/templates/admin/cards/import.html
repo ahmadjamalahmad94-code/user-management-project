@@ -1,0 +1,304 @@
+{% extends "admin/cards/_cards_layout.html" %}
+{% block title %}رفع بطاقات{% endblock %}
+{% block page_title %}رفع بطاقات جديدة{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+/* Hero */
+.imp-hero{position:relative;background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 60%,#3a3633 100%);color:#fff;border-radius:20px;padding:28px 30px;margin-bottom:18px;overflow:hidden;box-shadow:0 16px 40px rgba(30,30,30,.22)}
+.imp-hero::before{content:"";position:absolute;top:-60px;inset-inline-end:-60px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.30),transparent 70%);pointer-events:none}
+.imp-hero::after{content:"";position:absolute;bottom:-80px;inset-inline-start:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.12),transparent 70%);pointer-events:none}
+.imp-hero h2{margin:0 0 8px;font-size:24px;font-weight:900;letter-spacing:-.3px}
+.imp-hero h2 i{color:var(--d-gold);margin-inline-end:8px}
+.imp-hero p{margin:0;font-size:13.5px;color:rgba(255,255,255,.72);line-height:1.8;max-width:620px}
+
+/* Steps */
+.imp-steps{position:relative;display:flex;gap:14px;margin-top:18px;flex-wrap:wrap;z-index:1}
+.imp-step{display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;font-size:12px;font-weight:700;transition:.22s ease;cursor:default}
+.imp-step.is-active{background:linear-gradient(135deg,var(--d-gold),#FFD96A);color:#1E1E1E;border-color:transparent;box-shadow:0 6px 14px rgba(244,186,42,.30)}
+.imp-step.is-done{background:rgba(31,143,81,.18);color:#85e0ad;border-color:rgba(133,224,173,.30)}
+.imp-step .imp-step-n{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.12);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+.imp-step.is-active .imp-step-n{background:rgba(30,30,30,.85);color:#F4BA2A}
+.imp-step.is-done .imp-step-n{background:#1f8f51;color:#fff}
+
+/* Section card */
+.imp-card{background:#fff;border:1px solid var(--d-border);border-radius:18px;padding:22px 26px;margin-bottom:16px;box-shadow:0 2px 8px rgba(30,30,30,.04)}
+.imp-card-title{display:flex;align-items:center;gap:10px;font-size:14.5px;font-weight:800;color:var(--d-black);margin:0 0 14px;padding-bottom:10px;border-bottom:1px dashed var(--d-border)}
+.imp-card-title i{width:32px;height:32px;border-radius:10px;background:var(--d-gold-faint,#FDF1CF);color:var(--d-gold-deep,#D8A11C);display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+
+/* Category cards */
+.cat-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cat-card{position:relative;background:#FAFAF8;border:1.5px solid var(--d-border);border-radius:14px;padding:14px;cursor:pointer;transition:all .22s ease;display:flex;flex-direction:column;gap:8px;text-align:center;overflow:hidden;font-family:inherit}
+.cat-card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,var(--cat-from,rgba(244,186,42,.08)),var(--cat-to,rgba(244,186,42,.22)));opacity:0;transition:opacity .22s ease;pointer-events:none}
+.cat-card:hover{transform:translateY(-2px);border-color:var(--cat-accent,var(--d-gold));box-shadow:0 8px 18px rgba(30,30,30,.08)}
+.cat-card:hover::before{opacity:.5}
+.cat-card.is-selected{border-color:var(--cat-accent,var(--d-black));background:#fff;box-shadow:0 10px 24px rgba(30,30,30,.12)}
+.cat-card.is-selected::before{opacity:1}
+.cat-card > *{position:relative;z-index:1}
+.cat-card .cat-ico{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.7);color:var(--cat-accent,#7c2d12);display:inline-flex;align-items:center;justify-content:center;font-size:17px;margin:0 auto;transition:.22s ease}
+.cat-card.is-selected .cat-ico{background:var(--cat-accent,var(--d-black));color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.18)}
+.cat-card .cat-label{font-size:13.5px;font-weight:800;color:var(--d-black);line-height:1.2}
+.cat-card .cat-min{font-size:10.5px;font-weight:700;color:var(--d-text-muted);font-family:monospace}
+.cat-card .cat-check{position:absolute;top:8px;inset-inline-end:8px;width:18px;height:18px;border-radius:50%;background:var(--cat-accent,var(--d-gold));color:#fff;display:none;align-items:center;justify-content:center;font-size:10px;z-index:2}
+.cat-card.is-selected .cat-check{display:inline-flex}
+
+/* Drop zone */
+.drop-zone{position:relative;border:2.5px dashed var(--d-border-strong);background:linear-gradient(180deg,#FAFAF8,#fff);border-radius:18px;padding:38px 22px;text-align:center;cursor:pointer;transition:all .25s ease;overflow:hidden}
+.drop-zone:hover{border-color:var(--d-gold);background:linear-gradient(180deg,#FDF1CF,#FFFCEF)}
+.drop-zone.is-dragover{border-color:var(--d-gold);border-style:solid;background:linear-gradient(135deg,#FDF1CF,#FFD96A22);transform:scale(1.01);box-shadow:0 16px 36px rgba(244,186,42,.22)}
+.drop-zone.has-file{border-color:#1f8f51;border-style:solid;background:linear-gradient(135deg,#e8f6ee,#fff)}
+.drop-zone-ico{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--d-gold),#FFD96A);color:#1E1E1E;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:12px;box-shadow:0 12px 28px rgba(244,186,42,.30);transition:.25s ease}
+.drop-zone.has-file .drop-zone-ico{background:linear-gradient(135deg,#1f8f51,#22c55e);color:#fff;box-shadow:0 12px 28px rgba(31,143,81,.30)}
+.drop-zone-title{font-size:16px;font-weight:800;color:var(--d-black);margin-bottom:6px}
+.drop-zone-hint{font-size:12.5px;color:var(--d-text-muted);font-weight:600}
+.drop-zone-formats{display:inline-flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.drop-zone-formats .fmt{font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:999px;background:#fff;border:1px solid var(--d-border);color:var(--d-text-soft);font-family:monospace}
+/* الـ input مخفي تماماً — نستخدم JS لتشغيله */
+#cards-file{display:none !important}
+
+/* File chip */
+.file-chip{display:none;align-items:center;gap:14px;padding:14px 16px;background:linear-gradient(135deg,#e8f6ee,#fff);border:1.5px solid rgba(31,143,81,.30);border-radius:14px;margin-top:14px;animation:fileIn .35s ease}
+.file-chip.is-show{display:flex}
+@keyframes fileIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.file-chip .fc-ico{width:42px;height:42px;border-radius:11px;background:#1f8f51;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.file-chip .fc-meta{flex:1;min-width:0;text-align:start}
+.file-chip .fc-name{font-size:13.5px;font-weight:800;color:var(--d-black);direction:ltr;text-align:start;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-chip .fc-info{font-size:11.5px;color:var(--d-text-soft);font-weight:700;margin-top:2px}
+.file-chip .fc-remove{background:none;border:0;color:#b91c1c;cursor:pointer;padding:6px 10px;border-radius:8px;font-size:14px;flex-shrink:0}
+.file-chip .fc-remove:hover{background:rgba(185,28,28,.10)}
+
+/* Help / Format guide */
+.guide{background:#FDF6E3;border:1px dashed rgba(217,119,6,.4);border-radius:14px;padding:14px 18px;color:#7c2d12;font-size:12.5px;line-height:1.85}
+.guide strong{color:var(--d-black);display:block;margin-bottom:6px;font-size:13.5px;display:flex;align-items:center;gap:6px}
+.guide strong i{color:#d97706}
+.guide code{background:rgba(255,255,255,.7);padding:2px 8px;border-radius:6px;font-family:monospace;color:#1E1E1E;font-size:12px}
+.guide-example{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;padding:10px;background:rgba(255,255,255,.7);border-radius:10px;font-family:monospace;font-size:12px;color:var(--d-black)}
+.guide-example .col{padding:4px 8px;border-radius:6px;background:#fff;text-align:center}
+.guide-example .hdr{font-weight:800;color:var(--d-text-muted);background:transparent}
+
+/* Submit area */
+.submit-bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px;padding-top:16px;border-top:1px dashed var(--d-border)}
+.submit-bar .submit-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:13px;background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;font-size:14.5px;font-weight:900;border:0;cursor:pointer;font-family:inherit;box-shadow:0 8px 22px rgba(244,186,42,.32);transition:.18s ease}
+.submit-bar .submit-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 28px rgba(244,186,42,.42)}
+.submit-bar .submit-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.submit-bar .cancel-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 22px;border-radius:13px;background:#fff;border:1px solid var(--d-border-strong);color:var(--d-text);font-size:13.5px;font-weight:800;font-family:inherit;text-decoration:none;transition:.18s ease}
+.submit-bar .cancel-btn:hover{border-color:var(--d-gold);background:#FAFAF8}
+
+@media (max-width:720px){
+  .imp-hero{padding:22px}
+  .imp-hero h2{font-size:20px}
+  .imp-card{padding:16px}
+}
+</style>
+{% endblock %}
+
+{% block cards_content %}
+
+<!-- ── Hero ── -->
+<div class="imp-hero">
+  <h2><i class="fa-solid fa-cloud-arrow-up"></i>رفع ملف بطاقات</h2>
+  <p>اختر الفئة، اسحب ملف البطاقات وأفلته، ثم اضغط رفع. النظام يكتشف الصيغة تلقائيًا ويتجاهل صف العنوان ويربط البطاقات بالفئة المختارة.</p>
+  <div class="imp-steps">
+    <div class="imp-step is-active" id="step-1"><span class="imp-step-n">1</span><span>اختيار الفئة</span></div>
+    <div class="imp-step" id="step-2"><span class="imp-step-n">2</span><span>اختيار الملف</span></div>
+    <div class="imp-step" id="step-3"><span class="imp-step-n">3</span><span>التأكيد والرفع</span></div>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('admin_cards_import_page') }}" enctype="multipart/form-data" id="import-form">
+  {{ csrf_token_input() | safe }}
+  <input type="hidden" name="category_code" id="category-code-input" value="">
+
+  <!-- ── Step 1: Category ── -->
+  <div class="imp-card">
+    <h3 class="imp-card-title"><i class="fa-solid fa-layer-group"></i> اختر فئة البطاقات</h3>
+    <div class="cat-grid">
+      {% for c in categories %}
+      {% set dm = c.duration_minutes|int %}
+      {% if dm <= 30 %}
+        {% set accent = '#0891b2' %}{% set frm = 'rgba(8,145,178,.10)' %}{% set to = 'rgba(8,145,178,.22)' %}{% set icon = 'fa-bolt' %}
+      {% elif dm <= 60 %}
+        {% set accent = '#1c52a8' %}{% set frm = 'rgba(28,82,168,.10)' %}{% set to = 'rgba(28,82,168,.22)' %}{% set icon = 'fa-clock' %}
+      {% elif dm <= 120 %}
+        {% set accent = '#7c3aed' %}{% set frm = 'rgba(124,58,237,.10)' %}{% set to = 'rgba(124,58,237,.22)' %}{% set icon = 'fa-hourglass-half' %}
+      {% elif dm <= 180 %}
+        {% set accent = '#d97706' %}{% set frm = 'rgba(217,119,6,.10)' %}{% set to = 'rgba(217,119,6,.22)' %}{% set icon = 'fa-bolt-lightning' %}
+      {% else %}
+        {% set accent = '#dc2626' %}{% set frm = 'rgba(220,38,38,.10)' %}{% set to = 'rgba(220,38,38,.22)' %}{% set icon = 'fa-fire' %}
+      {% endif %}
+      <button type="button" class="cat-card" data-code="{{ c.code }}" data-label="{{ c.label_ar }}"
+              style="--cat-accent:{{ accent }};--cat-from:{{ frm }};--cat-to:{{ to }}">
+        <span class="cat-check"><i class="fa-solid fa-check"></i></span>
+        <span class="cat-ico"><i class="fa-solid {{ icon }}"></i></span>
+        <span class="cat-label">{{ c.label_ar }}</span>
+        <span class="cat-min">{{ dm }} دقيقة</span>
+      </button>
+      {% else %}
+      <div style="grid-column:1/-1;text-align:center;color:var(--d-text-muted);padding:20px">
+        لا توجد فئات نشطة. <a href="{{ url_for('admin_cards_categories') }}" style="color:var(--d-gold-deep);font-weight:700">أضف فئة أولاً</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Step 2: File ── -->
+  <div class="imp-card">
+    <h3 class="imp-card-title"><i class="fa-solid fa-file-arrow-up"></i> اسحب الملف وأفلت هنا</h3>
+    <div class="drop-zone" id="drop-zone" role="button" tabindex="0">
+      <div class="drop-zone-ico"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+      <div class="drop-zone-title">اسحب الملف هنا أو اضغط للاختيار</div>
+      <div class="drop-zone-hint">ملف جدولي أو ملف إكسل — صف العنوان يُتجاهل تلقائيًا</div>
+      <div class="drop-zone-formats">
+        <span class="fmt">ملف جدولي</span>
+        <span class="fmt">إكسل</span>
+        <span class="fmt">إكسل ماكرو</span>
+      </div>
+    </div>
+    <input type="file" name="cards_file" id="cards-file" accept=".csv,.xlsx,.xlsm" required style="display:none">
+
+
+    <div class="file-chip" id="file-chip">
+      <span class="fc-ico"><i class="fa-solid fa-file-circle-check"></i></span>
+      <div class="fc-meta">
+        <div class="fc-name" id="fc-name">—</div>
+        <div class="fc-info" id="fc-info">—</div>
+      </div>
+      <button type="button" class="fc-remove" id="fc-remove" title="إزالة"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  </div>
+
+  <!-- ── Format guide ── -->
+  <div class="imp-card" style="background:transparent;border:0;padding:0;box-shadow:none;margin-bottom:14px">
+    <div class="guide">
+      <strong><i class="fa-solid fa-circle-info"></i>صيغة الملف المتوقعة</strong>
+      عمودان فقط: <strong>اسم المستخدم</strong> أولاً ثم <strong>كلمة المرور</strong>. النظام يتجاهل صف العنوان تلقائيًا.
+      <div class="guide-example">
+        <div class="col hdr">اسم المستخدم</div>
+        <div class="col hdr">كلمة المرور</div>
+        <div class="col">600001</div>
+        <div class="col">781234</div>
+        <div class="col">600002</div>
+        <div class="col">785678</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Submit ── -->
+  <div class="submit-bar">
+    <a class="cancel-btn" href="{{ url_for('admin_cards_inventory_page') }}"><i class="fa-solid fa-arrow-right"></i> عودة للمخزون</a>
+    <button class="submit-btn" type="submit" id="submit-btn" disabled>
+      <i class="fa-solid fa-cloud-arrow-up"></i>
+      <span id="submit-label">رفع البطاقات</span>
+    </button>
+  </div>
+</form>
+
+<script>
+(function(){
+  var step1 = document.getElementById('step-1');
+  var step2 = document.getElementById('step-2');
+  var step3 = document.getElementById('step-3');
+  var catInput = document.getElementById('category-code-input');
+  var dropZone = document.getElementById('drop-zone');
+  var fileInput = document.getElementById('cards-file');
+  var fileChip = document.getElementById('file-chip');
+  var fcName = document.getElementById('fc-name');
+  var fcInfo = document.getElementById('fc-info');
+  var fcRemove = document.getElementById('fc-remove');
+  var submitBtn = document.getElementById('submit-btn');
+  var submitLabel = document.getElementById('submit-label');
+  var form = document.getElementById('import-form');
+
+  function fmtSize(n){
+    if(n > 1048576) return (n/1048576).toFixed(2)+' ميجابايت';
+    if(n > 1024) return (n/1024).toFixed(1)+' كيلوبايت';
+    return n+' بايت';
+  }
+  function updateSteps(){
+    var hasCat = !!catInput.value;
+    var hasFile = fileInput.files && fileInput.files.length > 0;
+    step1.classList.toggle('is-done', hasCat);
+    step1.classList.toggle('is-active', !hasCat);
+    step2.classList.toggle('is-done', hasFile);
+    step2.classList.toggle('is-active', hasCat && !hasFile);
+    step3.classList.toggle('is-active', hasCat && hasFile);
+    submitBtn.disabled = !(hasCat && hasFile);
+  }
+
+  // Category cards
+  document.querySelectorAll('.cat-card').forEach(function(card){
+    card.addEventListener('click', function(){
+      document.querySelectorAll('.cat-card').forEach(function(x){ x.classList.toggle('is-selected', x === card); });
+      catInput.value = card.dataset.code;
+      updateSteps();
+    });
+  });
+
+  // Trigger file picker when clicking the drop-zone
+  dropZone.addEventListener('click', function(e){
+    // لا تفتح اختيار الملف إذا الضغط كان على زر الإزالة في الـ chip
+    if(e.target.closest && e.target.closest('.fc-remove')) return;
+    fileInput.click();
+  });
+  dropZone.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileInput.click(); }
+  });
+
+  // File handling
+  function showFile(file){
+    if(!file){
+      fileChip.classList.remove('is-show');
+      dropZone.classList.remove('has-file');
+      return;
+    }
+    fcName.textContent = file.name;
+    fcInfo.textContent = fmtSize(file.size);
+    fileChip.classList.add('is-show');
+    dropZone.classList.add('has-file');
+  }
+  fileInput.addEventListener('change', function(){
+    showFile(fileInput.files[0]);
+    updateSteps();
+  });
+  fcRemove.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
+    fileInput.value = '';
+    showFile(null);
+    updateSteps();
+  });
+
+  // Drag & drop
+  ['dragenter','dragover'].forEach(function(ev){
+    dropZone.addEventListener(ev, function(e){
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.add('is-dragover');
+    });
+  });
+  ['dragleave','drop'].forEach(function(ev){
+    dropZone.addEventListener(ev, function(e){
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.remove('is-dragover');
+    });
+  });
+  dropZone.addEventListener('drop', function(e){
+    var files = e.dataTransfer.files;
+    if(files && files.length){
+      fileInput.files = files;
+      showFile(files[0]);
+      updateSteps();
+    }
+  });
+
+  // Submit feedback
+  form.addEventListener('submit', function(){
+    submitBtn.disabled = true;
+    submitLabel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جارٍ الرفع...';
+  });
+
+  updateSteps();
+})();
+</script>
+
+{% endblock %}

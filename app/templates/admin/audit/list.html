@@ -1,0 +1,145 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}سجل العمليات{% endblock %}
+{% block page_title %}سجل العمليات{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>السجلات</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>سجل العمليات</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.audit-row td{vertical-align:middle;font-size:13px}
+.audit-row td.col-id{font-family:monospace;color:var(--d-text-muted);font-size:11.5px}
+.audit-row td.col-user{font-weight:700;color:var(--d-black)}
+.audit-row td.col-details{font-size:12.5px;color:var(--d-text-soft);max-width:340px;white-space:normal;line-height:1.55}
+.audit-row td.col-time{font-size:11.5px;color:var(--d-text-muted);font-family:monospace;white-space:nowrap}
+
+.act-badge{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 9px;
+  border-radius:999px;font-size:11.5px;font-weight:700;
+}
+.act-default{background:#F4F3EF;color:var(--d-text-soft)}
+.act-create{background:#e8f6ee;color:#1f8f51}
+.act-update{background:#FDF1CF;color:#7c2d12}
+.act-delete{background:#fde2e2;color:#b91c1c}
+.act-login{background:#e7f0fd;color:#1c52a8}
+
+.target-badge{
+  display:inline-flex;align-items:center;gap:5px;padding:2px 8px;
+  border-radius:8px;font-size:11px;font-weight:600;
+  background:rgba(244,186,42,.13);color:#7c2d12;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# Hero #}
+<section class="d-hero">
+  <div>
+    <h2>سجل العمليات</h2>
+    <p>كل العمليات الحساسة داخل النظام مع تتبع من قام بها ومتى حدثت.</p>
+  </div>
+  <div class="d-hero-actions">
+    <a class="d-pill-btn d-pill-btn--ghost" href="/audit-log">
+      <i class="fa-solid fa-rotate"></i>تحديث
+    </a>
+  </div>
+</section>
+
+{# KPIs #}
+<section class="d-kpi-grid">
+  <div class="d-kpi">
+    <div class="d-kpi-head">
+      <span class="d-kpi-label">إجمالي العمليات</span>
+      <span class="d-kpi-icon d-kpi-icon--dark"><i class="fa-solid fa-clock-rotate-left"></i></span>
+    </div>
+    <div class="d-kpi-value">{{ total }}</div>
+    <div class="d-kpi-trend is-flat"><small>كل ما هو مسجَّل في النظام</small></div>
+  </div>
+  <div class="d-kpi">
+    <div class="d-kpi-head">
+      <span class="d-kpi-label">محمَّل الآن</span>
+      <span class="d-kpi-icon d-kpi-icon--gold"><i class="fa-solid fa-eye"></i></span>
+    </div>
+    <div class="d-kpi-value">{{ loaded }}</div>
+    <div class="d-kpi-trend is-flat"><small>متاح للتصفح بدون إعادة تحميل</small></div>
+  </div>
+  <div class="d-kpi">
+    <div class="d-kpi-head">
+      <span class="d-kpi-label">سقف الجلب</span>
+      <span class="d-kpi-icon"><i class="fa-solid fa-database"></i></span>
+    </div>
+    <div class="d-kpi-value">{{ limit }}</div>
+    <div class="d-kpi-trend is-flat"><small>أحدث {{ limit }} سجل</small></div>
+  </div>
+</section>
+
+{% if truncated %}
+<div style="margin-top:14px;padding:10px 14px;border-radius:12px;background:rgba(244,186,42,.10);border:1px dashed rgba(244,186,42,.45);color:#7c2d12;font-size:12.5px">
+  <i class="fa-solid fa-circle-info"></i>
+  هناك أكثر من {{ limit }} سجلًا — تم تحميل أحدث {{ loaded }} فقط للأداء.
+</div>
+{% endif %}
+
+{# Table #}
+<section class="d-card" style="margin-top:16px">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-clock-rotate-left"></i>السجل التفصيلي</h3>
+    <span style="font-size:11.5px;color:var(--d-text-muted)">{{ loaded }} عملية</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="audit-log">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>المستخدم</th>
+          <th>العملية</th>
+          <th>الهدف</th>
+          <th>هدف ID</th>
+          <th>التفاصيل</th>
+          <th>الوقت</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr class="audit-row">
+          <td class="col-id">#{{ r.id }}</td>
+          <td class="col-user">{{ r.username_snapshot or '—' }}</td>
+          <td>
+            {% set a = (r.action_type or '')|lower %}
+            {% if 'create' in a or 'add' in a %}
+              <span class="act-badge act-create">{{ action_type_label(r.action_type) }}</span>
+            {% elif 'update' in a or 'edit' in a or 'patch' in a or 'approve' in a %}
+              <span class="act-badge act-update">{{ action_type_label(r.action_type) }}</span>
+            {% elif 'delete' in a or 'remove' in a or 'clear' in a %}
+              <span class="act-badge act-delete">{{ action_type_label(r.action_type) }}</span>
+            {% elif 'login' in a or 'logout' in a or 'auth' in a %}
+              <span class="act-badge act-login">{{ action_type_label(r.action_type) }}</span>
+            {% else %}
+              <span class="act-badge act-default">{{ action_type_label(r.action_type) }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if r.target_type %}
+              <span class="target-badge"><i class="fa-solid fa-tag"></i>{{ target_type_label(r.target_type) }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="col-id">{{ r.target_id or '—' }}</td>
+          <td class="col-details">{{ (r.details or '—')|arabize_audit }}</td>
+          <td class="col-time">{{ format_dt_compact(r.created_at) }}</td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="7" class="empty-state" style="text-align:center;padding:28px;color:var(--d-text-muted)">لا توجد عمليات مسجَّلة بعد.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}

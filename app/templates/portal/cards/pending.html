@@ -1,0 +1,53 @@
+{% extends "portal/cards/dashboard.html" %}
+{% block title %}بوابتي — طلباتي المعلّقة{% endblock %}
+{% block page_title %}طلباتي المعلّقة{% endblock %}
+{% block crumbs %}
+  <span>بوابة المشترك</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>البطاقات</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>المعلّقة</span>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-notice">
+  <i class="fa-solid fa-hourglass-half"></i>
+  <div>
+    <strong>هذه طلبات بطاقات قدّمتها وتنتظر التسليم من الإدارة.</strong>
+    عند تجهيزها سترى بطاقتك في الصفحة الرئيسية.
+  </div>
+</div>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list-check"></i>الطلبات المعلّقة</h3>
+    <a class="d-card-action" href="/card">العودة للرئيسية</a>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="10" data-page-sizes="10,20,50,100" data-persist-key="portal-cards-pending">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الفئة المطلوبة</th>
+          <th>وقت الطلب</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in pending_actions %}
+        <tr>
+          <td>#{{ a.id }}</td>
+          <td>{{ a.category_label or a.payload.get('category_code', '—') }}</td>
+          <td>{{ a.requested_at }}</td>
+          <td><span class="d-badge d-badge--warn">{{ a.status_label or 'قيد الانتظار' }}</span></td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="4" style="text-align:center;color:var(--d-text-muted);padding:32px">لا توجد طلبات معلّقة.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}

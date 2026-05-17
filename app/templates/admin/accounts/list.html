@@ -1,0 +1,144 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}إدارة المستخدمين{% endblock %}
+{% block page_title %}إدارة المستخدمين والصلاحيات{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>النظام</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>المستخدمون</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.acct-row td{vertical-align:middle;font-size:13px}
+.acct-row td.col-id{font-family:monospace;color:var(--d-text-muted);font-size:11.5px}
+.acct-row td.col-user{font-weight:700;color:var(--d-black);font-family:monospace}
+.acct-row td.col-name{font-size:12.5px;color:var(--d-text-soft)}
+
+.status-pill{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+  border-radius:999px;font-size:11.5px;font-weight:700;
+}
+.st-on{background:#e8f6ee;color:#1f8f51}
+.st-off{background:#fde2e2;color:#b91c1c}
+
+.perm-wrap{display:flex;flex-wrap:wrap;gap:4px;max-width:440px}
+.perm-chip{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 8px;
+  border-radius:8px;font-size:10.5px;font-weight:600;
+  background:rgba(244,186,42,.14);color:#7c2d12;
+}
+.perm-empty{font-size:11px;color:var(--d-text-muted);font-style:italic}
+
+.actions-cell{display:flex;gap:4px;justify-content:flex-end}
+.actions-cell .d-card-action{padding:4px 10px}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# Hero #}
+<section class="d-hero">
+  <div>
+    <h2>إدارة المستخدمين والصلاحيات</h2>
+    <p>أنشئ مستخدمين بصلاحيات دقيقة للسجل، الأرشيف، التصدير، والاسترجاع.</p>
+  </div>
+  <div class="d-hero-actions">
+    <a class="d-pill-btn" href="{{ url_for('add_account') }}">
+      <i class="fa-solid fa-user-plus"></i>إضافة مستخدم
+    </a>
+  </div>
+</section>
+
+{# KPIs #}
+<section class="d-kpi-grid">
+  <div class="d-kpi">
+    <div class="d-kpi-head">
+      <span class="d-kpi-label">إجمالي الحسابات</span>
+      <span class="d-kpi-icon d-kpi-icon--dark"><i class="fa-solid fa-users-gear"></i></span>
+    </div>
+    <div class="d-kpi-value">{{ accounts|length }}</div>
+    <div class="d-kpi-trend is-flat"><small>مستخدم في النظام</small></div>
+  </div>
+  <div class="d-kpi">
+    <div class="d-kpi-head">
+      <span class="d-kpi-label">المفعَّلون</span>
+      <span class="d-kpi-icon d-kpi-icon--success"><i class="fa-solid fa-circle-check"></i></span>
+    </div>
+    <div class="d-kpi-value">{{ active_count }}</div>
+    <div class="d-kpi-trend is-flat"><small>يمكنهم تسجيل الدخول</small></div>
+  </div>
+  <div class="d-kpi">
+    <div class="d-kpi-head">
+      <span class="d-kpi-label">المعطَّلون</span>
+      <span class="d-kpi-icon"><i class="fa-solid fa-circle-pause"></i></span>
+    </div>
+    <div class="d-kpi-value">{{ inactive_count }}</div>
+    <div class="d-kpi-trend is-flat"><small>دخولهم متوقَّف</small></div>
+  </div>
+</section>
+
+{# Table #}
+<section class="d-card" style="margin-top:16px">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list"></i>قائمة المستخدمين</h3>
+    <span style="font-size:11.5px;color:var(--d-text-muted)">{{ accounts|length }} حساب</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="accounts">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>اسم المستخدم</th>
+          <th>الاسم الكامل</th>
+          <th>الحالة</th>
+          <th>الصلاحيات</th>
+          <th style="text-align:left">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in accounts %}
+        <tr class="acct-row">
+          <td class="col-id">#{{ a.id }}</td>
+          <td class="col-user">{{ a.username }}</td>
+          <td class="col-name">{{ a.full_name or '—' }}</td>
+          <td>
+            {% if a.is_active %}
+              <span class="status-pill st-on"><i class="fa-solid fa-check"></i>مفعَّل</span>
+            {% else %}
+              <span class="status-pill st-off"><i class="fa-solid fa-pause"></i>معطَّل</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if a.permission_list %}
+            <div class="perm-wrap">
+              {% for p in a.permission_list %}
+              <span class="perm-chip"><i class="fa-solid fa-shield-halved"></i>{{ permission_label(p) }}</span>
+              {% endfor %}
+            </div>
+            {% else %}
+            <span class="perm-empty">لا توجد صلاحيات محددة</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="actions-cell">
+              <a class="d-card-action" href="/accounts/edit/{{ a.id }}" title="تعديل"><i class="fa-solid fa-pen"></i></a>
+              <form class="inline-form" method="POST" action="/accounts/toggle/{{ a.id }}" style="display:inline">
+                {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+                <button class="d-card-action" type="submit" title="تفعيل/تعطيل"><i class="fa-solid fa-power-off"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="6" class="empty-state" style="text-align:center;padding:28px;color:var(--d-text-muted)">لا توجد حسابات بعد. أضف أول مستخدم لإدارة النظام.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}

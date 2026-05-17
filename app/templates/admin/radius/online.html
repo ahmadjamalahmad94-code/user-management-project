@@ -1,0 +1,214 @@
+{% extends "admin/_admin_layout.html" %}
+
+{% block title %}المتصلون الآن{% endblock %}
+
+
+
+
+
+{% block page_title %}المتصلون الآن{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>RADIUS</span>
+  <i class="fa-solid fa-chevron-left"></i>
+  <span>المتصلون</span>
+{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<meta http-equiv="refresh" content="30">
+<style>
+.online-hero{
+  background:linear-gradient(135deg,var(--d-black),var(--d-black-deeper));
+  color:#fff;
+  border-radius:var(--d-radius-xl);
+  padding:32px 36px;
+  display:flex;align-items:center;justify-content:space-between;gap:24px;
+  position:relative;overflow:hidden;flex-wrap:wrap;
+}
+.online-hero::after{
+  content:"";position:absolute;
+  inset:auto -100px -120px auto;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle, rgba(31,143,81,.25), transparent 70%);
+  pointer-events:none;
+}
+.online-hero .big{
+  font-size:64px;
+  font-weight:800;
+  line-height:1;
+  color:var(--d-gold);
+  font-feature-settings:"tnum" 1;
+}
+.online-hero .big small{
+  font-size:18px;
+  color:rgba(255,255,255,.55);
+  font-weight:600;
+}
+.online-hero-info strong{font-size:18px;font-weight:800;display:block}
+.online-hero-info span{font-size:13px;color:rgba(255,255,255,.7);line-height:1.8}
+
+.pulse-dot{
+  display:inline-block;
+  width:10px;height:10px;border-radius:50%;
+  background:#22c55e;
+  margin-inline-end:8px;
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.7)}
+  50%{box-shadow:0 0 0 8px rgba(34,197,94,0)}
+}
+
+.auto-refresh-bar{
+  position:relative;
+  height:3px;
+  background:rgba(255,255,255,.1);
+  border-radius:3px;
+  overflow:hidden;
+  margin-top:12px;
+}
+.auto-refresh-bar::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,var(--d-gold),var(--d-gold-deep));
+  animation:refresh-bar 30s linear infinite;
+  transform-origin:left;
+}
+@keyframes refresh-bar{
+  from{transform:scaleX(0)}
+  to{transform:scaleX(1)}
+}
+
+.format-bytes::after{content:""}
+</style>
+{% endblock %}
+
+
+
+{% block content %}
+
+<section class="online-hero">
+  <div class="online-hero-info">
+    <strong>
+      {% if sessions_result.available %}
+        <span class="pulse-dot"></span>الجلسات النشطة الآن
+      {% else %}
+        <i class="fa-solid fa-triangle-exclamation" style="color:var(--d-gold)"></i> غير متاح
+      {% endif %}
+    </strong>
+    <span>
+      {% if sessions_result.available %}
+        تحديث تلقائي كل 30 ثانية
+        {% if sessions_result.cached %}— آخر قراءة قبل {{ sessions_result.age_seconds }}ث{% endif %}
+        <div class="auto-refresh-bar"></div>
+      {% else %}
+        {{ sessions_result.error or "RADIUS API غير مفعّل." }}
+      {% endif %}
+    </span>
+  </div>
+  <div class="big">
+    {{ online_count }}
+    <small>متصل</small>
+  </div>
+</section>
+
+<section style="display:grid;grid-template-columns:auto auto 1fr;gap:10px;align-items:center;flex-wrap:wrap">
+  <form method="POST" action="{{ url_for('admin_radius_online_refresh') }}">
+    {{ csrf_token_input() | safe }}
+    <button class="d-pill-btn" type="submit">
+      <i class="fa-solid fa-arrows-rotate"></i>تحديث فوري
+    </button>
+  </form>
+  <span style="font-size:12px;color:var(--d-text-muted)">
+    <i class="fa-solid fa-circle-info"></i>
+    الصفحة تتحدّث تلقائيًا كل 30ث
+  </span>
+  {% if server_info.available %}
+  <span style="margin-inline-start:auto;font-size:12px;color:var(--d-text-muted)">
+    🟢 API v{{ server_info.data.api_version }} — وقت السيرفر: {{ server_info.data.server_time }}
+  </span>
+  {% endif %}
+</section>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-list"></i>قائمة الجلسات</h3>
+    <span style="font-size:11.5px;color:var(--d-text-muted)">{{ online_count }} جلسة</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="radius-online">
+      <thead>
+        <tr>
+          <th>المستخدم</th>
+          <th>IP</th>
+          <th>MAC</th>
+          <th>NAS</th>
+          <th>مدة الاتصال</th>
+          <th>الترافيك</th>
+          <th>إجراء</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+        <tr>
+          <td><strong style="font-family:monospace">{{ s.username }}</strong></td>
+          <td style="font-family:monospace">{{ s.framed_ip }}</td>
+          <td style="font-family:monospace;font-size:12px;color:var(--d-text-muted)">{{ s.calling_id }}</td>
+          <td>{{ s.nas }}</td>
+          <td>
+            {% set sec = s.running_sec | int %}
+            {% set h = (sec // 3600) %}
+            {% set m = ((sec % 3600) // 60) %}
+            {% if h > 0 %}{{ h }}س {% endif %}{{ m }}د
+          </td>
+          <td>
+            {% set kb_in = (s.bytes_in | int) // 1024 %}
+            {% set kb_out = (s.bytes_out | int) // 1024 %}
+            <span style="font-size:11.5px">↓ {{ kb_in }} KB · ↑ {{ kb_out }} KB</span>
+          </td>
+          <td>
+            <button class="d-card-action" type="button" disabled
+                    title="فصل الجلسة — قيد التطوير (يحتاج RADIUS_API_WRITES_ENABLED=1)"
+                    style="opacity:.55;cursor:not-allowed">
+              <i class="fa-solid fa-plug-circle-xmark"></i> فصل 🚧
+            </button>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" style="text-align:center;color:var(--d-text-muted);padding:48px 20px">
+            {% if not sessions_result.available %}
+              <i class="fa-solid fa-circle-info" style="display:block;font-size:32px;color:var(--d-border-strong);margin-bottom:8px"></i>
+              <strong>الـ API غير متصل</strong><br>
+              <small>{{ sessions_result.error or "تأكد من RADIUS_API_READY=1" }}</small>
+            {% else %}
+              <i class="fa-solid fa-wifi" style="display:block;font-size:32px;color:var(--d-border-strong);margin-bottom:8px"></i>
+              <strong>لا يوجد متصلون الآن</strong><br>
+              <small>سيظهرون هنا فور دخولهم</small>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-book"></i>ملاحظات</h3>
+  </div>
+  <div class="d-card-body">
+    <ul style="padding-inline-start:20px;line-height:2;font-size:13.5px;color:var(--d-text-soft);margin:0">
+      <li>الجلسات تأتي مباشرة من <code>radacct</code> عبر <code>/get_online_users</code>.</li>
+      <li>المدير الحالي (<code>ahmad</code>) يرى فقط الجلسات تحت إدارته (owner_id == man_id).</li>
+      <li>زر "فصل" يستخدم RADIUS CoA Disconnect — مُعطَّل لحد ما تفعّل <code>RADIUS_API_WRITES_ENABLED=1</code>.</li>
+      <li>الصفحة تتحدّث تلقائيًا كل 30ث (Meta refresh) — تستطيع التحديث الفوري بزر "تحديث فوري".</li>
+    </ul>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}تقرير {{ beneficiary.full_name }}{% endblock %}
+{% block page_title %}التقرير الشهري{% endblock %}
+{% block crumbs %}
+  <span>الإدارة</span><i class="fa-solid fa-chevron-left"></i>
+  <a href="{{ url_for('admin_user_profile_page', beneficiary_id=beneficiary.id) }}">{{ beneficiary.full_name }}</a>
+  <i class="fa-solid fa-chevron-left"></i><span>التقرير الشهري</span>
+{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.mr-hero{background:linear-gradient(135deg,#1E1E1E,#2a2724);color:#fff;border-radius:18px;
+  padding:22px 26px;margin-bottom:16px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
+.mr-hero::after{content:"";position:absolute;inset:auto -80px -120px auto;width:200px;height:200px;
+  border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.25),transparent 70%)}
+.mr-hero-ico{width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,var(--d-gold),#FFD96A);
+  color:#1E1E1E;display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.mr-hero h2{margin:0 0 4px;font-size:20px;font-weight:900}
+.mr-hero p{margin:0;font-size:13px;color:rgba(255,255,255,.72)}
+
+.mr-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.mr-stat{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:16px;
+  display:flex;align-items:center;gap:12px}
+.mr-stat-ico{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.mr-stat-ico.g{background:#e8f6ee;color:#166534}
+.mr-stat-ico.b{background:#eef4ff;color:#1d4ed8}
+.mr-stat-ico.y{background:#fef3c7;color:#92400e}
+.mr-stat .lbl{font-size:11px;color:var(--d-text-soft);font-weight:800;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:3px}
+.mr-stat .val{font-size:22px;font-weight:900;color:var(--d-black);line-height:1;font-feature-settings:"tnum"}
+
+.mr-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;
+  padding:18px 22px;margin-bottom:14px;box-shadow:0 1px 3px rgba(30,30,30,.04)}
+.mr-card h3{margin:0 0 14px;font-size:14.5px;font-weight:900;color:var(--d-black);
+  display:flex;align-items:center;gap:9px;padding-bottom:10px;border-bottom:1px dashed var(--d-border)}
+.mr-card h3 i{color:var(--d-gold)}
+
+/* Bar chart */
+.mr-chart{display:flex;align-items:flex-end;gap:3px;height:240px;padding:14px 0;
+  border-bottom:1px solid var(--d-border);overflow-x:auto}
+.mr-bar{flex:1;min-width:18px;background:linear-gradient(180deg,var(--d-gold),#FFD96A);
+  border-radius:6px 6px 0 0;position:relative;cursor:pointer;transition:.2s;min-height:4px}
+.mr-bar:hover{background:linear-gradient(180deg,#1E1E1E,#3a3633);transform:translateY(-2px)}
+.mr-bar::before{content:attr(data-v);position:absolute;top:-22px;left:50%;transform:translateX(-50%);
+  font-size:10px;color:var(--d-text-muted);font-weight:800;white-space:nowrap;opacity:0;transition:.15s}
+.mr-bar:hover::before{opacity:1}
+.mr-bar::after{content:attr(data-d);position:absolute;bottom:-22px;left:50%;transform:translateX(-50%) rotate(-50deg);
+  transform-origin:top left;font-size:9.5px;color:var(--d-text-muted);white-space:nowrap}
+.mr-chart-wrap{padding-bottom:30px}
+
+.mr-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.mr-table th,.mr-table td{padding:8px 12px;text-align:start;border-bottom:1px solid #f5f3ee}
+.mr-table th{font-size:11px;color:var(--d-text-soft);font-weight:800;text-transform:uppercase;background:#fbfaf7}
+.mr-online{display:inline-block;padding:2px 8px;border-radius:999px;background:#e8f6ee;color:#166534;font-size:10.5px;font-weight:800}
+.mr-offline{display:inline-block;padding:2px 8px;border-radius:999px;background:#f3f4f6;color:#6b7280;font-size:10.5px;font-weight:800}
+
+.mr-empty{padding:40px;text-align:center;color:var(--d-text-muted)}
+.mr-empty i{display:block;font-size:32px;margin-bottom:8px}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="mr-hero">
+  <span class="mr-hero-ico"><i class="fa-solid fa-chart-line"></i></span>
+  <div>
+    <h2>التقرير الشهري — {{ beneficiary.full_name }}</h2>
+    <p>تاريخ الاستهلاك خلال الأيام الماضية مبني على snapshots يومية محفوظة من RADIUS API.</p>
+  </div>
+</section>
+
+<section class="mr-stats">
+  <div class="mr-stat">
+    <span class="mr-stat-ico g"><i class="fa-solid fa-database"></i></span>
+    <div><span class="lbl">آخر استهلاك</span><span class="val">{{ '%.1f'|format(total_gb) }} GB</span></div>
+  </div>
+  <div class="mr-stat">
+    <span class="mr-stat-ico b"><i class="fa-solid fa-wifi"></i></span>
+    <div><span class="lbl">أيام نشطة</span><span class="val">{{ online_days }} / {{ snapshots|length }}</span></div>
+  </div>
+  <div class="mr-stat">
+    <span class="mr-stat-ico y"><i class="fa-solid fa-camera"></i></span>
+    <div><span class="lbl">عدد الـ snapshots</span><span class="val">{{ snapshots|length }}</span></div>
+  </div>
+</section>
+
+<div class="mr-card">
+  <h3><i class="fa-solid fa-chart-column"></i>منحنى الاستهلاك (آخر 30 يوم)</h3>
+  {% if chart_data %}
+  {% set max_gb = (chart_data | map(attribute='gb') | max) or 1 %}
+  <div class="mr-chart-wrap">
+    <div class="mr-chart">
+      {% for d in chart_data %}
+        {% set h = (d.gb / max_gb * 100) if max_gb > 0 else 0 %}
+        <div class="mr-bar"
+             style="height:{{ h }}%"
+             data-v="{{ d.gb }} GB"
+             data-d="{{ d.d }}"
+             title="{{ d.d }} — {{ d.gb }} GB"></div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="mr-empty">
+    <i class="fa-regular fa-folder-open"></i>
+    <div>لا توجد snapshots بعد. اذهب لـ <a href="{{ url_for('admin_radius_live_monitor') }}">المراقبة الحية</a> واضغط "Snapshot يومي".</div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="mr-card">
+  <h3><i class="fa-solid fa-list"></i>سجل الـ snapshots</h3>
+  {% if snapshots %}
+  <table class="mr-table">
+    <thead><tr><th>التاريخ</th><th>الاستهلاك</th><th>الباقة</th><th>الحالة</th><th>السرعة (نزول/صعود)</th></tr></thead>
+    <tbody>
+      {% for s in snapshots %}
+      <tr>
+        <td style="font-family:monospace">{{ s.snapshot_date }}</td>
+        <td style="font-family:monospace;font-weight:800">{{ '%.2f'|format((s.usage_bytes or 0)/1024/1024/1024) }} GB</td>
+        <td>{{ s.profile_name or '—' }}</td>
+        <td>
+          {% if s.is_online %}<span class="mr-online">متصل</span>{% else %}<span class="mr-offline">غير متصل</span>{% endif %}
+        </td>
+        <td style="font-family:monospace;font-size:11px">{{ s.down_speed or '—' }} / {{ s.up_speed or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="mr-empty"><i class="fa-regular fa-folder-open"></i><div>لا توجد بيانات بعد.</div></div>
+  {% endif %}
+</div>
+{% endblock %}

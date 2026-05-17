@@ -1,0 +1,297 @@
+{% extends "portal/account/_layout.html" %}
+{% block title %}{{ form_title }}{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+:root{
+  --uf-gold:#F4BA2A;--uf-gold-2:#FFD96A;--uf-ink:#1E1E1E;
+  --uf-cream:#fbfaf7;--uf-line:#e8e2d5;--uf-muted:#6f6758;
+}
+
+/* Hero per-form coloring */
+.uf-hero{
+  display:flex;align-items:center;gap:14px;padding:20px 22px;border-radius:18px;
+  margin-bottom:16px;position:relative;overflow:hidden;color:#fff;
+  box-shadow:0 12px 28px rgba(30,30,30,.14);
+}
+.uf-hero::after{content:"";position:absolute;inset:auto -80px -120px auto;width:200px;height:200px;
+  border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.20),transparent 70%)}
+.uf-hero.--pwd{background:linear-gradient(135deg,#1d4ed8 0%,#3b6dd8 100%)}
+.uf-hero.--unblock{background:linear-gradient(135deg,#166534 0%,#22c55e 100%)}
+.uf-hero.--speed{background:linear-gradient(135deg,#7c2d12 0%,#F4BA2A 100%)}
+.uf-hero-ico{
+  width:56px;height:56px;border-radius:16px;display:grid;place-items:center;font-size:24px;
+  background:rgba(255,255,255,.18);color:#fff;flex-shrink:0;backdrop-filter:blur(2px);
+  border:1px solid rgba(255,255,255,.22);
+}
+.uf-hero h2{margin:0 0 4px;font-size:19px;font-weight:900;color:#fff;letter-spacing:-.2px}
+.uf-hero p{margin:0;font-size:13px;color:rgba(255,255,255,.85);line-height:1.7;max-width:600px}
+
+/* Card — centered */
+.uf-card{
+  background:#fff;border:1px solid var(--uf-line);border-radius:16px;
+  box-shadow:0 1px 3px rgba(30,30,30,.04);
+  max-width:720px;width:100%;margin:0 auto;overflow:hidden;
+}
+.uf-hero{max-width:720px;width:100%;margin-left:auto;margin-right:auto;margin-bottom:16px}
+.uf-card-head{
+  display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--uf-line);
+  background:linear-gradient(180deg,#fbfaf7,#fff);
+}
+.uf-card-head i{
+  width:32px;height:32px;border-radius:9px;background:#fff7df;color:#7a5310;
+  display:grid;place-items:center;font-size:13px;flex-shrink:0;
+}
+.uf-card-head h3{margin:0;font-size:14.5px;font-weight:900;color:var(--uf-ink)}
+.uf-card-body{padding:20px 22px}
+
+/* fields */
+.uf-grid{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:560px){
+  .uf-grid.cols-2{grid-template-columns:1fr 1fr}
+}
+.uf-field{display:flex;flex-direction:column;gap:6px}
+.uf-field label{font-size:12.5px;font-weight:800;color:var(--uf-muted)}
+.uf-field label small{color:#aaa;font-weight:600;margin-inline-start:6px}
+.uf-field input,.uf-field select,.uf-field textarea{
+  padding:11px 14px;border-radius:11px;border:1.5px solid #d8d0c1;
+  font-size:13.5px;font-family:inherit;background:var(--uf-cream);transition:.15s;
+}
+.uf-field input:focus,.uf-field select:focus,.uf-field textarea:focus{
+  outline:0;border-color:var(--uf-gold);background:#fff;
+  box-shadow:0 0 0 4px rgba(244,186,42,.18);
+}
+.uf-field textarea{resize:vertical;min-height:90px}
+
+/* Speed chips (visual selector) */
+.uf-chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(85px,1fr));gap:8px}
+.uf-chip{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:11px 8px;border:1.5px solid #d8d0c1;border-radius:11px;
+  cursor:pointer;background:var(--uf-cream);transition:.15s;
+}
+.uf-chip:hover{border-color:var(--uf-gold);background:#fff}
+.uf-chip input{display:none}
+.uf-chip:has(input:checked){
+  background:linear-gradient(135deg,var(--uf-gold),var(--uf-gold-2));
+  border-color:var(--uf-gold);color:var(--uf-ink);
+}
+.uf-chip b{font-size:14px;font-weight:900}
+.uf-chip small{font-size:10.5px;color:var(--uf-muted);font-weight:700}
+.uf-chip:has(input:checked) small{color:rgba(30,30,30,.7)}
+
+/* Submit row */
+.uf-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:18px}
+.uf-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 22px;border-radius:11px;font-size:13.5px;font-weight:900;
+  font-family:inherit;cursor:pointer;border:1.5px solid transparent;transition:.15s;
+}
+.uf-btn--primary{background:linear-gradient(135deg,var(--uf-gold),var(--uf-gold-2));color:var(--uf-ink);box-shadow:0 8px 18px rgba(244,186,42,.30)}
+.uf-btn--primary:hover{transform:translateY(-1px)}
+.uf-btn--ghost{background:#fff;color:var(--uf-ink);border-color:var(--uf-line)}
+.uf-btn--ghost:hover{background:var(--uf-cream)}
+
+/* Helper hint card */
+.uf-hint{
+  display:flex;align-items:flex-start;gap:10px;padding:12px 14px;
+  background:#fff7df;border:1px solid #f1d993;border-radius:11px;
+  color:#7a5310;font-size:12.5px;line-height:1.7;margin-bottom:14px;
+}
+.uf-hint i{color:#D8A11C;font-size:14px;margin-top:2px;flex-shrink:0}
+
+/* Password strength meter */
+.uf-meter{display:flex;gap:4px;margin-top:6px;height:5px}
+.uf-meter span{flex:1;background:#eee5d2;border-radius:3px;transition:.2s}
+.uf-meter.s1 span:nth-child(1){background:#ef4444}
+.uf-meter.s2 span:nth-child(-n+2){background:#f59e0b}
+.uf-meter.s3 span:nth-child(-n+3){background:#22c55e}
+.uf-meter.s4 span{background:#16a34a}
+.uf-meter-lbl{font-size:11px;color:var(--uf-muted);margin-top:4px;font-weight:700}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ─── Hero مخصّص لكل نوع ─── #}
+{% if form_type == 'change_password' %}
+  <section class="uf-hero --pwd">
+    <span class="uf-hero-ico"><i class="fa-solid fa-key"></i></span>
+    <div>
+      <h2>تغيير كلمة المرور</h2>
+      <p>اطلب كلمة مرور جديدة لحسابك. سيراجع الفريق طلبك ويتواصل معك للتأكيد.</p>
+    </div>
+  </section>
+{% elif form_type == 'password_frozen' %}
+  <section class="uf-hero --pwd">
+    <span class="uf-hero-ico"><i class="fa-solid fa-lock"></i></span>
+    <div>
+      <h2>تغيير كلمة المرور موقوف مؤقتًا</h2>
+      <p>هذه الخدمة غير متاحة حاليًا من بوابة المشترك. عند الحاجة تواصل مع الإدارة.</p>
+    </div>
+  </section>
+{% elif form_type == 'unblock_site' %}
+  <section class="uf-hero --unblock">
+    <span class="uf-hero-ico"><i class="fa-solid fa-globe"></i></span>
+    <div>
+      <h2>فتح موقع محجوب</h2>
+      <p>أرسل رابط الموقع مع سبب الطلب — يساعدنا توضيح الاستخدام على معالجة طلبك أسرع.</p>
+    </div>
+  </section>
+{% elif form_type == 'speed_upgrade' %}
+  <section class="uf-hero --speed">
+    <span class="uf-hero-ico"><i class="fa-solid fa-gauge-high"></i></span>
+    <div>
+      <h2>طلب رفع السرعة</h2>
+      <p>اختر السرعة المطلوبة ومدتها. الطلب يُراجَع من فريق الإدارة قبل التطبيق.</p>
+    </div>
+  </section>
+{% endif %}
+
+<section class="uf-card">
+  <div class="uf-card-head">
+    <i class="fa-solid {{ form_icon }}"></i>
+    <h3>تفاصيل الطلب</h3>
+  </div>
+  <div class="uf-card-body">
+
+    {% if form_type != 'password_frozen' %}
+    <div class="uf-hint">
+      <i class="fa-solid fa-circle-info"></i>
+      <span>سيدخل طلبك قائمة المراجعة الإدارية. ستجد حالته في <b>طلباتي</b>، وسيتم التواصل معك عند التنفيذ.</span>
+    </div>
+    {% endif %}
+
+    {% if form_type == 'password_frozen' %}
+      <div class="uf-hint">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>جمّدنا تغيير كلمة المرور مؤقتًا لحين اعتماد آلية التنفيذ النهائية. يمكنك الرجوع إلى حسابك أو متابعة طلباتك الحالية.</span>
+      </div>
+      <div class="uf-actions">
+        <a class="uf-btn uf-btn--primary" href="{{ url_for('user_account_dashboard') }}">
+          <i class="fa-solid fa-arrow-right"></i>العودة إلى حسابي
+        </a>
+        <a class="uf-btn uf-btn--ghost" href="{{ url_for('user_account_my_requests') }}">
+          <i class="fa-solid fa-list-check"></i>طلباتي
+        </a>
+      </div>
+    {% else %}
+    <form method="POST">
+      {{ csrf_token_input() | safe }}
+
+      {# ─── تغيير كلمة المرور ─── #}
+      {% if form_type == 'change_password' %}
+      <div class="uf-grid">
+        <div class="uf-field">
+          <label>كلمة المرور الحالية <small>(لتأكيد الهوية)</small></label>
+          <input type="password" name="current_password" required autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <div class="uf-grid cols-2">
+          <div class="uf-field">
+            <label>كلمة المرور الجديدة</label>
+            <input id="uf-new-pwd" type="password" name="new_password" required minlength="6" autocomplete="new-password" placeholder="6 أحرف على الأقل">
+            <div class="uf-meter" id="uf-meter"><span></span><span></span><span></span><span></span></div>
+            <div class="uf-meter-lbl" id="uf-meter-lbl">قوة كلمة المرور: —</div>
+          </div>
+          <div class="uf-field">
+            <label>تأكيد كلمة المرور</label>
+            <input type="password" name="confirm_password" required minlength="6" autocomplete="new-password" placeholder="أعد كتابة كلمة المرور">
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ─── فتح موقع محجوب ─── #}
+      {% if form_type == 'unblock_site' %}
+      <div class="uf-grid">
+        <div class="uf-field">
+          <label>رابط الموقع المراد فتحه</label>
+          <input type="url" name="site_url" required placeholder="https://example.com" dir="ltr" style="text-align:left">
+        </div>
+        <div class="uf-field">
+          <label>سبب الطلب</label>
+          <textarea name="reason" rows="3" required placeholder="مثلاً: موقع تعليمي مطلوب للدراسة، موقع عمل…"></textarea>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ─── طلب رفع السرعة ─── #}
+      {% if form_type == 'speed_upgrade' %}
+      <div class="uf-field">
+        <label>السرعة المطلوبة</label>
+        <div class="uf-chips">
+          {% for v, lbl, sub in [('10mbps','10','ميغابت'),('20mbps','20','ميغابت'),('30mbps','30','ميغابت'),('50mbps','50','ميغابت'),('100mbps','100','ميغابت')] %}
+          <label class="uf-chip">
+            <input type="radio" name="requested_speed" value="{{ v }}" {% if loop.first %}required{% endif %}>
+            <b>{{ lbl }}</b>
+            <small>{{ sub }}</small>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="uf-grid cols-2" style="margin-top:14px">
+        <div class="uf-field">
+          <label>المدة المطلوبة</label>
+          <select name="duration" required>
+            <option value="">— اختر المدة —</option>
+            <option value="hour">ساعة واحدة</option>
+            <option value="day">يوم كامل</option>
+            <option value="week">أسبوع</option>
+            <option value="permanent">دائم</option>
+          </select>
+        </div>
+        <div class="uf-field">
+          <label>أولوية الطلب</label>
+          <select name="priority">
+            <option value="normal" selected>عادية</option>
+            <option value="urgent">عاجلة</option>
+          </select>
+        </div>
+        <div class="uf-field" style="grid-column:1/-1">
+          <label>سبب الطلب <small>(اختياري)</small></label>
+          <textarea name="reason" rows="3" placeholder="مثلاً: تحميل ملفات كبيرة، مكالمات عمل، اجتماعات…"></textarea>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="uf-actions">
+        <a class="uf-btn uf-btn--ghost" href="{{ url_for('user_account_dashboard') }}">
+          <i class="fa-solid fa-arrow-right"></i>عودة
+        </a>
+        <button class="uf-btn uf-btn--primary" type="submit">
+          <i class="fa-solid fa-paper-plane"></i>إرسال الطلب
+        </button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</section>
+
+{% if form_type == 'change_password' %}
+<script>
+(function(){
+  var inp = document.getElementById('uf-new-pwd');
+  var meter = document.getElementById('uf-meter');
+  var lbl = document.getElementById('uf-meter-lbl');
+  if(!inp) return;
+  function score(s){
+    var n = 0;
+    if(s.length >= 6) n++;
+    if(s.length >= 10) n++;
+    if(/[A-Z]/.test(s) && /[a-z]/.test(s)) n++;
+    if(/\d/.test(s) && /[^A-Za-z0-9]/.test(s)) n++;
+    return Math.min(n, 4);
+  }
+  var labels = ['—','ضعيفة','مقبولة','جيدة','قوية'];
+  inp.addEventListener('input', function(){
+    var s = score(inp.value || '');
+    meter.className = 'uf-meter s' + s;
+    lbl.textContent = 'قوة كلمة المرور: ' + labels[s];
+  });
+})();
+</script>
+{% endif %}
+
+{% endblock %}

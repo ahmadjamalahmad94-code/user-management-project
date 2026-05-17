@@ -1,0 +1,48 @@
+{% extends "admin/_admin_layout.html" %}
+
+{% block head_extra %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_hub.css') }}">
+<style>
+.sms-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.sms-nav a{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:999px;
+  background:#fff;border:1.5px solid var(--d-border-strong);color:var(--d-text-soft);
+  font-size:13px;font-weight:800;text-decoration:none;transition:.15s}
+.sms-nav a:hover{border-color:var(--d-gold);color:var(--d-black)}
+.sms-nav a.is-on{background:#1E1E1E;color:#fff;border-color:#1E1E1E}
+.sms-nav a.is-on i{color:var(--d-gold)}
+
+.sms-hero{background:linear-gradient(135deg,#1E1E1E,#2a2724);color:#fff;border-radius:18px;
+  padding:22px 26px;margin-bottom:14px;display:flex;align-items:center;gap:14px;
+  position:relative;overflow:hidden;box-shadow:0 12px 32px rgba(30,30,30,.18)}
+.sms-hero::after{content:"";position:absolute;inset:auto -80px -120px auto;width:200px;height:200px;
+  border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.25),transparent 70%)}
+.sms-hero-ico{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--d-gold),#FFD96A);color:#1E1E1E;font-size:22px;flex-shrink:0}
+.sms-hero h2{margin:0 0 4px;font-size:20px;font-weight:900}
+.sms-hero p{margin:0;font-size:13px;color:rgba(255,255,255,.72);line-height:1.7}
+
+.sms-flash{padding:11px 14px;border-radius:11px;margin-bottom:12px;font-weight:700;font-size:13px}
+.sms-flash.s{background:#e8f6ee;color:#1f8f51}
+.sms-flash.e{background:#fde2e2;color:#b91c1c}
+</style>
+{% endblock %}
+
+{% block content %}
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in msgs %}
+    <div class="sms-flash {{ 's' if cat == 'success' else 'e' }}">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+{% set p = request.path %}
+<nav class="sms-nav" aria-label="تنقل SMS">
+  <a href="{{ url_for('admin_sms_dashboard') }}" class="{% if p == '/admin/sms' %}is-on{% endif %}"><i class="fa-solid fa-gauge-high"></i> لوحة SMS</a>
+  <a href="{{ url_for('admin_sms_settings_page') }}" class="{% if p == '/admin/sms/settings' %}is-on{% endif %}"><i class="fa-solid fa-gear"></i> إعدادات API</a>
+  <a href="{{ url_for('admin_sms_services_page') }}" class="{% if p == '/admin/sms/services' %}is-on{% endif %}"><i class="fa-solid fa-toggle-on"></i> الخدمات</a>
+  <a href="{{ url_for('admin_sms_log_page') }}" class="{% if p == '/admin/sms/log' %}is-on{% endif %}"><i class="fa-solid fa-list-check"></i> سجل الرسائل</a>
+</nav>
+
+{% block sms_content %}{% endblock %}
+{% endblock %}

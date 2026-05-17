@@ -1,0 +1,78 @@
+{% extends "auth/_layout.html" %}
+
+{% set active_nav = 'portal' %}
+{% block title %}الرئيسية{% endblock %}
+
+{% block content %}
+  {# ─── Hero ─────────────────────────────────────────────────── #}
+  <section class="auth-hero" aria-labelledby="portal-hero-title">
+    <span class="auth-hero-eyebrow">
+      <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+      دخول موحّد ذكي
+    </span>
+    <h1 id="portal-hero-title">منصّة Hobe Hub — خدمات الإنترنت بطريقة واحدة بسيطة</h1>
+    <p>
+      أدخل رقم جوالك مرة واحدة، وسنوصلك تلقائيًا لبوابتك الصحيحة —
+      مشترك، بطاقات، أو حساب جديد بانتظار التفعيل.
+    </p>
+  </section>
+
+  {# ─── Two primary actions: login + register ────────────────── #}
+  <section class="auth-paths auth-paths--single" aria-label="نقاط الدخول">
+    <a class="auth-path auth-path--primary auth-path--wide" href="/login">
+      <span class="auth-path-icon" aria-hidden="true">
+        <i class="fa-solid fa-right-to-bracket"></i>
+      </span>
+      <h3>تسجيل الدخول</h3>
+      <p>دخول موحّد لكل المشتركين — رقم الجوال أو اسم المستخدم، ونحن نتعرّف على نوع حسابك تلقائيًا.</p>
+      <span class="auth-path-cta">
+        ابدأ الدخول
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      </span>
+    </a>
+
+    <a class="auth-path auth-path--accent" href="{{ url_for('user_register') }}">
+      <span class="auth-path-icon" aria-hidden="true">
+        <i class="fa-solid fa-user-plus"></i>
+      </span>
+      <h3>اشتراك جديد</h3>
+      <p>سجّل بياناتك الأولية ليتم التواصل معك وتجهيز حساب الاشتراك المناسب لك.</p>
+      <span class="auth-path-cta">
+        إنشاء طلب اشتراك
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      </span>
+    </a>
+  </section>
+
+  {# ─── How it works ────────────────────────────────────────── #}
+  <section class="auth-trust" aria-label="كيف يعمل الدخول">
+    <div class="auth-trust-item">
+      <i class="fa-solid fa-1" aria-hidden="true"></i>
+      <div>
+        <strong>أدخل رقمك</strong><br>
+        اكتب رقم جوالك أو اسم المستخدم في خانة واحدة.
+      </div>
+    </div>
+    <div class="auth-trust-item">
+      <i class="fa-solid fa-2" aria-hidden="true"></i>
+      <div>
+        <strong>نتعرّف على حسابك</strong><br>
+        نحدّد إذا كان نشطًا أو يحتاج تفعيلًا أو غير مسجّل.
+      </div>
+    </div>
+    <div class="auth-trust-item">
+      <i class="fa-solid fa-3" aria-hidden="true"></i>
+      <div>
+        <strong>كلمة المرور أو الكود</strong><br>
+        أكمل بكلمة المرور المعتادة أو برمز التفعيل الجديد.
+      </div>
+    </div>
+    <div class="auth-trust-item">
+      <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+      <div>
+        <strong>دخول لبوابتك</strong><br>
+        نحوّلك مباشرة إلى البوابة الصحيحة دون اختيار يدوي.
+      </div>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "admin/_admin_layout.html" %}
+{% block title %}صفحتي الشخصية{% endblock %}
+{% block page_title %}صفحتي الشخصية{% endblock %}
+{% block crumbs %}<span>الإدارة</span><i class="fa-solid fa-chevron-left"></i><span>صفحتي</span>{% endblock %}
+
+{% block head_extra %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+<style>
+.p-hero{border-radius:18px;padding:24px 28px;background:linear-gradient(135deg,#1E1E1E 0%,#2a2724 100%);color:#fff;display:flex;align-items:center;gap:18px;margin-bottom:18px;position:relative;overflow:hidden}
+.p-hero::after{content:"";position:absolute;inset:auto -80px -120px auto;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(244,186,42,.30),transparent 70%)}
+.p-avatar{width:72px;height:72px;border-radius:50%;background:var(--d-gold);color:#1E1E1E;display:inline-flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;flex-shrink:0}
+.p-hero h2{margin:0;font-size:22px;font-weight:800}
+.p-hero p{margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.7);font-family:monospace}
+.perms-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.perm-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:8px;background:rgba(244,186,42,.18);color:#7c2d12;font-size:11px;font-weight:700}
+.f-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.f-field{display:flex;flex-direction:column;gap:6px}
+.f-field label{font-size:13px;font-weight:700;color:var(--d-text)}
+.f-field input{padding:10px 14px;border-radius:11px;border:1.5px solid var(--d-border-strong);font-size:14px;font-family:inherit;background:#FAFAF8}
+.f-field input:focus{outline:0;border-color:var(--d-gold);background:#fff;box-shadow:0 0 0 3px rgba(244,186,42,.20)}
+.f-field input[readonly]{background:#F4F3EF;color:var(--d-text-soft);cursor:not-allowed}
+.btn-primary-big{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:12px;background:linear-gradient(135deg,#F4BA2A 0%,#FFD96A 100%);color:#1E1E1E;font-size:15px;font-weight:800;border:0;cursor:pointer;font-family:inherit;box-shadow:0 6px 18px rgba(244,186,42,.30);transition:.18s ease}
+.btn-primary-big:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(244,186,42,.40)}
+.flash-toast{padding:11px 14px;border-radius:11px;margin-bottom:14px;font-size:13.5px;font-weight:700}
+.flash-success{background:#e8f6ee;color:#1f8f51;border:1px solid rgba(31,143,81,.3)}
+.flash-error{background:#fde2e2;color:#b91c1c;border:1px solid rgba(185,28,28,.3)}
+</style>{% endblock %}
+
+{% block content %}
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for cat,msg in msgs %}<div class="flash-toast flash-{{ 'success' if cat=='success' else 'error' }}">{{ msg }}</div>{% endfor %}{% endwith %}
+
+<section class="p-hero">
+  <div class="p-avatar">{{ (account.username or 'A')[0]|upper }}</div>
+  <div>
+    <h2>{{ account.full_name or account.username }}</h2>
+    <p>👤 {{ account.username }} · مدير</p>
+  </div>
+</section>
+
+<section class="d-card" style="margin-bottom:14px">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-shield-halved"></i>صلاحياتي</h3></div>
+  <div class="d-card-body">
+    {% if permissions %}
+    <div class="perms-wrap">
+      {% for p in permissions %}<span class="perm-pill"><i class="fa-solid fa-check"></i>{{ permission_label(p) }}</span>{% endfor %}
+    </div>
+    {% else %}<p style="color:var(--d-text-muted);font-size:13px">لا توجد صلاحيات معطاة.</p>{% endif %}
+  </div>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head"><h3 class="d-card-title"><i class="fa-solid fa-user-pen"></i>تعديل بياناتي</h3></div>
+  <div class="d-card-body">
+    <form method="POST">
+      {{ csrf_token_input()|safe if csrf_token_input is defined else '' }}
+      <div class="f-grid">
+        <div class="f-field"><label>اسم المستخدم</label><input value="{{ account.username }}" readonly></div>
+        <div class="f-field"><label>الاسم الكامل</label><input name="full_name" value="{{ account.full_name or '' }}"></div>
+        <div class="f-field"><label>كلمة المرور الحالية</label><input type="password" name="current_password" required></div>
+        <div class="f-field"><label>كلمة المرور الجديدة</label><input type="password" name="new_password" required minlength="6"></div>
+      </div>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end">
+        <button type="submit" class="btn-primary-big"><i class="fa-solid fa-floppy-disk"></i>حفظ التغييرات</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

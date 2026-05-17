@@ -1,0 +1,134 @@
+{% extends "admin/users_account/_layout.html" %}
+{% block title %}قائمة مشتركي حساب الإنترنت{% endblock %}
+{% block page_title %}قائمة مشتركي حساب الإنترنت{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_addons.css') }}">
+{% endblock %}
+
+{% block users_content %}
+
+<div class="d-notice">
+  <i class="fa-solid fa-screwdriver-wrench"></i>
+  <div>
+    <strong>قائمة تشغيلية فقط.</strong>
+    استخدم صفحة المستفيدين كسجل موحد، وهذه القائمة مخصصة لمتابعة مشتركي حساب الإنترنت وإجراءاتهم.
+  </div>
+</div>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-filter"></i>بحث وفلترة</h3>
+  </div>
+  <div class="d-card-body">
+    <form method="GET" class="d-form-row cols-3">
+      <div>
+        <label class="d-label">بحث</label>
+        <input class="d-field" type="search" name="q" value="{{ filters.q or '' }}" placeholder="الاسم أو الجوال...">
+      </div>
+      <div>
+        <label class="d-label">النوع</label>
+        <select class="d-field" name="user_type">
+          <option value="">— الكل —</option>
+          <option value="university" {% if filters.user_type == 'university' %}selected{% endif %}>جامعي</option>
+          <option value="freelancer" {% if filters.user_type == 'freelancer' %}selected{% endif %}>عمل حر</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px">
+        <button class="d-pill-btn" type="submit"><i class="fa-solid fa-magnifying-glass"></i>بحث</button>
+        <a class="d-pill-btn d-pill-btn--ghost" href="{{ url_for('admin_users_account_list') }}">مسح</a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="d-card">
+  <div class="d-card-head">
+    <h3 class="d-card-title"><i class="fa-solid fa-users-viewfinder"></i>المشتركون</h3>
+    <span style="font-size:12px;color:var(--d-text-muted)">{{ users | length }} نتيجة</span>
+  </div>
+  <div class="d-card-body--flush d-table-wrap">
+    <table class="d-table" data-paginated="1" data-page-size="20" data-page-sizes="10,20,50,100" data-persist-key="users-account-list">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الاسم</th>
+          <th>الجوال</th>
+          <th>النوع</th>
+          <th>طريقة الإنترنت</th>
+          <th>حالة الحساب</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>#{{ u.id }}</td>
+          <td><strong>{{ u.full_name }}</strong></td>
+          <td>{{ u.phone or '—' }}</td>
+          <td><span class="d-badge d-badge--neutral">{{ u.user_type_label }}</span></td>
+          <td>
+            {% if u.access_mode == 'username' %}
+              <span class="d-badge d-badge--dark">حساب إنترنت</span>
+            {% else %}
+              <span class="d-badge">بطاقات</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if u.has_portal_account %}
+              <span class="d-badge d-badge--success">مفعّل</span>
+            {% else %}
+              <span class="d-badge d-badge--warn">غير مفعّل</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_beneficiary_convert_access', beneficiary_id=u.id) }}"
+                  style="display:inline;margin-inline-end:6px"
+                  data-beneficiary-name="{{ u.full_name }}"
+                  data-target-label="{% if u.access_mode == 'username' %}نظام البطاقات{% else %}حساب إنترنت{% endif %}"
+                  onsubmit="return confirmBeneficiaryConvert(this)">
+              {{ csrf_token_input() | safe }}
+              <input type="hidden" name="confirm_convert" value="">
+              {% if u.access_mode == 'username' %}
+                <input type="hidden" name="target_mode" value="cards">
+                <button class="d-card-action" type="submit" title="تحويل لبطاقات">→ بطاقات</button>
+              {% else %}
+                <input type="hidden" name="target_mode" value="username">
+                {% if u.can_switch %}
+                <button class="d-card-action" type="submit" title="تحويل إلى حساب إنترنت">→ حساب إنترنت</button>
+                {% else %}
+                <button class="d-card-action" type="button" disabled title="{{ u.switch_reason }}" style="opacity:.5;cursor:not-allowed">🔒</button>
+                {% endif %}
+              {% endif %}
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr class="no-paginate"><td colspan="7" style="text-align:center;color:var(--d-text-muted);padding:32px">لا يوجد مشتركو حساب إنترنت مطابقون.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+function confirmBeneficiaryConvert(form) {
+  const confirmationInput = form.querySelector('input[name="confirm_convert"]');
+  const beneficiaryName = form.dataset.beneficiaryName || 'هذا المشترك';
+  const targetLabel = form.dataset.targetLabel || 'طريقة الوصول الجديدة';
+  const message = `سيتم تحويل ${beneficiaryName} إلى ${targetLabel}.\n\nهذا الإجراء يغيّر نوع دخول المشترك. هل تريد المتابعة؟`;
+
+  if (!window.confirm(message)) {
+    if (confirmationInput) confirmationInput.value = '';
+    return false;
+  }
+
+  if (confirmationInput) confirmationInput.value = '1';
+  return true;
+}
+</script>
+{% endblock %}

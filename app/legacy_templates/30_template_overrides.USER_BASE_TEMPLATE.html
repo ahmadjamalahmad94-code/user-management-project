@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+</head>
+<body class="{% if session.get('portal_type') == 'beneficiary' %}portal-body{% else %}portal-auth-body{% endif %}">
+{% set portal_path = request.path %}
+{% if session.get('portal_type') == 'beneficiary' %}
+<div class="portal-shell">
+  <aside class="user-sidebar">
+    <div class="user-sidebar-brand">
+      <div class="brand-badge">H</div>
+      <div>
+        <strong>بوابة المستفيد</strong>
+        <small>خدمات الإنترنت الخاصة بك</small>
+      </div>
+    </div>
+    <div class="user-sidebar-meta">
+      <span class="badge badge-blue">{{ portal_access_label }}</span>
+      <span class="badge">{{ session.get('beneficiary_username','') }}</span>
+    </div>
+    <nav class="user-nav">
+      <a href="{{ url_for('user_dashboard') }}" class="{% if portal_path == '/user/dashboard' %}active{% endif %}"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+      <a href="{{ url_for('user_internet_access_page') }}" class="{% if portal_path == '/user/internet' or portal_path == '/user/internet/my-access' %}active{% endif %}"><i class="fa-solid fa-wifi"></i><span>حساب الإنترنت</span></a>
+      <a href="{{ url_for('user_internet_request_page') }}" class="{% if portal_path == '/user/internet/request' %}active{% endif %}"><i class="fa-solid fa-paper-plane"></i><span>{% if portal_access_mode == 'cards' %}طلب بطاقة{% else %}طلب خدمة{% endif %}</span></a>
+      <a href="{{ url_for('user_internet_my_requests_page') }}" class="{% if portal_path == '/user/internet/my-requests' %}active{% endif %}"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+      <a href="{{ url_for('user_profile_page') }}" class="{% if portal_path == '/user/profile' %}active{% endif %}"><i class="fa-solid fa-id-card"></i><span>ملفي الشخصي</span></a>
+      <a href="{{ url_for('user_logout') }}"><i class="fa-solid fa-right-from-bracket"></i><span>تسجيل الخروج</span></a>
+    </nav>
+    <div class="user-sidebar-note">هذه الواجهة تعرض بياناتك وطلباتك فقط، ولا تتيح أي وصول إداري.</div>
+  </aside>
+  <main class="user-main">
+    <div class="user-topbar">
+      <div class="topbar-title">
+        <strong>{{ title }}</strong>
+        <small>واجهة خدمية مبسطة للمستفيد</small>
+      </div>
+      <div class="userbox">
+        {% if session.get('beneficiary_full_name') %}<span class="badge">{{ session.get('beneficiary_full_name') }}</span>{% endif %}
+        <span class="badge badge-blue">{{ portal_access_label }}</span>
+      </div>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash {{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {{ content|safe }}
+  </main>
+</div>
+{% else %}
+<div class="main" style="max-width:760px;margin:0 auto;padding-top:28px">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-title"><strong>{{ title }}</strong><small>بوابة المستفيد</small></div></div>
+  </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+        <div class="flash {{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {{ content|safe }}
+</div>
+{% endif %}
+<script src="{{ url_for('static', filename='js/app.js') }}?v=20260515-foundation01"></script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1E1E1E">
+  <title>{% block title %}لوحة التحكم{% endblock %} — Hobe Hub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_table.css') }}">
+  <script defer src="{{ url_for('static', filename='js/dashboard_table.js') }}"></script>
+  <style>
+  /* ── Floating Flash Toasts (global, auto-dismiss) ── */
+  #flash-stack{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;
+    display:flex;flex-direction:column;gap:8px;pointer-events:none;width:min(92vw,520px)}
+  #flash-stack .flash-toast{pointer-events:auto;padding:12px 18px;border-radius:12px;
+    font-size:13.5px;font-weight:700;line-height:1.45;display:flex;align-items:center;gap:10px;
+    box-shadow:0 12px 30px rgba(0,0,0,.18);border:1px solid transparent;
+    animation:flashIn .3s cubic-bezier(.2,1.3,.4,1) both;backdrop-filter:blur(4px)}
+  #flash-stack .flash-toast.is-out{animation:flashOut .35s ease forwards}
+  #flash-stack .flash-toast.flash-success{background:#e8f6ee;color:#1f8f51;border-color:rgba(31,143,81,.3)}
+  #flash-stack .flash-toast.flash-error  {background:#fde2e2;color:#b91c1c;border-color:rgba(185,28,28,.3)}
+  #flash-stack .flash-toast.flash-info   {background:#e8eef9;color:#1c52a8;border-color:rgba(28,82,168,.3)}
+  #flash-stack .flash-toast .flash-x{margin-inline-start:auto;background:none;border:0;cursor:pointer;
+    color:inherit;opacity:.6;font-size:14px;padding:2px 6px;border-radius:6px;font-family:inherit}
+  #flash-stack .flash-toast .flash-x:hover{opacity:1;background:rgba(0,0,0,.08)}
+  @keyframes flashIn{from{opacity:0;transform:translateY(-12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes flashOut{to{opacity:0;transform:translateY(-12px) scale(.96)}}
+  </style>
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="dashboard-body">
+
+{# Global flash stack — consumes the queue once, floating + auto-dismiss #}
+{% with __msgs = get_flashed_messages(with_categories=true) %}
+  {% if __msgs %}
+  <div id="flash-stack" role="status" aria-live="polite">
+    {% for cat, msg in __msgs %}
+      {% set _kind = 'success' if cat == 'success' else ('info' if cat == 'info' else 'error') %}
+      <div class="flash-toast flash-{{ _kind }}" data-auto-dismiss="3200">
+        <i class="fa-solid {% if _kind == 'success' %}fa-circle-check{% elif _kind == 'info' %}fa-circle-info{% else %}fa-circle-exclamation{% endif %}"></i>
+        <span>{{ msg }}</span>
+        <button type="button" class="flash-x" aria-label="إغلاق">✕</button>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<div class="d-shell is-collapsed" id="d-shell">
+  {# ── Sidebar ────────────────────────────────── #}
+  <aside class="d-sidebar" aria-label="القائمة الجانبية">
+    <div class="d-sidebar-head">
+      <span class="d-brand-mark" aria-hidden="true">H</span>
+      <span class="d-brand-text">
+        <strong>Hobe Hub</strong>
+        <small>{% block sidebar_subtitle %}منصة إدارة وخدمات الإنترنت{% endblock %}</small>
+      </span>
+    </div>
+
+    <nav class="d-nav" aria-label="التنقل الرئيسي">
+      {% block sidebar_nav %}{% endblock %}
+    </nav>
+
+    <div class="d-sidebar-foot">
+      <div class="d-user-pill">
+        <span class="d-user-avatar" aria-hidden="true">{% block user_initial %}A{% endblock %}</span>
+        <span class="d-user-meta">
+          <strong>{% block user_name %}مستخدم{% endblock %}</strong>
+          <small>{% block user_role %}—{% endblock %}</small>
+        </span>
+        <a class="d-icon-btn"
+           href="{% if request.path.startswith('/admin') or session.get('portal_type') == 'admin' %}{{ url_for('logout') }}{% elif request.path.startswith('/card') %}/card/logout{% else %}{{ url_for('user_logout') }}{% endif %}"
+           title="تسجيل الخروج">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  {# ── Main column ────────────────────────────── #}
+  <div class="d-main">
+    <header class="d-topbar">
+      <button class="d-sidebar-toggle" id="d-sidebar-toggle" type="button" aria-label="طي القائمة الجانبية">
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+      </button>
+      <div class="d-topbar-title">
+        <h1>{% block page_title %}الرئيسية{% endblock %}</h1>
+        <div class="d-crumbs">
+          {% block crumbs %}
+            <span>لوحة التحكم</span>
+            <i class="fa-solid fa-chevron-left"></i>
+            <span>الرئيسية</span>
+          {% endblock %}
+        </div>
+      </div>
+      <div class="d-topbar-actions">
+        {% block topbar_actions %}
+        <div class="d-search">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input type="search" placeholder="بحث سريع…" aria-label="بحث">
+        </div>
+        {% set _notifications_href = '/admin/notifications' if request.path.startswith('/admin') else ('/card/notifications' if request.path.startswith('/card') else '/user/notifications') %}
+        {% set _notifications_seen_url = '/admin/notifications/seen' if request.path.startswith('/admin') else ('/card/notifications/seen' if request.path.startswith('/card') else '/user/notifications/seen') %}
+        {% set _notifications_count = notification_count|default(0)|int %}
+        <div class="d-notifications" data-notifications data-seen-url="{{ _notifications_seen_url }}" data-center-url="{{ _notifications_href }}">
+          <button class="d-bell" type="button" aria-label="إشعارات" aria-haspopup="true">
+            <i class="fa-regular fa-bell"></i>
+            {% if _notifications_count > 0 %}
+              <span class="d-bell-count">{{ _notifications_count if _notifications_count < 100 else '99+' }}</span>
+            {% endif %}
+          </button>
+          <div class="d-notification-menu" role="menu" aria-label="آخر الإشعارات">
+            <div class="d-notification-menu-head">
+              <strong>آخر الإشعارات</strong>
+              <a href="{{ _notifications_href }}">عرض الكل</a>
+            </div>
+            <div class="d-notification-list">
+              {% for item in notification_preview|default([]) %}
+              <a class="d-notification-item" href="{{ item.href or _notifications_href }}" role="menuitem">
+                <span>
+                  <strong>{{ item.title }}</strong>
+                  <small>{{ item.meta }}</small>
+                </span>
+                {% if item.badge %}<em>{{ item.badge }}</em>{% endif %}
+              </a>
+              {% else %}
+              <div class="d-notification-empty">لا توجد إشعارات جديدة.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endblock %}
+      </div>
+    </header>
+
+    <main class="d-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <div class="d-overlay" id="d-overlay" aria-hidden="true"></div>
+</div>
+
+<script>
+(function(){
+  var shell = document.getElementById('d-shell');
+  var toggle = document.getElementById('d-sidebar-toggle');
+  var overlay = document.getElementById('d-overlay');
+  if(!shell || !toggle) return;
+
+  // السايد بار يبدأ مطويًا في كل تحميل للصفحة (لا حفظ في localStorage)
+  function isMobile(){ return window.matchMedia('(max-width:860px)').matches; }
+
+  toggle.addEventListener('click', function(){
+    if (isMobile()) {
+      shell.classList.toggle('is-open');
+    } else {
+      shell.classList.toggle('is-collapsed');
+    }
+  });
+
+  overlay && overlay.addEventListener('click', function(){
+    shell.classList.remove('is-open');
+  });
+})();
+
+// ── Flash auto-dismiss + close button ──
+(function(){
+  function dismiss(el){
+    if(!el || el.dataset.dismissed) return;
+    el.dataset.dismissed = '1';
+    el.classList.add('is-out');
+    setTimeout(function(){ try{ el.remove(); }catch(e){} }, 360);
+  }
+  document.querySelectorAll('#flash-stack .flash-toast').forEach(function(t){
+    var delay = parseInt(t.dataset.autoDismiss || '3200', 10);
+    var xBtn = t.querySelector('.flash-x');
+    if(xBtn) xBtn.addEventListener('click', function(){ dismiss(t); });
+    setTimeout(function(){ dismiss(t); }, delay);
+  });
+})();
+
+// عند فتح قائمة الإشعارات نعتبرها شوهدت ونخفي العداد فورًا.
+(function(){
+  document.querySelectorAll('[data-notifications]').forEach(function(box){
+    var seenUrl = box.dataset.seenUrl;
+    var centerUrl = box.dataset.centerUrl;
+    var bell = box.querySelector('.d-bell');
+    if(!seenUrl || !bell) return;
+    var sent = false;
+    function clearBadge(){
+      box.querySelectorAll('.d-bell-count,.d-nav-badge').forEach(function(el){
+        try{ el.remove(); }catch(e){}
+      });
+      if(centerUrl){
+        document.querySelectorAll('a[href="' + centerUrl + '"] .d-nav-badge').forEach(function(el){
+          try{ el.remove(); }catch(e){}
+        });
+      }
+    }
+    function markSeen(){
+      clearBadge();
+      if(sent) return;
+      sent = true;
+      fetch(seenUrl, {
+        method: 'POST',
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        credentials: 'same-origin'
+      }).catch(function(){ sent = false; });
+    }
+    bell.addEventListener('click', markSeen);
+    bell.addEventListener('focus', markSeen);
+    box.addEventListener('mouseenter', markSeen);
+  });
+})();
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
