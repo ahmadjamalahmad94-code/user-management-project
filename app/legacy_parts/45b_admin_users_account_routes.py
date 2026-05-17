@@ -44,7 +44,7 @@ def admin_users_account_overview():
 
     # إجمالي مشتركي اليوزر = beneficiary_portal_accounts النشطة
     users_count_row = query_one(
-        "SELECT COUNT(*) AS c FROM beneficiary_portal_accounts WHERE is_active=1"
+        "SELECT COUNT(*) AS c FROM beneficiary_portal_accounts WHERE is_active=TRUE"
     ) or {}
     users_count = int(users_count_row.get("c") or 0)
 

@@ -195,7 +195,7 @@ def admin_portal_account_reset(portal_id):
         UPDATE beneficiary_portal_accounts SET
             password_hash='',
             password_plain=NULL,
-            must_set_password=1,
+            must_set_password=TRUE,
             activation_code_hash=%s,
             activation_code_expires_at=%s,
             last_activation_sent_at=NULL,
@@ -338,7 +338,7 @@ def admin_portal_account_move_in():
         INSERT INTO beneficiary_portal_accounts
             (beneficiary_id, username, password_hash, password_plain, is_active,
              must_set_password, activation_code_hash, activation_code_expires_at)
-        VALUES (%s, %s, '', NULL, 1, 1, %s, %s)
+        VALUES (%s, %s, '', NULL, TRUE, TRUE, %s, %s)
         RETURNING id
         """,
         [beneficiary_id, username, _sha256(code), _expiry_72h()],
@@ -389,7 +389,7 @@ def admin_portal_account_set_credentials(portal_id):
             """
             UPDATE beneficiary_portal_accounts SET
                 username=%s, password_hash=%s, password_plain=%s,
-                is_active=%s, must_set_password=0,
+                is_active=%s, must_set_password=FALSE,
                 activation_code_hash=NULL, activation_code_expires_at=NULL,
                 updated_at=CURRENT_TIMESTAMP
             WHERE id=%s

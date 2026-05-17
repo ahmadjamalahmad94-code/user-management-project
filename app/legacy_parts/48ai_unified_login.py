@@ -322,7 +322,7 @@ def login_activate():
         """
         UPDATE beneficiary_portal_accounts SET
             password_hash=%s, password_plain=%s,
-            must_set_password=0,
+            must_set_password=FALSE,
             activation_code_hash=NULL, activation_code_expires_at=NULL,
             activated_at=CURRENT_TIMESTAMP, failed_login_attempts=0, locked_until=NULL,
             updated_at=CURRENT_TIMESTAMP

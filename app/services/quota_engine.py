@@ -162,7 +162,7 @@ def get_effective_policy(beneficiary_id: int, *, today: date | None = None) -> d
         SELECT * FROM card_quota_policies
         WHERE scope='user'
           AND target_id=%s
-          AND is_active=1
+          AND is_active=TRUE
           AND (valid_from IS NULL OR valid_from <= %s)
           AND (valid_until IS NULL OR valid_until >= %s)
         ORDER BY priority ASC, id DESC
@@ -182,7 +182,7 @@ def get_effective_policy(beneficiary_id: int, *, today: date | None = None) -> d
             SELECT * FROM card_quota_policies
             WHERE scope='group'
               AND target_id IN ({placeholders})
-              AND is_active=1
+              AND is_active=TRUE
               AND (valid_from IS NULL OR valid_from <= %s)
               AND (valid_until IS NULL OR valid_until >= %s)
             ORDER BY priority ASC, id DESC
@@ -198,7 +198,7 @@ def get_effective_policy(beneficiary_id: int, *, today: date | None = None) -> d
         """
         SELECT * FROM card_quota_policies
         WHERE scope='default'
-          AND is_active=1
+          AND is_active=TRUE
           AND (valid_from IS NULL OR valid_from <= %s)
           AND (valid_until IS NULL OR valid_until >= %s)
         ORDER BY priority ASC, id DESC
@@ -346,7 +346,7 @@ def get_active_categories() -> list[dict]:
     return legacy.query_all(
         """
         SELECT * FROM card_categories
-        WHERE is_active=1
+        WHERE is_active=TRUE
           AND code IN ('half_hour','one_hour','two_hours','three_hours','four_hours')
         ORDER BY display_order ASC, duration_minutes ASC
         """
@@ -387,7 +387,7 @@ def get_category_by_code(code: str) -> dict | None:
         """
         SELECT * FROM card_categories
         WHERE code=%s
-          AND is_active=1
+          AND is_active=TRUE
           AND code IN ('half_hour','one_hour','two_hours','three_hours','four_hours')
         LIMIT 1
         """,

@@ -451,7 +451,7 @@ def get_inventory_counts() -> list[dict]:
                 WHERE duration_minutes = cc.duration_minutes
             ), 0) AS available
         FROM card_categories cc
-        WHERE cc.is_active=1
+        WHERE cc.is_active=TRUE
           AND cc.code IN ('half_hour','one_hour','two_hours','three_hours','four_hours')
         ORDER BY cc.display_order ASC, cc.duration_minutes ASC
         """

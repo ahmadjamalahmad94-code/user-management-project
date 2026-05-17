@@ -79,7 +79,7 @@ def admin_cards_policies_add_ajax():
             (scope, target_id, daily_limit, weekly_limit, allowed_days,
              allowed_category_codes, priority, valid_from, valid_until,
              valid_time_from, valid_time_until, notes, is_active, created_by_account_id)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,1,%s)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,TRUE,%s)
         """,
         [data["scope"], data["target_id"], data["daily_limit"], data["weekly_limit"],
          data["allowed_days"], data["allowed_category_codes"], data["priority"],

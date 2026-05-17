@@ -90,7 +90,7 @@ def admin_cards_categories_add_ajax():
         """
         INSERT INTO card_categories
             (code, label_ar, duration_minutes, display_order, icon, radius_profile_id, is_active)
-        VALUES (%s,%s,%s,%s,%s,%s,1)
+        VALUES (%s,%s,%s,%s,%s,%s,TRUE)
         """,
         [data["code"], data["label_ar"], data["duration_minutes"],
          data["display_order"], data["icon"], data["radius_profile_id"]],

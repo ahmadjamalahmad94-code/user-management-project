@@ -4,7 +4,26 @@
 
 ---
 
-## النسخة الحالية — التصميم الموحّد + AJAX live search + Kill-switch
+## النسخة الحالية — التصميم الموحّد + AJAX live search + Kill-switch + إصلاح PostgreSQL
+
+### إصلاح حرج: PostgreSQL boolean = integer
+PostgreSQL صارم في الأنواع: `is_active = 1` لا يعمل لأن العمود `BOOLEAN`. SQLite كان يقبل ذلك.
+الحل: استبدال كل `=1` / `=0` في SQL strings بـ `=TRUE` / `=FALSE` (يعمل في الـ dialect الاثنين).
+
+**الملفات المُصلَحة:**
+- `services/quota_engine.py` — كل استعلامات `is_active=1` → `is_active=TRUE`
+- `legacy_parts/48q_admin_cards_inventory_controls.py` — `cc.is_active = 1` → `cc.is_active = TRUE`
+- `legacy_parts/45a_admin_cards_v2_routes.py` — INSERT values + toggle endpoints بـ `bool` Python
+- `legacy_parts/48ad_cards_policies_ajax.py` — INSERT VALUES `1` → `TRUE`
+- `legacy_parts/48af_cards_categories_ajax.py` — INSERT VALUES `1` → `TRUE`
+- `legacy_parts/48ah_portal_import.py` — `must_set_password=0` → `FALSE`، VALUES `1,0` → `TRUE,FALSE`
+- `legacy_parts/48ai_unified_login.py` — `must_set_password=0` → `FALSE`
+- `legacy_parts/48x_portal_accounts_v2.py` — `must_set_password=0` → `FALSE`
+- `legacy_parts/48y_phase1_portal_section.py` — `must_set_password=1/0`، `is_active=1` → `TRUE/FALSE`
+
+ملاحظة: ملفات `16_sqlite_*` و `15_sqlite_seed_data.py` بقيت بـ `=1`/`=0` لأنها تعمل على SQLite فقط.
+
+---
 
 ### ميزات جديدة كبيرة
 

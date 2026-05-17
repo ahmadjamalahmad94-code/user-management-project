@@ -125,7 +125,7 @@ def admin_portal_accounts_update(portal_id):
         execute_sql(
             """
             UPDATE beneficiary_portal_accounts
-            SET username=%s, password_hash=%s, is_active=%s, must_set_password=0,
+            SET username=%s, password_hash=%s, is_active=%s, must_set_password=FALSE,
                 updated_at=CURRENT_TIMESTAMP, failed_login_attempts=0, locked_until=NULL
             WHERE id=%s
             """,

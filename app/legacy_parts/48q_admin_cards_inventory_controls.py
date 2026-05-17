@@ -89,7 +89,7 @@ def _category_label_subquery(alias: str) -> str:
         SELECT cc.label_ar
         FROM card_categories cc
         WHERE cc.duration_minutes = {alias}.duration_minutes
-          AND cc.is_active = 1
+          AND cc.is_active = TRUE
           AND cc.code IN ({OFFICIAL_CARD_CODES_SQL})
         ORDER BY cc.display_order ASC, cc.id ASC
         LIMIT 1

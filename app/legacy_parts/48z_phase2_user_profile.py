@@ -41,7 +41,7 @@ def _profile_issued_cards(beneficiary_id):
         SELECT bic.*, cc.label_ar AS category_label
         FROM beneficiary_issued_cards bic
         LEFT JOIN card_categories cc
-          ON cc.duration_minutes = bic.duration_minutes AND cc.is_active = 1
+          ON cc.duration_minutes = bic.duration_minutes AND cc.is_active = TRUE
         WHERE bic.beneficiary_id=%s
         ORDER BY bic.id DESC
         LIMIT 20

@@ -237,7 +237,7 @@ def admin_import_portal_accounts():
             try:
                 execute_sql(
                     "UPDATE beneficiary_portal_accounts SET username=%s, password_hash=%s, password_plain=%s, "
-                    "must_set_password=0, updated_at=CURRENT_TIMESTAMP WHERE id=%s",
+                    "must_set_password=FALSE, updated_at=CURRENT_TIMESTAMP WHERE id=%s",
                     [username, _import_sha256(password), password, existing["id"]],
                 )
                 updated += 1
@@ -259,7 +259,7 @@ def admin_import_portal_accounts():
                     INSERT INTO beneficiary_portal_accounts
                         (beneficiary_id, username, password_hash, password_plain,
                          is_active, must_set_password, activated_at)
-                    VALUES (%s, %s, %s, %s, 1, 0, CURRENT_TIMESTAMP)
+                    VALUES (%s, %s, %s, %s, TRUE, FALSE, CURRENT_TIMESTAMP)
                     """,
                     [ben["id"], username, _import_sha256(password), password],
                 )

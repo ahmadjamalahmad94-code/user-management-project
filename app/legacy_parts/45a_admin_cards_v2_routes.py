@@ -37,7 +37,7 @@ def admin_cards_overview():
     delivered_today = int(delivered_today_row.get("c") or 0)
 
     policies_count_row = query_one(
-        "SELECT COUNT(*) AS c FROM card_quota_policies WHERE is_active=1"
+        "SELECT COUNT(*) AS c FROM card_quota_policies WHERE is_active=TRUE"
     ) or {}
     policies_count = int(policies_count_row.get("c") or 0)
 
@@ -186,7 +186,7 @@ def admin_cards_categories_add():
         """
         INSERT INTO card_categories
             (code, label_ar, duration_minutes, display_order, icon, radius_profile_id, is_active)
-        VALUES (%s,%s,%s,%s,%s,%s,1)
+        VALUES (%s,%s,%s,%s,%s,%s,TRUE)
         """,
         [code, label_ar, duration, display_order, icon, radius_profile_id],
     )
@@ -202,7 +202,7 @@ def admin_cards_categories_toggle(category_id):
     if not row:
         flash("الفئة غير موجودة.", "error")
         return redirect(url_for("admin_cards_categories"))
-    new_state = 0 if row.get("is_active") else 1
+    new_state = not bool(row.get("is_active"))  # bool للتوافق مع Postgres + SQLite
     execute_sql(
         "UPDATE card_categories SET is_active=%s, updated_at=CURRENT_TIMESTAMP WHERE id=%s",
         [new_state, category_id],
@@ -224,7 +224,7 @@ def admin_cards_policies():
     try:
         categories = query_all(
             "SELECT code, label_ar, duration_minutes FROM card_categories "
-            "WHERE is_active=1 ORDER BY duration_minutes ASC"
+            "WHERE is_active=TRUE ORDER BY duration_minutes ASC"
         ) or []
     except Exception:
         categories = []
@@ -269,7 +269,7 @@ def admin_cards_policies_add():
             (scope, target_id, daily_limit, weekly_limit, allowed_days,
              allowed_category_codes, priority, valid_from, valid_until,
              valid_time_from, valid_time_until, notes, is_active, created_by_account_id)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,1,%s)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,TRUE,%s)
         """,
         [
             scope, target_id, daily_limit, weekly_limit, allowed_days,
@@ -290,7 +290,7 @@ def admin_cards_policies_toggle(policy_id):
     if not row:
         flash("السياسة غير موجودة.", "error")
         return redirect(url_for("admin_cards_policies"))
-    new_state = 0 if row.get("is_active") else 1
+    new_state = not bool(row.get("is_active"))  # bool للتوافق مع Postgres + SQLite
     execute_sql(
         "UPDATE card_quota_policies SET is_active=%s, updated_at=CURRENT_TIMESTAMP WHERE id=%s",
         [new_state, policy_id],

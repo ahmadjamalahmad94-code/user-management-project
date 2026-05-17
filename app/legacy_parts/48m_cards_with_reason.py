@@ -53,7 +53,7 @@ def _user_cards_dashboard_v2():
                    SELECT cc.label_ar
                    FROM card_categories cc
                    WHERE cc.duration_minutes = bic.duration_minutes
-                     AND cc.is_active = 1
+                     AND cc.is_active = TRUE
                      AND cc.code IN ('half_hour','one_hour','two_hours','three_hours','four_hours')
                    ORDER BY cc.display_order ASC, cc.id ASC
                    LIMIT 1

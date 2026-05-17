@@ -379,7 +379,7 @@ def admin_radius_snapshots_run():
         """
         SELECT b.* FROM beneficiaries b
         JOIN beneficiary_portal_accounts pa ON pa.beneficiary_id = b.id
-        WHERE pa.is_active = 1
+        WHERE pa.is_active = TRUE
         """
     ) or []
     success = 0
