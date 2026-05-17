@@ -87,6 +87,7 @@ def _fetch_portal_accounts(search=""):
         like = "%" + search + "%"
         where.append("(b.full_name ILIKE %s OR b.phone ILIKE %s OR pa.username ILIKE %s)")
         params.extend([like, like, like])
+    where.append("pa.is_active=TRUE")
     if where:
         sql += " WHERE " + " AND ".join(where)
     sql += " ORDER BY pa.id DESC LIMIT 500"
@@ -94,13 +95,14 @@ def _fetch_portal_accounts(search=""):
 
 
 def _fetch_outside_beneficiaries(search=""):
-    """مستفيدون بدون حساب بوابة (خارج)."""
+    """مستفيدون لديهم حساب بوابة غير فعال (خارج البوابة)."""
     sql = (
         "SELECT b.id, b.full_name, b.phone, b.user_type, b.verification_status, b.tier, "
+        "pa.id AS portal_account_id, pa.username AS portal_username, pa.is_active, "
         "b.university_internet_method, b.freelancer_internet_method "
         "FROM beneficiaries b "
-        "LEFT JOIN beneficiary_portal_accounts pa ON pa.beneficiary_id = b.id "
-        "WHERE pa.id IS NULL"
+        "JOIN beneficiary_portal_accounts pa ON pa.beneficiary_id = b.id "
+        "WHERE pa.is_active=FALSE"
     )
     params = []
     if search:
@@ -118,8 +120,8 @@ def _portal_accounts_phase1_view():
     q = clean_csv_value(request.args.get("q")) if "clean_csv_value" in globals() else (request.args.get("q") or "").strip()
     inside = _fetch_portal_accounts(q) or []
     outside = _fetch_outside_beneficiaries(q) or []
-    active_count = sum(1 for a in inside if a.get("is_active"))
-    inactive_count = len(inside) - active_count
+    active_count = len(inside)
+    inactive_count = len(outside)
     return render_template(
         "admin/portal_accounts/list.html",
         inside=inside,
@@ -163,7 +165,7 @@ def admin_portal_accounts_list_ajax():
         "admin/portal_accounts/_outside_rows.html",
         outside=outside,
     )
-    active_count = sum(1 for a in inside if a.get("is_active"))
+    active_count = len(inside)
     return jsonify({
         "ok": True,
         "inside_html": inside_html,
@@ -172,7 +174,7 @@ def admin_portal_accounts_list_ajax():
             "inside": len(inside),
             "outside": len(outside),
             "active": active_count,
-            "inactive": len(inside) - active_count,
+            "inactive": len(outside),
         },
     })
 
@@ -318,9 +320,45 @@ def admin_portal_account_move_in():
     ben = query_one("SELECT id, phone, full_name FROM beneficiaries WHERE id=%s", [beneficiary_id])
     if not ben:
         return jsonify({"ok": False, "message": "المستفيد غير موجود."}), 404
-    existing = query_one("SELECT id FROM beneficiary_portal_accounts WHERE beneficiary_id=%s", [beneficiary_id])
+    existing = query_one(
+        "SELECT id, username, password_hash, must_set_password FROM beneficiary_portal_accounts WHERE beneficiary_id=%s",
+        [beneficiary_id],
+    )
     if existing:
-        return jsonify({"ok": False, "message": "هذا المستفيد لديه حساب بوابة بالفعل."}), 400
+        needs_code = (not existing.get("password_hash")) or bool(existing.get("must_set_password"))
+        code = _gen_activation_code() if needs_code else ""
+        if needs_code:
+            execute_sql(
+                """
+                UPDATE beneficiary_portal_accounts
+                SET is_active=TRUE,
+                    must_set_password=TRUE,
+                    activation_code_hash=%s,
+                    activation_code_expires_at=%s,
+                    updated_at=CURRENT_TIMESTAMP
+                WHERE id=%s
+                """,
+                [_sha256(code), _expiry_72h(), existing["id"]],
+            )
+        else:
+            execute_sql(
+                "UPDATE beneficiary_portal_accounts SET is_active=TRUE, updated_at=CURRENT_TIMESTAMP WHERE id=%s",
+                [existing["id"]],
+            )
+        final_username = existing.get("username") or username or ben.get("phone") or ""
+        log_action(
+            "portal_move_in", "beneficiary_portal_account", existing["id"],
+            f"تفعيل بوابة {ben.get('full_name')} (يوزر {final_username})",
+        )
+        return jsonify({
+            "ok": True,
+            "message": "تم تفعيل حساب البوابة.",
+            "portal_id": existing["id"],
+            "username": final_username,
+            "code": code,
+            "expires_hours": 72 if code else 0,
+            "phone": ben.get("phone") or "",
+        })
 
     if not username:
         username = (ben.get("phone") or "").strip()
