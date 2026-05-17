@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تسجيل اشتراك جديد — HobeHub</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:'Cairo','Tajawal',system-ui,sans-serif;
+  background:linear-gradient(135deg,#FAFAF8 0%,#F4F3EF 100%);
+  color:#1E1E1E;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 16px;
+}
+
+/* ─── Brand strip ─── */
+.brand-strip{
+  display:flex;align-items:center;gap:14px;margin-bottom:24px;
+}
+.brand-logo{
+  width:54px;height:54px;border-radius:15px;
+  background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;
+  display:grid;place-items:center;font-size:24px;font-weight:900;
+  box-shadow:0 10px 24px rgba(244,186,42,.35);
+}
+.brand-strip h1{font-size:18px;font-weight:900}
+.brand-strip h1 span{color:#F4BA2A}
+.brand-strip p{font-size:11.5px;color:#7a7368;font-weight:700;margin-top:2px}
+
+/* ─── Step bar ─── */
+.steps{
+  display:flex;gap:12px;align-items:center;justify-content:center;
+  margin-bottom:24px;
+}
+.step-dot{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:999px;
+  background:#fff;border:1.5px solid #e8e2d5;
+  font-size:12px;font-weight:800;color:#7a7368;
+  transition:.25s ease;
+}
+.step-dot.is-on{background:#1E1E1E;color:#fff;border-color:#1E1E1E;box-shadow:0 8px 18px -6px rgba(30,30,30,.35)}
+.step-dot.is-done{background:rgba(31,143,81,.12);color:#166534;border-color:rgba(31,143,81,.30)}
+.step-dot i{font-size:11px}
+.step-num{
+  width:18px;height:18px;border-radius:50%;background:#e8e2d5;color:#7a7368;
+  display:grid;place-items:center;font-size:10px;font-weight:900;
+}
+.step-dot.is-on .step-num{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E}
+.step-dot.is-done .step-num{background:#22c55e;color:#fff}
+.steps-sep{flex-grow:0;width:30px;height:2px;background:#e8e2d5;border-radius:2px}
+
+/* ─── Card ─── */
+.card{
+  width:min(580px, 100%);
+  background:#fff;border:1px solid #efe9da;
+  border-radius:22px;padding:30px 32px;
+  box-shadow:0 24px 48px -16px rgba(30,30,30,.15);
+}
+.card-head{text-align:center;margin-bottom:20px;padding-bottom:18px;border-bottom:1px dashed #efe9da}
+.card-head h2{font-size:20px;font-weight:900;margin-bottom:8px;letter-spacing:-.3px}
+.card-head p{font-size:13px;color:#7a7368;line-height:1.7;font-weight:600}
+
+/* ─── Forms ─── */
+.step-form{display:none}
+.step-form.is-on{display:block;animation:formIn .35s ease}
+@keyframes formIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:800;color:#5b5246;margin-bottom:6px}
+.field label .req{color:#b91c1c}
+.field input, .field select, .field textarea{
+  width:100%;padding:11px 14px;border-radius:11px;
+  border:1.5px solid #e8e2d5;background:#fbfaf7;
+  font-family:inherit;font-size:13.5px;font-weight:700;color:#1E1E1E;
+  transition:.18s ease;outline:0;
+}
+.field input:focus, .field select:focus, .field textarea:focus{
+  border-color:#F4BA2A;background:#fff;
+  box-shadow:0 0 0 3px rgba(244,186,42,.22);
+}
+.field input::placeholder{color:#aea596;font-weight:600}
+.field textarea{resize:vertical;min-height:64px}
+.field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.field-row.cols-2{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+
+/* ─── Phone input — large & focused ─── */
+.phone-block{display:flex;flex-direction:column;align-items:stretch}
+.phone-wrap{
+  display:flex;align-items:center;gap:10px;
+  padding:6px;background:#FAFAF8;border:2px solid #e8e2d5;border-radius:15px;
+  transition:.2s ease;
+}
+.phone-wrap:focus-within{border-color:#F4BA2A;background:#fff;box-shadow:0 0 0 4px rgba(244,186,42,.20)}
+.phone-icon{
+  width:42px;height:42px;flex-shrink:0;border-radius:11px;
+  background:linear-gradient(135deg,#1E1E1E,#2a2724);color:#F4BA2A;
+  display:grid;place-items:center;font-size:18px;
+}
+.phone-wrap input{
+  flex:1;border:0;background:transparent;outline:0;
+  font-family:inherit;font-size:16px;font-weight:800;color:#1E1E1E;
+  letter-spacing:1px;text-align:center;direction:ltr;padding:8px 12px;
+}
+.phone-wrap input::placeholder{color:#bdb4a6;font-weight:600;letter-spacing:.5px}
+
+/* ─── Action buttons ─── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 22px;border-radius:12px;border:0;cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:900;letter-spacing:.3px;
+  transition:.25s ease;width:100%;
+}
+.btn-primary{
+  background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E;
+  box-shadow:0 12px 26px -8px rgba(244,186,42,.50);
+}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 36px -8px rgba(244,186,42,.70)}
+.btn-primary:disabled{opacity:.5;cursor:wait;transform:none}
+.btn-ghost{background:#fff;color:#5b5246;border:1.5px solid #e8e2d5}
+.btn-ghost:hover{background:#FAFAF8;border-color:#F4BA2A;color:#1E1E1E}
+.btn-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.btn-row .btn{flex:1;min-width:180px}
+
+/* ─── Messages ─── */
+.msg{display:none;margin-top:14px;padding:13px 16px;border-radius:12px;font-size:13px;font-weight:700;line-height:1.7}
+.msg.show{display:flex;align-items:flex-start;gap:10px;animation:msgIn .35s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.msg i{font-size:18px;margin-top:1px;flex-shrink:0}
+.msg.err{background:#fde2e2;color:#991b1b;border:1px solid rgba(185,28,28,.20)}
+.msg.err i{color:#b91c1c}
+.msg.warn{background:#FFFBEA;color:#7c2d12;border:1px solid rgba(217,119,6,.30)}
+.msg.warn i{color:#d97706}
+.msg.ok{background:#e8f6ee;color:#166534;border:1px solid rgba(31,143,81,.25)}
+.msg.ok i{color:#1f8f51}
+.msg.info{background:#eef4ff;color:#1e3a8a;border:1px solid rgba(29,78,216,.20)}
+.msg.info i{color:#1d4ed8}
+
+/* ─── Type selector pills ─── */
+.type-pills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.type-pill{
+  padding:14px 10px;border-radius:13px;cursor:pointer;
+  background:#FAFAF8;border:2px solid #e8e2d5;
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  transition:.2s ease;text-align:center;
+}
+.type-pill:hover{border-color:#F4BA2A;background:#fff;transform:translateY(-1px)}
+.type-pill.is-on{
+  background:linear-gradient(135deg,rgba(244,186,42,.10),#fff);
+  border-color:#F4BA2A;box-shadow:0 0 0 4px rgba(244,186,42,.10);
+}
+.type-pill i{
+  width:36px;height:36px;border-radius:10px;
+  background:#1E1E1E;color:#F4BA2A;display:grid;place-items:center;font-size:14px;
+  transition:.2s ease;
+}
+.type-pill.is-on i{background:linear-gradient(135deg,#F4BA2A,#FFD96A);color:#1E1E1E}
+.type-pill strong{font-size:13px;font-weight:900}
+.type-pill small{font-size:10.5px;color:#7a7368;font-weight:600}
+
+/* ─── Type-specific sections ─── */
+.type-section{display:none;padding-top:14px;margin-top:8px;border-top:1px dashed #efe9da}
+.type-section.is-on{display:block;animation:formIn .3s ease}
+.section-title{font-size:13px;font-weight:900;color:#5b5246;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.section-title i{color:#F4BA2A}
+
+/* ─── Footer link ─── */
+.foot{text-align:center;margin-top:18px;font-size:12px;color:#7a7368}
+.foot a{color:#1E1E1E;font-weight:800;text-decoration:none;border-bottom:1.5px solid #F4BA2A;padding-bottom:1px}
+.foot a:hover{color:#F4BA2A}
+
+/* ─── Loading spinner ─── */
+.spin{
+  display:inline-block;width:14px;height:14px;
+  border:2.5px solid rgba(30,30,30,.20);border-top-color:#1E1E1E;
+  border-radius:50%;animation:spin .55s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── Result block (when phone is found) ─── */
+.result-block{
+  margin-top:18px;padding:24px 22px;border-radius:14px;text-align:center;
+  background:linear-gradient(135deg,#FFFBEA,#FDF1CF);
+  border:2px solid rgba(217,119,6,.25);
+  animation:formIn .4s ease;
+}
+.result-block .ico{
+  width:60px;height:60px;border-radius:50%;margin:0 auto 14px;
+  background:#FFFBEA;border:3px solid #d97706;color:#d97706;
+  display:grid;place-items:center;font-size:24px;
+}
+.result-block h3{font-size:17px;font-weight:900;color:#7c2d12;margin-bottom:8px}
+.result-block p{font-size:13px;color:#7c2d12;line-height:1.8;font-weight:700;max-width:380px;margin:0 auto 16px}
+.result-block .phone-shown{
+  display:inline-block;padding:4px 12px;background:#fff;border-radius:8px;
+  font-family:monospace;font-weight:900;color:#1E1E1E;
+  border:1.5px solid rgba(217,119,6,.25);margin:0 4px;
+}
+
+@media (max-width:480px){
+  .card{padding:24px 20px;border-radius:18px}
+  .field-row{grid-template-columns:1fr}
+  .type-pills{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Brand -->
+<div class="brand-strip">
+  <div class="brand-logo">H</div>
+  <div>
+    <h1>Hobe<span>Hub</span></h1>
+    <p>تسجيل اشتراك جديد</p>
+  </div>
+</div>
+
+<!-- Steps indicator -->
+<div class="steps" id="steps-bar">
+  <span class="step-dot is-on" data-step="1">
+    <span class="step-num">١</span><i class="fa-solid fa-mobile-screen"></i>فحص الرقم
+  </span>
+  <span class="steps-sep"></span>
+  <span class="step-dot" data-step="2">
+    <span class="step-num">٢</span><i class="fa-solid fa-user-pen"></i>البيانات
+  </span>
+  <span class="steps-sep"></span>
+  <span class="step-dot" data-step="3">
+    <span class="step-num">٣</span><i class="fa-solid fa-circle-check"></i>تم
+  </span>
+</div>
+
+<!-- Card -->
+<main class="card">
+
+  <!-- ════════════ Step 1: Phone check ════════════ -->
+  <section class="step-form is-on" id="step-1">
+    <div class="card-head">
+      <h2>أهلاً بك 👋</h2>
+      <p>أدخل رقم جوالك أولاً، سنفحص إن كان مسجلاً مسبقاً في النظام لتجنّب التكرار.</p>
+    </div>
+
+    <form id="form-check" autocomplete="off">
+      <div class="phone-block">
+        <div class="phone-wrap">
+          <span class="phone-icon"><i class="fa-solid fa-mobile-screen-button"></i></span>
+          <input type="tel" name="phone" id="phone-check" placeholder="05XXXXXXXX" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" required autofocus>
+        </div>
+      </div>
+
+      <div class="msg" id="msg-check"></div>
+
+      <!-- Result block — appears when phone is found -->
+      <div id="found-block"></div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary" id="btn-check">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>فحص الرقم</span>
+        </button>
+      </div>
+    </form>
+
+    <div class="foot">
+      لديك حساب مفعّل بالفعل؟
+      <a href="/login"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</a>
+    </div>
+  </section>
+
+  <!-- ════════════ Step 2: Registration form ════════════ -->
+  <section class="step-form" id="step-2">
+    <div class="card-head">
+      <h2>📝 بيانات الاشتراك</h2>
+      <p>الرقم <strong id="phone-confirmed" style="font-family:monospace;color:#F4BA2A">05XXXXXXXX</strong> غير مسجّل. أكمل البيانات لإنشاء طلبك.</p>
+    </div>
+
+    <form id="form-register" autocomplete="off">
+      <input type="hidden" name="phone" id="phone-hidden">
+
+      <!-- نوع المشترك -->
+      <div class="field">
+        <label>نوع المشترك <span class="req">*</span></label>
+        <div class="type-pills" id="type-pills">
+          <div class="type-pill" data-type="tawjihi">
+            <i class="fa-solid fa-user-graduate"></i>
+            <strong>توجيهي</strong>
+            <small>طلاب الثانوية</small>
+          </div>
+          <div class="type-pill" data-type="university">
+            <i class="fa-solid fa-building-columns"></i>
+            <strong>جامعي</strong>
+            <small>طلاب الجامعات</small>
+          </div>
+          <div class="type-pill" data-type="freelancer">
+            <i class="fa-solid fa-laptop-code"></i>
+            <strong>عمل حر</strong>
+            <small>مهنيون</small>
+          </div>
+        </div>
+        <input type="hidden" name="user_type" id="user-type" required>
+      </div>
+
+      <!-- الاسم -->
+      <div class="field">
+        <label>الاسم الرباعي <span class="req">*</span></label>
+        <div class="field-row">
+          <input type="text" name="first_name" placeholder="الأول" required>
+          <input type="text" name="second_name" placeholder="الأب">
+          <input type="text" name="third_name" placeholder="الجد">
+          <input type="text" name="fourth_name" placeholder="العائلة" required>
+        </div>
+      </div>
+
+      <!-- قسم التوجيهي -->
+      <div class="type-section" id="sec-tawjihi">
+        <div class="section-title"><i class="fa-solid fa-user-graduate"></i>بيانات التوجيهي</div>
+        <div class="field-row cols-2">
+          <div class="field">
+            <label>سنة التوجيهي</label>
+            <select name="tawjihi_year">
+              <option value="">— اختر —</option>
+              <option value="2023">2023</option>
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>الفرع</label>
+            <select name="tawjihi_branch">
+              <option value="">— اختر —</option>
+              <option value="علمي">علمي</option>
+              <option value="أدبي">أدبي</option>
+              <option value="ريادة وأعمال">ريادة وأعمال</option>
+              <option value="صناعي">صناعي</option>
+              <option value="زراعي">زراعي</option>
+              <option value="فندقي">فندقي</option>
+              <option value="شرعي">شرعي</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- قسم الجامعي -->
+      <div class="type-section" id="sec-university">
+        <div class="section-title"><i class="fa-solid fa-building-columns"></i>بيانات الجامعة</div>
+        <div class="field-row cols-2">
+          <div class="field"><label>اسم الجامعة</label><input type="text" name="university_name" placeholder="مثال: الجامعة الإسلامية"></div>
+          <div class="field"><label>الرقم الجامعي</label><input type="text" name="university_number" placeholder="مثال: 220123456"></div>
+          <div class="field"><label>التخصص</label><input type="text" name="university_specialization" placeholder="مثال: علوم حاسوب"></div>
+        </div>
+      </div>
+
+      <!-- قسم العمل الحر -->
+      <div class="type-section" id="sec-freelancer">
+        <div class="section-title"><i class="fa-solid fa-laptop-code"></i>بيانات العمل الحر</div>
+        <div class="field-row cols-2">
+          <div class="field"><label>التخصص / المجال</label><input type="text" name="freelancer_specialization" placeholder="مثال: تصميم، برمجة، تسويق..."></div>
+          <div class="field"><label>الشركة / الجهة (اختياري)</label><input type="text" name="freelancer_company" placeholder="اسم الشركة إن وُجدت"></div>
+        </div>
+      </div>
+
+      <!-- ملاحظات -->
+      <div class="field" style="margin-top:14px">
+        <label>ملاحظات للإدارة (اختياري)</label>
+        <textarea name="notes" placeholder="أي معلومات تساعد الإدارة على تجهيز حسابك"></textarea>
+      </div>
+
+      <div class="msg" id="msg-register"></div>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="btn-back"><i class="fa-solid fa-arrow-right"></i>رجوع</button>
+        <button type="submit" class="btn btn-primary" id="btn-submit">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>إرسال طلب الاشتراك</span>
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ════════════ Step 3: Success ════════════ -->
+  <section class="step-form" id="step-3">
+    <div class="card-head" style="border-bottom:0">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#86efac);margin:0 auto 16px;display:grid;place-items:center;color:#fff;font-size:36px;box-shadow:0 14px 36px -10px rgba(34,197,94,.50)">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h2 style="color:#166534">تم استلام طلبك بنجاح! 🎉</h2>
+      <p id="success-msg">سيتواصل معك المدير قريباً عبر الرقم المُسجّل لإكمال إعدادات حسابك.</p>
+    </div>
+
+    <div class="btn-row" style="justify-content:center">
+      <a href="/" class="btn btn-ghost" style="text-decoration:none"><i class="fa-solid fa-house"></i>الرئيسية</a>
+      <a href="/login" class="btn btn-primary" style="text-decoration:none"><i class="fa-solid fa-right-to-bracket"></i>تسجيل الدخول</a>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  const stepBar = document.getElementById('steps-bar');
+  const stepsSections = {
+    1: document.getElementById('step-1'),
+    2: document.getElementById('step-2'),
+    3: document.getElementById('step-3'),
+  };
+
+  function goStep(n){
+    Object.entries(stepsSections).forEach(([k, el]) => {
+      el.classList.toggle('is-on', String(k) === String(n));
+    });
+    stepBar.querySelectorAll('.step-dot').forEach(dot => {
+      const s = parseInt(dot.dataset.step, 10);
+      dot.classList.remove('is-on', 'is-done');
+      if(s < n) dot.classList.add('is-done');
+      else if(s === n) dot.classList.add('is-on');
+    });
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function showMsg(el, kind, text){
+    el.className = 'msg show ' + kind;
+    el.innerHTML = '<i class="fa-solid fa-' + (
+      kind==='err'?'circle-exclamation':kind==='warn'?'triangle-exclamation':kind==='ok'?'circle-check':'circle-info'
+    ) + '"></i><span>'+text+'</span>';
+  }
+  function clearMsg(el){ el.className='msg'; el.innerHTML=''; }
+  function setBtnLoading(btn, label, on){
+    btn.disabled = !!on;
+    if(on){
+      btn.innerHTML = '<span class="spin"></span><span>'+label+'</span>';
+    } else {
+      btn.innerHTML = btn.dataset.html || btn.innerHTML;
+    }
+  }
+
+  // ─── Step 1 ───
+  const formCheck = document.getElementById('form-check');
+  const phoneCheck = document.getElementById('phone-check');
+  const btnCheck = document.getElementById('btn-check');
+  const msgCheck = document.getElementById('msg-check');
+  const foundBlock = document.getElementById('found-block');
+
+  // Restrict to digits
+  phoneCheck.addEventListener('input', () => {
+    let v = phoneCheck.value.replace(/[^\d]/g, '');
+    if(v.length > 10) v = v.slice(0, 10);
+    phoneCheck.value = v;
+  });
+
+  btnCheck.dataset.html = btnCheck.innerHTML;
+
+  formCheck.addEventListener('submit', (e) => {
+    e.preventDefault();
+    clearMsg(msgCheck);
+    foundBlock.innerHTML = '';
+
+    let phone = phoneCheck.value.trim();
+    if(!/^0\d{9}$/.test(phone) && !/^5\d{8}$/.test(phone)){
+      showMsg(msgCheck, 'err', 'الرجاء إدخال رقم جوال صحيح (10 أرقام تبدأ بـ 0).');
+      return;
+    }
+
+    setBtnLoading(btnCheck, 'جارٍ الفحص…', true);
+    const fd = new FormData();
+    fd.append('phone', phone);
+
+    fetch('/user/register/check-phone', { method:'POST', body:fd, credentials:'same-origin' })
+      .then(r => r.json())
+      .then(d => {
+        setBtnLoading(btnCheck, '', false);
+        if(!d || !d.ok){
+          showMsg(msgCheck, 'err', (d && d.message) || 'تعذّر فحص الرقم.');
+          return;
+        }
+        if(d.found){
+          // Render the found block instead of moving to step 2
+          foundBlock.innerHTML =
+            '<div class="result-block">'+
+              '<div class="ico"><i class="fa-solid fa-triangle-exclamation"></i></div>'+
+              '<h3>هذا الرقم مسجَّل لدينا</h3>'+
+              '<p>'+(d.message || '')+'</p>'+
+              '<p style="margin-top:6px">الرقم: <span class="phone-shown">'+(d.phone || phone)+'</span></p>'+
+              '<a href="/login" class="btn btn-primary" style="margin-top:14px;text-decoration:none;max-width:240px"><i class="fa-solid fa-right-to-bracket"></i>تسجيل الدخول</a>'+
+            '</div>';
+          return;
+        }
+        // Not found → move to step 2
+        document.getElementById('phone-confirmed').textContent = d.phone;
+        document.getElementById('phone-hidden').value = d.phone;
+        goStep(2);
+      })
+      .catch(() => {
+        setBtnLoading(btnCheck, '', false);
+        showMsg(msgCheck, 'err', 'تعذّر الاتصال بالخادم. تحقّق من اتصالك.');
+      });
+  });
+
+  // ─── Step 2: Type pills ───
+  const typePills = document.querySelectorAll('#type-pills .type-pill');
+  const userTypeInput = document.getElementById('user-type');
+  const sections = {
+    tawjihi: document.getElementById('sec-tawjihi'),
+    university: document.getElementById('sec-university'),
+    freelancer: document.getElementById('sec-freelancer'),
+  };
+
+  typePills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      const t = pill.dataset.type;
+      typePills.forEach(p => p.classList.toggle('is-on', p === pill));
+      userTypeInput.value = t;
+      Object.entries(sections).forEach(([k, el]) => el.classList.toggle('is-on', k === t));
+    });
+  });
+
+  // ─── Step 2: Back button ───
+  document.getElementById('btn-back').addEventListener('click', () => goStep(1));
+
+  // ─── Step 2: Submit ───
+  const formRegister = document.getElementById('form-register');
+  const btnSubmit = document.getElementById('btn-submit');
+  const msgRegister = document.getElementById('msg-register');
+  btnSubmit.dataset.html = btnSubmit.innerHTML;
+
+  formRegister.addEventListener('submit', (e) => {
+    e.preventDefault();
+    clearMsg(msgRegister);
+
+    if(!userTypeInput.value){
+      showMsg(msgRegister, 'err', 'اختر نوع المشترك أولاً.');
+      return;
+    }
+
+    setBtnLoading(btnSubmit, 'جارٍ الإرسال…', true);
+    const fd = new FormData(formRegister);
+
+    fetch('/user/register/submit', { method:'POST', body:fd, credentials:'same-origin' })
+      .then(r => r.json().then(j => ({status: r.status, body: j})))
+      .then(({status, body}) => {
+        setBtnLoading(btnSubmit, '', false);
+        if(status === 409 && body){
+          showMsg(msgRegister, 'warn', body.message || 'الرقم مسجّل مسبقاً.');
+          return;
+        }
+        if(!body || !body.ok){
+          showMsg(msgRegister, 'err', (body && body.message) || 'تعذّر إرسال الطلب.');
+          return;
+        }
+        // Success → step 3
+        document.getElementById('success-msg').textContent = body.message || 'سيتواصل معك المدير قريباً.';
+        goStep(3);
+      })
+      .catch(() => {
+        setBtnLoading(btnSubmit, '', false);
+        showMsg(msgRegister, 'err', 'تعذّر الاتصال بالخادم.');
+      });
+  });
+})();
+</script>
+</body>
+</html>

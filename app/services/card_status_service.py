@@ -82,8 +82,9 @@ def get_card_statuses(
 ) -> dict[int, dict[str, Any]]:
     cards = cards or []
     statuses: dict[int, dict[str, Any]] = {}
+    client = get_radius_client()
     # ⚡ Kill-switch موحّد: لا أي استدعاء HTTP إذا كان API معطّل
-    if is_radius_offline():
+    if is_radius_offline() and _is_real_radius_client(client):
         for card in cards:
             card_id = _card_id(card)
             statuses[card_id] = _api_unavailable_status(
@@ -91,7 +92,6 @@ def get_card_statuses(
                 "RADIUS API معطّل حالياً (قيد التفعيل الرسمي).",
             ).as_dict()
         return statuses
-    client = get_radius_client()
     api_ready = getattr(client, "mode", "live") == "live" and not is_api_under_development()
     sessions = _online_sessions_by_username(client)
     usage_calls = 0
@@ -245,6 +245,10 @@ def _online_sessions_by_username(client: Any) -> dict[str, Any]:
         if username:
             mapped[username] = session
     return mapped
+
+
+def _is_real_radius_client(client: Any) -> bool:
+    return client.__class__.__module__.startswith("app.services.radius_client.")
 
 
 def _fetch_usage_or_sessions(client: Any, username: str) -> Any:
